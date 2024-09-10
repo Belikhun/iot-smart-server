@@ -1,0 +1,16 @@
+{
+	"name": "smart-server",
+	"module": "index.ts",
+	"type": "module",
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"mysql2": "^3.11.1",
+		"sequelize": "^6.37.3",
+		"sequelize-cli": "^6.6.2"
+	}
+}
