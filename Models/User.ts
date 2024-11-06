@@ -1,11 +1,16 @@
 import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../Config/Database";
+import { database } from "../Config/Database";
 
 interface UserAttributes {
 	id?: number;
 	username: string;
 	email: string;
 	password: string;
+	lastPassword: string;
+	lastIP: string;
+	isAdmin: boolean;
+	created: number;
+	updated: number;
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {
@@ -13,6 +18,11 @@ class User extends Model<UserAttributes> implements UserAttributes {
 	public username!: string;
 	public email!: string;
 	public password!: string;
+	public lastPassword!: string;
+	public lastIP!: string;
+	public isAdmin: boolean = false;
+	public created!: number;
+	public updated!: number;
 }
 
 User.init({
@@ -23,7 +33,8 @@ User.init({
 	},
 	username: {
 		type: DataTypes.STRING,
-		allowNull: false
+		allowNull: false,
+		unique: true
 	},
 	email: {
 		type: DataTypes.STRING,
@@ -33,10 +44,33 @@ User.init({
 	password: {
 		type: DataTypes.STRING,
 		allowNull: false
+	},
+	lastPassword: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
+	lastIP: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
+	isAdmin: {
+		type: DataTypes.BOOLEAN,
+		allowNull: false,
+		defaultValue: false
+	},
+	created: {
+		type: DataTypes.NUMBER,
+		allowNull: false
+	},
+	updated: {
+		type: DataTypes.NUMBER,
+		allowNull: false
 	}
 }, {
-	sequelize,
-	tableName: "users"
+	sequelize: database,
+	tableName: "Users",
+	createdAt: "created",
+	updatedAt: "updated"
 });
 
 export default User;
