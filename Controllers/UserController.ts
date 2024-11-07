@@ -1,15 +1,25 @@
+import Elysia from "elysia";
 import User from "../Models/User";
+import { hashPassword } from "../Utils/Password";
+import APIResponse from "../Classes/APIResponse";
 
-export const getAllUsers = async (request: Request): Promise<Response> => {
-	try {
-		const users = await User.findAll();
-		return new Response(JSON.stringify(users), {
-			headers: { "Content-Type": "application/json" },
-		});
-	} catch (error) {
-		return new Response(JSON.stringify({ error: "Failed to fetch users" }), {
-			status: 500,
-			headers: { "Content-Type": "application/json" },
-		});
-	}
-};
+export const userController = new Elysia({ prefix: "/user" });
+
+userController.post("/create", async ({ request }) => {
+	const { username, email, password } = await request.json();
+
+	let existingUser = await User.findOne({ where: { username } });
+
+	if (existingUser)
+		throw new Error(`Người dùng với username ${username} đã tồn tại!`);
+
+	const instance = User.build({
+		username,
+		email,
+		password: await hashPassword(password),
+		isAdmin: false
+	});
+
+	await instance.save();
+	return new APIResponse(0, `Tạo user thành công!`, 200, instance);
+});

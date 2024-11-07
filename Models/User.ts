@@ -6,23 +6,23 @@ interface UserAttributes {
 	username: string;
 	email: string;
 	password: string;
-	lastPassword: string;
-	lastIP: string;
+	lastPassword?: string;
+	lastIP?: string;
 	isAdmin: boolean;
-	created: number;
-	updated: number;
+	readonly created?: Date;
+	readonly updated?: Date;
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {
-	public id!: number;
-	public username!: string;
-	public email!: string;
-	public password!: string;
-	public lastPassword!: string;
-	public lastIP!: string;
-	public isAdmin: boolean = false;
-	public created!: number;
-	public updated!: number;
+	declare id: number;
+	declare username: string;
+	declare email: string;
+	declare password: string;
+	declare lastPassword: string;
+	declare lastIP: string;
+	declare isAdmin: boolean;
+	declare readonly created: Date;
+	declare readonly updated: Date;
 }
 
 User.init({
@@ -59,16 +59,16 @@ User.init({
 		defaultValue: false
 	},
 	created: {
-		type: DataTypes.NUMBER,
+		type: DataTypes.DATE,
 		allowNull: false
 	},
 	updated: {
-		type: DataTypes.NUMBER,
+		type: DataTypes.DATE,
 		allowNull: false
 	}
 }, {
 	sequelize: database,
-	tableName: "Users",
+	tableName: "users",
 	createdAt: "created",
 	updatedAt: "updated"
 });

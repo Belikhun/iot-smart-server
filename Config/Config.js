@@ -1,4 +1,7 @@
 const {
+	HOST,
+	PORT,
+
 	DB_HOST,
 	DB_NAME,
 	DB_USERNAME,
@@ -29,7 +32,10 @@ const config = {
 		"database": DB_NAME,
 		"host": DB_HOST,
 		"dialect": DB_DIALECT
-	}
+	},
+
+	host: HOST || "127.0.0.1",
+	port: PORT || "80"
 };
 
 export default config;

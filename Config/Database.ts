@@ -1,4 +1,7 @@
 import { Sequelize } from "sequelize";
+import { scope } from "../Utils/Logger";
+
+const log = scope("db");
 
 // Access environment variables directly through process.env
 const {
@@ -10,7 +13,7 @@ const {
 } = process.env;
 
 if (!DB_HOST || !DB_NAME || !DB_USERNAME || !DB_PASSWORD || !DB_DIALECT)
-	throw new Error("Missing environment variables. Please check your .env file.");
+	throw new Error("Thiếu các biến môi trường. Hãy kiểm tra file .env của bạn.");
 
 // Create the Sequelize instance with the database configuration
 export const database = new Sequelize(DB_NAME!, DB_USERNAME!, DB_PASSWORD!, {
@@ -19,4 +22,26 @@ export const database = new Sequelize(DB_NAME!, DB_USERNAME!, DB_PASSWORD!, {
 	logging: false,
 });
 
-console.log(`Connecting to database ${DB_NAME} at ${DB_HOST}...`);
+export const initializeDB = async () => {
+	log.info(`Đang kết nối tới cơ sở dữ liệu ${DB_NAME} tại ${DB_HOST}...`);
+
+	try {
+		await database.authenticate({
+			retry: {
+				max: 3,
+				report(message, obj, error) {
+					if (error) {
+						log.warn(`Kết nối tới cơ sở dữ liệu thất bại (${obj.$current}/${obj.max}): `, error);
+						return;
+					}
+
+					log.info(`Đang kết nối... (#${obj.$current}/${obj.max})`);
+				},
+			}
+		});
+	} catch (error) {
+		log.error("Không thể kết nối tới cơ sở dữ liệu:", error);
+	}
+
+	log.success("Đã kết nối tới cơ sở dữ liệu");
+};
