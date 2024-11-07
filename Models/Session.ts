@@ -11,9 +11,9 @@ interface SessionAttributes {
 	userId: number;
 	data?: object;
 	ipAddress?: string;
-	expire: Date;
-	readonly created?: Date;
-	readonly updated?: Date;
+	expire: number;
+	created?: number;
+	updated?: number;
 }
 
 class Session extends Model<SessionAttributes> implements SessionAttributes {
@@ -22,9 +22,13 @@ class Session extends Model<SessionAttributes> implements SessionAttributes {
 	declare userId: number;
 	declare data: object;
 	declare ipAddress: string;
-	declare expire: Date;
-	declare readonly created: Date;
-	declare readonly updated: Date;
+	declare expire: number;
+	declare created: number;
+	declare updated: number;
+
+	public isActive(): boolean {
+		return (this.expire >= time());
+	}
 
 	public static async start(user: User) {
 		const uuid = randomUUID();
@@ -32,7 +36,7 @@ class Session extends Model<SessionAttributes> implements SessionAttributes {
 		const instance = this.build({
 			sessionId: uuid,
 			userId: user.id,
-			expire: moment().add(1, "month").toDate(),
+			expire: moment().add(1, "month").unix(),
 			ipAddress: user.lastIP
 		});
 
@@ -66,22 +70,34 @@ Session.init({
 		allowNull: true
 	},
 	expire: {
-		type: DataTypes.DATE,
+		type: DataTypes.INTEGER,
 		allowNull: false
 	},
 	created: {
-		type: DataTypes.DATE,
-		allowNull: false
+		type: DataTypes.INTEGER,
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	},
 	updated: {
-		type: DataTypes.DATE,
-		allowNull: false
+		type: DataTypes.INTEGER,
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	}
 }, {
 	sequelize: database,
 	tableName: "sessions",
 	createdAt: "created",
-	updatedAt: "updated"
+	updatedAt: "updated",
+	timestamps: true,
+	hooks: {
+		beforeCreate(instance) {
+			instance.created = instance.updated = moment().unix();
+		},
+
+		beforeUpdate(instance) {
+			instance.updated = moment().unix();
+		}
+	}
 });
 
 export default Session;

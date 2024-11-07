@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import { scope } from "../Utils/Logger";
+import moment from "moment";
 
 const log = scope("db");
 
@@ -19,7 +20,7 @@ if (!DB_HOST || !DB_NAME || !DB_USERNAME || !DB_PASSWORD || !DB_DIALECT)
 export const database = new Sequelize(DB_NAME!, DB_USERNAME!, DB_PASSWORD!, {
 	host: DB_HOST,
 	dialect: DB_DIALECT as any, // Specify the type (mysql, postgres, etc.)
-	logging: false,
+	logging: false
 });
 
 export const initializeDB = async () => {

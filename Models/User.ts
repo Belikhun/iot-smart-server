@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
+import moment from "moment";
 
 interface UserAttributes {
 	id?: number;
@@ -9,8 +10,8 @@ interface UserAttributes {
 	lastPassword?: string;
 	lastIP?: string;
 	isAdmin: boolean;
-	readonly created?: Date;
-	readonly updated?: Date;
+	created?: number;
+	updated?: number;
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {
@@ -21,8 +22,8 @@ class User extends Model<UserAttributes> implements UserAttributes {
 	declare lastPassword: string;
 	declare lastIP: string;
 	declare isAdmin: boolean;
-	declare readonly created: Date;
-	declare readonly updated: Date;
+	declare created: number;
+	declare updated: number;
 }
 
 User.init({
@@ -59,18 +60,28 @@ User.init({
 		defaultValue: false
 	},
 	created: {
-		type: DataTypes.DATE,
+		type: DataTypes.INTEGER,
 		allowNull: false
 	},
 	updated: {
-		type: DataTypes.DATE,
+		type: DataTypes.INTEGER,
 		allowNull: false
 	}
 }, {
 	sequelize: database,
 	tableName: "users",
 	createdAt: "created",
-	updatedAt: "updated"
+	updatedAt: "updated",
+	timestamps: true,
+	hooks: {
+		beforeCreate(instance) {
+			instance.created = instance.updated = moment().unix();
+		},
+
+		beforeUpdate(instance) {
+			instance.updated = moment().unix();
+		}
+	}
 });
 
 export default User;

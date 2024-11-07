@@ -1,5 +1,5 @@
 import Elysia, { type Context as BaseContext } from "elysia";
-import { router } from "./Routes/Index";
+import { apiRouter } from "./Routes/API";
 import config from "./Config/Config";
 import { scope } from "./Utils/Logger";
 import staticPlugin from "@elysiajs/static";
@@ -9,6 +9,7 @@ import { sessionMiddleware } from "./Middlewares/SessionMiddleware";
 import APIResponse from "./Classes/APIResponse";
 import type Session from "./Models/Session";
 import { time } from "./Utils/belibrary";
+import { websocketRouter } from "./Routes/WebSocket";
 
 const log = scope("http");
 
@@ -106,6 +107,7 @@ server.onStop((app: Elysia) => {
 
 export const initializeHttpServer = () => {
 	return server
-		.use(router)
+		.use(apiRouter)
+		.use(websocketRouter)
 		.listen({ hostname: config.host, port: config.port, development: true });
 };
