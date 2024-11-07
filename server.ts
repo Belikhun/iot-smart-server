@@ -7,7 +7,7 @@ import path from "path";
 import serverTiming from "@elysiajs/server-timing";
 import { sessionMiddleware } from "./Middlewares/SessionMiddleware";
 import APIResponse from "./Classes/APIResponse";
-import type Session from "./Models/Session";
+import type SessionModel from "./Models/SessionModel";
 import { time } from "./Utils/belibrary";
 import { websocketRouter } from "./Routes/WebSocket";
 
@@ -15,7 +15,7 @@ const log = scope("http");
 
 export interface HttpServerContext extends BaseContext {
 	timestamp: number
-	session?: Session
+	session?: SessionModel
 }
 
 export const server = new Elysia()

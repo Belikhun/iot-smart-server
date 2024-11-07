@@ -14,7 +14,7 @@ interface UserAttributes {
 	updated?: number;
 }
 
-class User extends Model<UserAttributes> implements UserAttributes {
+class UserModel extends Model<UserAttributes> implements UserAttributes {
 	declare id: number;
 	declare username: string;
 	declare email: string;
@@ -26,7 +26,7 @@ class User extends Model<UserAttributes> implements UserAttributes {
 	declare updated: number;
 }
 
-User.init({
+UserModel.init({
 	id: {
 		type: DataTypes.INTEGER,
 		autoIncrement: true,
@@ -84,4 +84,4 @@ User.init({
 	}
 });
 
-export default User;
+export default UserModel;

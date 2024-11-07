@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
-import type User from "./User";
+import type UserModel from "./UserModel";
 import { randomUUID } from "crypto";
 import { time } from "../Utils/belibrary";
 import moment from "moment";
@@ -16,7 +16,7 @@ interface SessionAttributes {
 	updated?: number;
 }
 
-class Session extends Model<SessionAttributes> implements SessionAttributes {
+class SessionModel extends Model<SessionAttributes> implements SessionAttributes {
 	declare id: number;
 	declare sessionId: string;
 	declare userId: number;
@@ -30,7 +30,7 @@ class Session extends Model<SessionAttributes> implements SessionAttributes {
 		return (this.expire >= time());
 	}
 
-	public static async start(user: User) {
+	public static async start(user: UserModel) {
 		const uuid = randomUUID();
 
 		const instance = this.build({
@@ -45,7 +45,7 @@ class Session extends Model<SessionAttributes> implements SessionAttributes {
 	}
 }
 
-Session.init({
+SessionModel.init({
 	id: {
 		type: DataTypes.INTEGER,
 		autoIncrement: true,
@@ -100,4 +100,4 @@ Session.init({
 	}
 });
 
-export default Session;
+export default SessionModel;

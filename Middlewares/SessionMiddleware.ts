@@ -1,6 +1,6 @@
 import type Elysia from "elysia";
 import { time } from "../Utils/belibrary";
-import Session from "../Models/Session";
+import SessionModel from "../Models/SessionModel";
 
 export const sessionMiddleware = (app: Elysia) => {
 	app.derive(async (context) => {
@@ -11,7 +11,7 @@ export const sessionMiddleware = (app: Elysia) => {
 		const sessionId = context.cookie["Session"].value;
 
 		if (sessionId)
-			session = await Session.findOne({ where: { sessionId } });
+			session = await SessionModel.findOne({ where: { sessionId } });
 
 		return {
 			timestamp,
