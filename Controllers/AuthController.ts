@@ -13,18 +13,23 @@ authController.post("/login", async ({ request, server, cookie }: HttpServerCont
 	const user = await UserModel.findOne({ where: { username } });
 
 	if (!user)
-		throw new Error(`Người dùng với username ${username} không tồn tại!`);
+		return new APIResponse(1, "Tài khoản không tồn tại!", 404);
 
-	if (!validatePassword(user.password, password))
-		throw new Error(`Mật khẩu không chính xác!`);
+	if (!(await validatePassword(user.password, password)))
+		return new APIResponse(2, "Mật khẩu không chính xác!", 403);
 
 	user.lastIP = server?.requestIP(request)?.address || "";
 	const session = await SessionModel.start(user);
 	cookie.Session.value = session.sessionId;
-	const response = new APIResponse(0, "Đăng nhập thành công!", 200, session);
-	return response;
+
+	return new APIResponse(0, "Đăng nhập thành công!", 200, await session.getReturnData());
+});
+
+authController.post("/logout", async ({ session }: HttpServerContext) => {
+	await session?.invalidate();
+	return new APIResponse(0, "Đăng xuất thành công!", 200);
 });
 
 authController.get("/session", async ({ session }: HttpServerContext) => {
-	return new APIResponse(0, "Phiên đăng nhập hiện tại", 200, session);
+	return new APIResponse(0, "Phiên đăng nhập hiện tại", 200, await session?.getReturnData());
 });

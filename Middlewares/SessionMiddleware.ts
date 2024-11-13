@@ -1,6 +1,7 @@
 import type Elysia from "elysia";
 import { time } from "../Utils/belibrary";
 import SessionModel from "../Models/SessionModel";
+import { Op } from "sequelize";
 
 export const sessionMiddleware = (app: Elysia) => {
 	app.derive(async (context) => {
@@ -10,8 +11,14 @@ export const sessionMiddleware = (app: Elysia) => {
 		let session = null;
 		const sessionId = context.cookie["Session"].value;
 
-		if (sessionId)
-			session = await SessionModel.findOne({ where: { sessionId } });
+		if (sessionId) {
+			session = await SessionModel.findOne({
+				where: {
+					sessionId,
+					expire: { [Op.gt]: timestamp }
+				}
+			});
+		}
 
 		return {
 			timestamp,

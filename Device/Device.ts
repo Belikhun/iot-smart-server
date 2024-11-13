@@ -12,9 +12,12 @@ export enum DeviceStatus {
 	RECONNECTING = "reconnecting"
 }
 
+type DeviceDict = { [hardwareId: string]: Device };
+type DeviceFeatureDict = { [uuid: string]: FeatureBase };
+
 const log = scope("devices");
-const devices: { [hardwareId: string]: Device } = {};
-const deviceFeatures: { [uuid: string]: FeatureBase } = {};
+const devices: DeviceDict = {};
+const deviceFeatures: DeviceFeatureDict = {};
 
 export default class Device {
 
@@ -118,6 +121,10 @@ export const getDevice = (hardwareId: string): Device | null => {
 		return devices[hardwareId];
 
 	return null;
+}
+
+export const getDevices = (): DeviceDict => {
+	return devices;
 }
 
 export const getDeviceFeature = (uuid: string): FeatureBase | null => {

@@ -33,7 +33,7 @@ const screens = {
 		this.system = new ScreenGroup("system", app.string("system"));
     },
 
-	loaded() {
+	activate() {
 		app.screen.activateByHash(this.locationHash);
 	}
 }

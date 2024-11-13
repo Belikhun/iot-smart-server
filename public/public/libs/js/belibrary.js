@@ -1432,7 +1432,7 @@ class lazyload {
 			node.addEventListener("error", () => this.errored = true);
 
 			// Add onload attribute to make sure cloning this node will work as expected.
-			node.setAttribute("onload", `this.parentElement.dataset.loaded = true;`);
+			node.setAttribute("onload", `this.parentElement ? this.parentElement.dataset.loaded = true : null;`);
 
 			if (this.sourceNode) {
 				this.container.replaceChild(node, this.sourceNode);

@@ -2,7 +2,7 @@
 export default class APIResponse {
 
 	public readonly code: number;
-	public readonly message: string;
+	public readonly description: string;
 	public readonly status: number;
 	public data: object | null = null;
 	public timestamp: number;
@@ -10,9 +10,9 @@ export default class APIResponse {
 
 	protected headers: { [name: string]: string };
 
-	constructor(code: number, message: string, status: number = 200, data: object | null = null) {
+	constructor(code: number, description: string, status: number = 200, data: object | null = null) {
 		this.code = code;
-		this.message = message;
+		this.description = description;
 		this.status = status;
 		this.data = data;
 		this.timestamp = 0;

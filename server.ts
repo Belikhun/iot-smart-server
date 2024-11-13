@@ -27,23 +27,24 @@ server.onRequest(({ request }) => {
 	log.incoming(`${request.method} ${request.url}`);
 });
 
-server.mapResponse(({ set, path, headers, response }) => {
+server.mapResponse(({ set: { status }, path, headers, response }) => {
 	const timestamp = (headers["X-Timestamp"])
 		? parseInt(headers["X-Timestamp"])
 		: 0;
 
 	if (response instanceof APIResponse) {
-		set.status = response.status;
+		status = response.status;
 		response.timestamp = timestamp;
 		response.runtime = time() - timestamp;
 		response.header("X-Timestamp", response.timestamp.toString());
 		response.header("X-Runtime", response.runtime.toString());
 
-		log.outgoing(`[⚙ API] ${path} ${set.status}`);
+		log.outgoing(`[⚙ API] ${path} ${status}`);
 
 		const newResponse = new Response(
 			JSON.stringify(response, null, "\t"),
 			{
+				status: response.status,
 				headers: {
 					"Content-Type": "application/json;charset=utf-8"
 				}
@@ -56,7 +57,7 @@ server.mapResponse(({ set, path, headers, response }) => {
 		return newResponse;
 	}
 
-	log.outgoing(`[📁 PUBLIC] ${path} ${set.status}`);
+	log.outgoing(`[📁 PUBLIC] ${path} ${status}`);
 	return response;
 });
 

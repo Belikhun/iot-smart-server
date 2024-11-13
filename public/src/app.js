@@ -30,6 +30,15 @@ const app = {
 	data: {},
 	strings: {},
 
+	/** @type {Session} */
+	session: undefined,
+
+	/** @type {User} */
+	user: undefined,
+
+	/** @type {LoadingOverlay} */
+	loadingOverlay: undefined,
+
 	/** @type {((size: "desktop"|"tablet"|"mobile") => void)[]} */
 	screenModeChangeListeners: [],
 	currentScreenMode: null,
@@ -41,10 +50,19 @@ const app = {
 		this.root.style.setProperty("--accent", this.data.accent);
 		this.root.style.setProperty("--accent-raw", this.data.accentRaw.join(" "));
 
+		this.loadingOverlay = new LoadingOverlay();
+		this.loadingOverlay.container = app.root.querySelector(":scope > .loadingOverlay");
+		this.loadingOverlay.spinner = app.root.querySelector(":scope > .loadingOverlay > .spinner");
+		this.loadingOverlay.loading = true;
+
 		popup.init();
 		addEventListener("resize", () => this.updateScreenMode());
 		this.updateScreenMode();
 		initGroup(this, "app");
+	},
+
+	set loading(loading) {
+		this.loadingOverlay.loading = loading;
 	},
 
 	string(name, args = {}) {
@@ -125,14 +143,179 @@ const app = {
 		return this.currentScreenMode;
 	},
 
+	auth: {
+		/** @type {TreeDOM} */
+		loginView: undefined,
+
+		usernameInput: undefined,
+		passwordInput: undefined,
+
+		/** @type {SQButton} */
+		loginButton: undefined,
+
+		init() {
+			this.usernameInput = createInput({
+				id: "login_form_username",
+				type: "text",
+				label: "Tên đăng nhập",
+				required: true,
+				autofill: false
+			});
+
+			this.passwordInput = createInput({
+				id: "login_form_password",
+				type: "password",
+				label: "Mật khẩu",
+				required: true,
+				autofill: false
+			});
+
+			this.loginButton = createButton("Đăng Nhập", {
+				type: "submit",
+				color: "accent",
+				disabled: true
+			});
+
+			const updateButtonState = () => {
+				this.loginButton.disabled = (!this.usernameInput.value || !this.passwordInput.value);
+			}
+
+			this.usernameInput.input.addEventListener("input", updateButtonState);
+			this.passwordInput.input.addEventListener("input", updateButtonState);
+
+			this.loginView = makeTree("div", "login-panel", {
+				overlay: { tag: "div", class: "overlay" },
+				form: { tag: "form", class: "login-form", method: "post", autocomplete: "off", child: {
+					logo: new lazyload({ source: app.url("/public/images/logo-128.png"), classes: "logo" }),
+
+					heading: { tag: "div", class: "heading", child: {
+						titl: { tag: "h1", class: "title", text: "Đăng nhập" },
+						sub: { tag: "div", class: "sub", html: "Sử dụng tài khoản <strong>quản trị</strong> để đăng nhập" }
+					}},
+
+					content: { tag: "div", class: "content", child: {
+						username: this.usernameInput,
+						password: this.passwordInput
+					}},
+
+					actions: { tag: "div", class: "actions", child: {
+						submit: this.loginButton
+					}}
+				}}
+			});
+
+			this.loginView.form.addEventListener("submit", (e) => {
+				e.preventDefault();
+				this.login(this.usernameInput.value, this.passwordInput.value);
+			});
+
+			this.check();
+		},
+
+		async check() {
+			try {
+				const response = await myajax({
+					url: app.api("/auth/session"),
+					method: "GET"
+				});
+
+				if (!response.data) {
+					this.log("WARN", `Chưa đăng nhập, sẽ hiện bảng đăng nhập...`);
+					this.showLogin();
+					return;
+				}
+
+				const session = Session.processResponse(response.data);
+				app.session = session;
+				app.user = session.user;
+				this.log("INFO", `Đã đăng nhập dưới tài khoản ${app.user.username}`);
+				this.completeLogin();
+			} catch (e) {
+				this.log("ERRR", `Lỗi khi kiểm tra phiên đăng nhập:`, e);
+				this.showLogin();
+			}
+		},
+
+		showLogin() {
+			app.root.appendChild(this.loginView);
+		},
+
+		completeLogin() {
+			app.navbar.userImage.source = app.user.getAvatarUrl();
+			app.navbar.userImage.load();
+			app.navbar.container.right.user.fullname.innerText = app.user.name;
+
+			if (app.root.contains(this.loginView))
+				app.root.removeChild(this.loginView);
+
+			app.loading = false;
+			screens.activate();
+		},
+
+		async login(username, password) {
+			this.loginButton.loading = true;
+
+			try {
+				const response = await myajax({
+					url: app.api("/auth/login"),
+					method: "POST",
+					json: {
+						username,
+						password
+					}
+				});
+
+				const session = Session.processResponse(response.data);
+				app.session = session;
+				app.user = session.user;
+				this.log("INFO", `Đã đăng nhập dưới tài khoản ${app.user.username}`);
+				this.completeLogin();
+			} catch (e) {
+				this.log("ERRR", `Lỗi khi đăng nhập:`, e);
+
+				if (e.data && e.data.code) {
+					if (e.data.code === 1)
+						this.usernameInput.set({ message: e.data.description });
+					else if (e.data.code === 2)
+						this.passwordInput.set({ message: e.data.description });
+				}
+			}
+
+			this.loginButton.loading = false;
+		},
+
+		async logout() {
+			if (!app.user)
+				return;
+
+			try {
+				await myajax({
+					url: app.api("/auth/logout"),
+					method: "POST"
+				});
+
+				this.log("INFO", `Đã đăng xuất khỏi tài khoản ${app.user.username}`);
+				location.reload();
+			} catch (e) {
+				this.log("ERRR", `Lỗi khi đăng xuất:`, e);
+				location.reload();
+			}
+		}
+	},
+
 	navbar: {
-		/** @type {HTMLElement} */
+		/** @type {TreeDOM} */
 		container: undefined,
 
 		/** @type {ContextMenu} */
 		userMenu: undefined,
+		
+		/** @type {lazyload} */
+		userImage: undefined,
 
 		init() {
+			this.userImage = new lazyload({ source: app.url("/public/images/guest.png"), classes: "userimage" });
+
 			this.container = makeTree("nav", "nav", {
 				left: { tag: "div", class: "left", child: {
 					brand: new lazyload({ source: app.url("/public/images/logo-32.png"), classes: "sitelogo", tagName: "a" }),
@@ -149,7 +332,7 @@ const app = {
 
 					user: { tag: "span", class: "user", child: {
 						fullname: { tag: "div", class: "name", text: app.string("guest") },
-						image: new lazyload({ source: app.url("/public/images/guest.png"), classes: "userimage" }),
+						image: this.userImage,
 						icon: { tag: "icon", icon: "caretDown", class: "caret" }
 					}}
 				}}
@@ -162,15 +345,15 @@ const app = {
 				.separator()
 				.add({ id: "logout", icon: "logout", text: app.string("menu.logout") });
 
-			this.userMenu.onSelect((name) => {
+			this.userMenu.onSelect(async (name) => {
 				switch (name) {
 					case "profile":
 						window.open(app.url(`/user/profile.php`), "_blank");
 						break;
 
 					case "logout":
-						window.location = app.data.logoutUrl;
-						break;
+						await app.auth.logout();
+						return;
 				}
 			});
 

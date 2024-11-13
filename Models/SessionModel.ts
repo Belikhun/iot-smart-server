@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
-import type UserModel from "./UserModel";
+import UserModel from "./UserModel";
 import { randomUUID } from "crypto";
 import { time } from "../Utils/belibrary";
 import moment from "moment";
@@ -28,6 +28,28 @@ class SessionModel extends Model<SessionAttributes> implements SessionAttributes
 
 	public isActive(): boolean {
 		return (this.expire >= time());
+	}
+
+	public async getUser(): Promise<UserModel | null> {
+		return await UserModel.findOne({ where: { id: this.userId } });
+	}
+
+	public async invalidate() {
+		this.expire = time() - 1;
+		await this.save();
+		return this;
+	}
+
+	public async getReturnData() {
+		const data: any = { ...this.dataValues };
+		delete data.data;
+		delete data.userId;
+		data.user = await this.getUser();
+
+		if (data.user)
+			data.user = await data.user.getReturnData();
+
+		return data;
 	}
 
 	public static async start(user: UserModel) {

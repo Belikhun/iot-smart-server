@@ -5,6 +5,7 @@ import moment from "moment";
 interface UserAttributes {
 	id?: number;
 	username: string;
+	name: string;
 	email: string;
 	password: string;
 	lastPassword?: string;
@@ -17,6 +18,7 @@ interface UserAttributes {
 class UserModel extends Model<UserAttributes> implements UserAttributes {
 	declare id: number;
 	declare username: string;
+	declare name: string;
 	declare email: string;
 	declare password: string;
 	declare lastPassword: string;
@@ -24,6 +26,15 @@ class UserModel extends Model<UserAttributes> implements UserAttributes {
 	declare isAdmin: boolean;
 	declare created: number;
 	declare updated: number;
+
+	public async getReturnData() {
+		const data: any = { ...this.dataValues };
+
+		delete data.password;
+		delete data.lastPassword;
+
+		return data;
+	}
 }
 
 UserModel.init({
@@ -36,6 +47,10 @@ UserModel.init({
 		type: DataTypes.STRING,
 		allowNull: false,
 		unique: true
+	},
+	name: {
+		type: DataTypes.STRING,
+		allowNull: false
 	},
 	email: {
 		type: DataTypes.STRING,
