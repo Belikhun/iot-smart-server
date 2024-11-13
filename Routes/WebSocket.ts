@@ -142,6 +142,7 @@ websocketRouter.ws("/device", {
 					});
 				}
 
+				device.sync();
 				break;
 			}
 		}

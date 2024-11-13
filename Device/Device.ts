@@ -1,6 +1,6 @@
 import DeviceFeatureModel from "../Models/DeviceFeatureModel";
 import DeviceModel from "../Models/DeviceModel";
-import { sendDashboardCommand, type WebSocket } from "../Routes/WebSocket";
+import { sendCommand, sendDashboardCommand, type WebSocket } from "../Routes/WebSocket";
 import { scope, type Logger } from "../Utils/Logger";
 import { resolveFeature } from "./FeatureFactory";
 import type { FeatureBase } from "./Features/FeatureBase";
@@ -42,6 +42,24 @@ export default class Device {
 		else
 			this.log.warn(`Thiết bị đã ngắt kết nối tới máy chủ!`);
 
+		return this;
+	}
+
+	/**
+	 * Perform state sync to device.
+	 *
+	 * @returns	{this}
+	 */
+	public sync(): this {
+		if (!this.connected || !this.websocket)
+			return this;
+
+		const payload = [];
+
+		for (const feature of Object.values(this.features))
+			payload.push(feature.getUpdateData())
+
+		sendCommand(this.websocket, "sync", payload);
 		return this;
 	}
 

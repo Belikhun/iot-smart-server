@@ -85,7 +85,7 @@ export class FeatureBase {
 	 */
 	protected doPushValue() {
 		if (this.device.websocket)
-			sendCommand(this.device.websocket, "update", this.getValue(), this.model.uuid)
+			sendCommand(this.device.websocket, "update", this.getUpdateData(), this.model.uuid)
 
 		return this;
 	}
