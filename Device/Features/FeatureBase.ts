@@ -1,5 +1,5 @@
 import type DeviceFeatureModel from "../../Models/DeviceFeatureModel";
-import { sendCommand, type WebSocket } from "../../Routes/WebSocket";
+import { sendCommand, sendDashboardCommand, type WebSocket } from "../../Routes/WebSocket";
 import { scope, type Logger } from "../../Utils/Logger";
 import type Device from "../Device";
 
@@ -34,6 +34,8 @@ export class FeatureBase {
 	public value(newValue: any | undefined = undefined) {
 		if (newValue !== undefined)
 			this.setValue(newValue);
+
+		return this.getValue();
 	}
 
 	public defaultValue(): any {
@@ -49,12 +51,12 @@ export class FeatureBase {
 			this.updateHandler(this.currentValue);
 
 		if (source !== FeatureUpdateSource.DASHBOARD) {
-			this.log.debug("Will perform dashboard update");
+			this.log.debug("Sẽ thực hiện cập nhật bảng điều khiển");
 			this.doUpdateDashboard();
 		}
 
 		if (source !== FeatureUpdateSource.DEVICE) {
-			this.log.debug("Will perform device state update");
+			this.log.debug("Sẽ thực hiện cập nhật trạng thái phần cứng");
 			this.doPushValue();
 		}
 
@@ -71,10 +73,10 @@ export class FeatureBase {
 	}
 
 	/**
-	 * Update this value to dashboard.
+	 * Push this value to dashboard.
 	 */
 	protected doUpdateDashboard() {
-
+		sendDashboardCommand("update", this.getUpdateData(), this.model.uuid);
 		return this;
 	}
 

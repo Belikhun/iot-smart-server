@@ -28,6 +28,9 @@ const devices = {
 	 * 	view: TreeDOM
 	 *  device: Device
 	 * 	menu: ContextMenu
+	 * 	update: () => void
+	 * 	edit: () => void
+	 * 	delete: () => Promise<void>
 	 * }} DeviceView
 	 */
 
@@ -41,10 +44,16 @@ const devices = {
 	updateButton: undefined,
 
 	/** @type {Device[]} */
-	devices: [],
+	current: [],
 
 	/** @type {{ [id: number]: DeviceView }} */
 	deviceView: {},
+
+	/** @type {{ [hardwareId: string]: Device }} */
+	devices: {},
+
+	/** @type {{ [uuid: string]: DeviceFeature }} */
+	features: {},
 
 	init() {
 		this.view = makeTree("div", "device-list", {
@@ -68,6 +77,32 @@ const devices = {
 		this.screen.onActivate(() => this.update());
 	},
 
+	/**
+	 * Get device instance by hardware ID.
+	 * 
+	 * @param	{string}			hardwareId
+	 * @returns	{?Device}
+	 */
+	getDevice(hardwareId) {
+		if (!this.devices[hardwareId])
+			return null;
+
+		return this.devices[hardwareId];
+	},
+
+	/**
+	 * Get device feature instance by uuid.
+	 * 
+	 * @param	{string}			uuid
+	 * @returns	{?DeviceFeature}
+	 */
+	getDeviceFeature(uuid) {
+		if (!this.features[uuid])
+			return null;
+
+		return this.features[uuid];
+	},
+
 	async update() {
 		this.updateButton.loading = true;
 
@@ -77,8 +112,47 @@ const devices = {
 				method: "GET"
 			});
 
-			this.devices = Device.processResponses(response.data);
+			this.current = Device.processResponses(response.data);
+
+			// Update device dictionary.
+			for (const device of this.current) {
+				this.devices[device.hardwareId] = device;
+
+				for (const feature of device.features)
+					this.features[feature.uuid] = feature;
+			}
+
 			this.renderDevices();
+		} catch (e) {
+			this.screen.handleError(e);
+		}
+
+		this.updateButton.loading = false;
+	},
+
+	async updateDevice(hardwareId) {
+		this.updateButton.loading = true;
+
+		try {
+			const response = await myajax({
+				url: app.api(`/device/${hardwareId}/info`),
+				method: "GET"
+			});
+
+			if (!response.data) {
+				this.log("WARN", `Không tìm thấy thiết bị với mã phần cứng ${hardwareId}!`);
+				this.updateButton.loading = false;
+				return;
+			}
+
+			const device = Device.processResponse(response.data);
+
+			this.devices[device.hardwareId] = device;
+			for (const feature of device.features)
+				this.features[feature.uuid] = feature;
+
+			const instance = this.render(device);
+			this.view.devices.insertBefore(instance.view, this.view.devices.firstChild);
 		} catch (e) {
 			this.screen.handleError(e);
 		}
@@ -89,7 +163,7 @@ const devices = {
 	renderDevices() {
 		emptyNode(this.view.devices);
 
-		for (const device of this.devices) {
+		for (const device of this.current) {
 			const instance = this.render(device);
 			this.view.devices.appendChild(instance.view);
 		}
@@ -198,11 +272,6 @@ const devices = {
 			if (instance.renderedStamp !== instance.device.stamp) {
 				// emptyNode(view.content);
 				// view.content.appendChild(instance.device.render());
-
-				// view.info.meta.mark.value.innerText = instance.device.mark;
-				// view.info.meta.version.value.innerText = `v${instance.device.version}`;
-
-				// instance.renderedStamp = instance.device.stamp;
 			}
 
 			if (instance.device.tags.length <= 0) {

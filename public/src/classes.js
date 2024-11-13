@@ -319,7 +319,7 @@ class Device extends Model {
 		/** @type {?string} */
 		this.area = null;
 
-		/** @type {Feature[]} */
+		/** @type {DeviceFeature[]} */
 		this.features = null;
 
 		/** @type {string} */
@@ -368,6 +368,10 @@ class Device extends Model {
 	}
 }
 
+const UPDATE_SOURCE_INTERNAL = "internal";
+const UPDATE_SOURCE_SERVER = "server";
+const UPDATE_SOURCE_CONTROL = "control";
+
 class DeviceFeature extends Model {
 	constructor(id) {
 		super(id);
@@ -398,6 +402,43 @@ class DeviceFeature extends Model {
 
 		/** @type {Number} */
 		this.updated = null;
+	}
+
+	setValue(newValue = undefined, source = UPDATE_SOURCE_INTERNAL) {
+		this.value = newValue;
+		clog("INFO", `DeviceFeature(${this.uuid}).setValue(): value=${newValue} source=${source}`);
+
+		if (source !== UPDATE_SOURCE_SERVER)
+			clog("DEBG", "Sẽ thực hiện cập nhật máy chủ");
+			this.doPushValue();
+
+		if (source !== UPDATE_SOURCE_CONTROL)
+			clog("DEBG", "Sẽ thực hiện cập nhật giao diện điều khiển");
+			this.doUpdateControl();
+
+		return this.getValue();
+	}
+
+	getValue() {
+		return this.value;
+	}
+
+	doUpdateControl() {
+
+		return this;
+	}
+
+	doPushValue() {
+		websocket.send("update", this.getUpdateData(), this.uuid);
+		return this;
+	}
+
+	getUpdateData() {
+		return {
+			id: this.deviceId,
+			uuid: this.uuid,
+			value: this.getValue()
+		}
 	}
 
 	/**

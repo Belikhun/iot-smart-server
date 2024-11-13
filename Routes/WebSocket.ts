@@ -1,11 +1,16 @@
 import Elysia, { t, type RouteSchema, type SingletonBase } from "elysia";
 import { scope } from "../Utils/Logger";
-import { runtime } from "../Utils/belibrary";
+import { runtime, time } from "../Utils/belibrary";
 import type { ElysiaWS } from "elysia/ws";
 import type { ServerWebSocket } from "bun";
-import Device, { createDevice, getDevice } from "../Device/Device";
+import Device, { createDevice, getDevice, getDeviceFeature } from "../Device/Device";
+import SessionModel from "../Models/SessionModel";
+import type UserModel from "../Models/UserModel";
+import { Op } from "sequelize";
+import { FeatureUpdateSource } from "../Device/Features/FeatureBase";
 
-const log = scope("ws");
+const logDev = scope("ws:device");
+const logDash = scope("ws:dashboard");
 export const websocketRouter = new Elysia({ prefix: "/ws" });
 export type WebSocket = ElysiaWS<ServerWebSocket<{}>, RouteSchema, SingletonBase>;
 const devices: { [id: string]: Device } = {};
@@ -18,9 +23,9 @@ export const sendCommand = (ws: WebSocket, command: string, data: any = null, ta
 		data,
 		target,
 		timestamp
-	}
+	};
 
-	log.outgoing(`[${ws.id}@${timestamp}] ${command}`);
+	logDev.outgoing(`[${ws.id}@${timestamp}] ${command} -> ${target}`);
 	ws.send(payload);
 }
 
@@ -33,39 +38,48 @@ websocketRouter.ws("/device", {
 	}),
 
 	open(ws) {
-		log.info(`${ws.remoteAddress} đã kết nối tới websocket thiết bị (ID ${ws.id})`);
+		logDev.info(`${ws.remoteAddress} đã kết nối tới websocket thiết bị (ID ${ws.id})`);
 	},
 
 	close(ws) {
 		if (!devices[ws.id]) {
-			log.info(`Không tìm thấy thiết bị của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+			logDev.info(`Không tìm thấy thiết bị của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
 			return;
 		}
 
 		const device = devices[ws.id];
-		log.info(`Thiết bị ${device.model.name} (${ws.remoteAddress}) đã ngắt kết nối, bắt đầu cập nhật trạng thái...`);
+		logDev.info(`Thiết bị ${device.model.name} (${ws.remoteAddress}) đã ngắt kết nối, bắt đầu cập nhật trạng thái...`);
 
 		delete devices[ws.id];
 		device.setWS(null);
+
+		sendDashboardCommand(
+			"update:device",
+			{
+				id: device.model.id,
+				hardwareId: device.model.hardwareId
+			},
+			device.model.hardwareId
+		);
 		return;
 	},
 
-	async message(ws, { command, data, timestamp }) {
-		log.incoming(`[${ws.id}@${timestamp}] ${command}`);
+	async message(ws, { command, data, source, timestamp }) {
+		logDev.incoming(`[${ws.id}@${timestamp}] ${source} -> ${command}`);
 
 		switch (command) {
 			case "auth": {
 				const { hardwareId, name, token } = data;
-				log.info(`Thiết bị ${name} [${hardwareId}] bắt đầu đăng nhập với token ${token}`);
+				logDev.info(`Thiết bị ${name} [${hardwareId}] bắt đầu đăng nhập với token ${token}`);
 				let device = getDevice(hardwareId);
 
 				if (!device) {
-					log.info(`Thiết bị với mã phần cứng ${hardwareId} chưa được đăng kí. Bắt đầu quá trình đăng kí thiết bị.`);
+					logDev.info(`Thiết bị với mã phần cứng ${hardwareId} chưa được đăng kí. Bắt đầu quá trình đăng kí thiết bị.`);
 					device = await createDevice(data);
 				}
 
 				if (device.model.token !== token) {
-					log.info(`Token thiết bị gửi không hợp lệ. Từ chối lệnh đăng nhập.`);
+					logDev.info(`Token thiết bị gửi không hợp lệ. Từ chối lệnh đăng nhập.`);
 					return;
 				}
 
@@ -76,16 +90,41 @@ websocketRouter.ws("/device", {
 
 				// @ts-ignore
 				sendCommand(ws, "features");
+
+				sendDashboardCommand(
+					"update:device",
+					{
+						id: device.model.id,
+						hardwareId: device.model.hardwareId
+					},
+					device.model.hardwareId
+				);
+
 				break;
 			}
 
-			case "update":
-
-				break;
-
-			case "features":
+			case "update": {
 				if (!devices[ws.id]) {
-					log.info(`Không tìm thấy thiết bị của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+					logDev.info(`Không tìm thấy thiết bị của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+					return;
+				}
+
+				const device = devices[ws.id];
+				const { value, id, uuid } = data;
+				const feature = device.getFeature(id);
+
+				if (!feature) {
+					logDev.info(`Không tìm thấy tính năng với mã ${id} [${uuid}], sẽ bỏ qua gói tin này.`);
+					return;
+				}
+
+				feature.setValue(value, FeatureUpdateSource.DEVICE);
+				break;
+			}
+
+			case "features": {
+				if (!devices[ws.id]) {
+					logDev.info(`Không tìm thấy thiết bị của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
 					return;
 				}
 
@@ -104,6 +143,100 @@ websocketRouter.ws("/device", {
 				}
 
 				break;
+			}
+		}
+	}
+});
+
+const sessions: { [id: string]: SessionModel } = {}
+const dashboards: { [sessionId: string]: WebSocket } = {}
+
+export const sendDashboardCommand = (command: string, data: any = null, target = "system") => {
+	const timestamp = runtime()
+
+	const payload = {
+		command,
+		data,
+		target,
+		timestamp
+	};
+
+	for (const [sessionId, ws] of Object.entries(dashboards)) {
+		logDev.outgoing(`[${ws.id}@${timestamp}] ${command} -> ${sessionId}`);
+		ws.send(payload);
+	}
+}
+
+websocketRouter.ws("/dashboard", {
+	body: t.Object({
+		command: t.String(),
+		source: t.String(),
+		data: t.Any(),
+		timestamp: t.Number()
+	}),
+
+	open(ws) {
+		logDash.info(`${ws.remoteAddress} đã kết nối tới websocket bảng điều khiển (ID ${ws.id})`);
+	},
+
+	async close(ws) {
+		if (!sessions[ws.id]) {
+			logDash.info(`Không tìm thấy phiên của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+			return;
+		}
+
+		const session = sessions[ws.id];
+		const user = (await session.getUser()) as UserModel;
+
+		logDash.info(`Bảng điều khiển với người dùng @${user.username} (${ws.remoteAddress}) đã ngắt kết nối.`);
+		delete sessions[ws.id];
+	},
+
+	async message(ws, { command, data, source, timestamp }) {
+		logDash.incoming(`[${ws.id}@${timestamp}] ${source} -> ${command}`);
+
+		if (command === "auth") {
+			const { sessionId } = data;
+			logDash.info(`Bảng điều khiển tại ${ws.remoteAddress} bắt đầu đăng nhập với session ${sessionId}`);
+
+			const session = await SessionModel.findOne({
+				where: {
+					sessionId,
+					expire: { [Op.gt]: time() }
+				}
+			});
+
+			if (!session) {
+				logDash.info(`Bảng điều khiển đã yêu cầu phiên không tồn tại hoặc đã hết hạn. Sẽ bỏ qua gói tin này.`);
+				return;
+			}
+
+			const user = (await session.getUser()) as UserModel;
+			logDash.success(`Đã đăng nhập thành công với người dùng @${user.username}`);
+			sessions[ws.id] = session;
+
+			// @ts-ignore
+			dashboards[session.sessionId] = ws;
+			return;
+		}
+
+		switch (command) {
+			case "update": {
+				if (!sessions[ws.id]) {
+					logDash.info(`Không tìm thấy phiên của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+					return;
+				}
+
+				const { value, id, uuid } = data;
+				const feature = getDeviceFeature(uuid);
+
+				if (!feature) {
+					logDev.info(`Không tìm thấy tính năng với mã ${id} [${uuid}], sẽ bỏ qua gói tin này.`);
+					return;
+				}
+
+				feature.setValue(value, FeatureUpdateSource.DASHBOARD);
+			}
 		}
 	}
 });

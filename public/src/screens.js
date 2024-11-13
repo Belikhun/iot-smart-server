@@ -34,6 +34,7 @@ const screens = {
     },
 
 	activate() {
+		websocket.connect();
 		app.screen.activateByHash(this.locationHash);
 	}
 }

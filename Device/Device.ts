@@ -1,6 +1,6 @@
 import DeviceFeatureModel from "../Models/DeviceFeatureModel";
 import DeviceModel from "../Models/DeviceModel";
-import type { WebSocket } from "../Routes/WebSocket";
+import { sendDashboardCommand, type WebSocket } from "../Routes/WebSocket";
 import { scope, type Logger } from "../Utils/Logger";
 import { resolveFeature } from "./FeatureFactory";
 import type { FeatureBase } from "./Features/FeatureBase";
@@ -59,7 +59,7 @@ export default class Device {
 
 			features: featureList,
 			connected: this.connected,
-			address: this.websocket?.remoteAddress
+			address: this.websocket?.remoteAddress || null
 		}
 	}
 
@@ -165,5 +165,6 @@ export const createDevice = async ({ hardwareId, name, token }: { hardwareId: st
 	await device.loadFeatures();
 	devices[device.model.hardwareId] = device;
 	log.success(`Nạp thông tin thiết bị ${device.model.name} thành công!`);
+	sendDashboardCommand("update:device", { id: model.id, hardwareId: model.hardwareId }, model.hardwareId);
 	return device;
 }

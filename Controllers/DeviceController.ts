@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import APIResponse from "../Classes/APIResponse";
-import { getDevices } from "../Device/Device";
+import { getDevice, getDevices } from "../Device/Device";
 
 export const deviceController = new Elysia({ prefix: "/device" });
 
@@ -12,4 +12,9 @@ deviceController.get("/list", async ({ request }) => {
 		instances.push(await device.getReturnData());
 
 	return new APIResponse(0, `Danh sách các thiết bị`, 200, instances);
+});
+
+deviceController.get("/:hardwareId/info", async ({ params: { hardwareId }, request }) => {
+	const device = getDevice(hardwareId);
+	return new APIResponse(0, `Thiết bị ${hardwareId}`, 200, await device?.getReturnData());
 });

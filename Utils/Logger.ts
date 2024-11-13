@@ -1,4 +1,5 @@
 import { SignaleOptions, Signale, type DefaultMethods } from "signale";
+import { pleft } from "./belibrary";
 
 export type WebLoggingMethods = "incoming" | "outgoing";
 export type Logger = Signale<DefaultMethods | WebLoggingMethods>;
@@ -94,11 +95,11 @@ export const log: Logger = new Signale(options);
 
 export const scope = (scope: string): Logger => new Signale({
 	...options,
-	scope
+	scope: pleft(scope, 32)
 });
 
 export const interactive = (scope: string): Logger => new Signale({
 	...options,
-	scope,
+	scope: pleft(scope, 32),
 	interactive: true
 });
