@@ -2,16 +2,14 @@ import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
 import moment from "moment";
 
-export enum DeviceFeatureKind {
-	LIGHT = "light"
-}
-
 interface DeviceFeatureAttributes {
 	id?: number;
 	deviceId: number;
-	kind: DeviceFeatureKind;
-	value: any;
-	valueUnit: string;
+	featureId: string;
+	uuid: string;
+	name: string;
+	kind: string;
+	value?: any;
 	created?: number;
 	updated?: number;
 }
@@ -19,9 +17,11 @@ interface DeviceFeatureAttributes {
 class DeviceFeatureModel extends Model<DeviceFeatureAttributes> implements DeviceFeatureAttributes {
 	declare id?: number;
 	declare deviceId: number;
-	declare kind: DeviceFeatureKind;
-	declare value: any;
-	declare valueUnit: string;
+	declare featureId: string;
+	declare uuid: string;
+	declare name: string;
+	declare kind: string;
+	declare value?: any;
 	declare created?: number;
 	declare updated?: number;
 }
@@ -33,7 +33,19 @@ DeviceFeatureModel.init({
 		primaryKey: true
 	},
 	deviceId: {
-		type: DataTypes.INTEGER,
+		type: DataTypes.NUMBER,
+		allowNull: false
+	},
+	featureId: {
+		type: DataTypes.STRING,
+		allowNull: false
+	},
+	uuid: {
+		type: DataTypes.STRING,
+		allowNull: false
+	},
+	name: {
+		type: DataTypes.STRING,
 		allowNull: false
 	},
 	kind: {
@@ -44,21 +56,19 @@ DeviceFeatureModel.init({
 		type: DataTypes.STRING,
 		allowNull: true
 	},
-	valueUnit: {
-		type: DataTypes.STRING,
-		allowNull: false
-	},
 	created: {
 		type: DataTypes.INTEGER,
-		allowNull: false
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	},
 	updated: {
 		type: DataTypes.INTEGER,
-		allowNull: false
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	}
 }, {
 	sequelize: database,
-	tableName: "deviceFeatures",
+	tableName: "devicefeatures",
 	createdAt: "created",
 	updatedAt: "updated",
 	timestamps: true,

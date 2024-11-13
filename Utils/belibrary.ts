@@ -1,5 +1,7 @@
 import moment from "moment";
 
+const start = performance.now()
+
 export function randomString(length: number = 16, charSet: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") {
 	let randomString = "";
 
@@ -13,4 +15,8 @@ export function randomString(length: number = 16, charSet: string = "ABCDEFGHIJK
 
 export function time(): number {
 	return moment().valueOf() / 1000;
+}
+
+export function runtime(): number {
+	return Math.floor(performance.now() - start);
 }

@@ -1,11 +1,21 @@
 import type DeviceFeatureModel from "../Models/DeviceFeatureModel";
-import { DeviceFeatureKind } from "../Models/DeviceFeatureModel";
+import type Device from "./Device";
 import type { FeatureBase } from "./Features/FeatureBase";
-import { Light } from "./Features/Light";
+import { FeatureButton } from "./Features/FeatureButton";
+import { FeatureOnOffPin } from "./Features/FeatureOnOffPin";
+import { FeatureRGBLed } from "./Features/FeatureRGBLed";
 
-export function resolveFeature(model: DeviceFeatureModel): FeatureBase {
+export function resolveFeature(model: DeviceFeatureModel, device: Device): FeatureBase {
 	switch (model.kind) {
-		case DeviceFeatureKind.LIGHT:
-			return new Light(model);
+		case "FeatureButton":
+			return new FeatureButton(model, device);
+
+		case "FeatureOnOffPin":
+			return new FeatureOnOffPin(model, device);
+
+		case "FeatureRGBLed":
+			return new FeatureRGBLed(model, device);
 	}
+
+	throw new Error(`Tính năng không hợp lệ hoặc chưa được hỗ trợ: ${model.kind}`);
 }

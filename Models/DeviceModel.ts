@@ -6,10 +6,10 @@ interface DeviceAttributes {
 	id?: number;
 	hardwareId: string;
 	name: string;
-	icon: string;
-	color: string;
-	tags: string;
-	area: string;
+	icon?: string;
+	color?: string;
+	tags?: string;
+	area?: string;
 	token: string;
 	created?: number;
 	updated?: number;
@@ -19,10 +19,10 @@ class DeviceModel extends Model<DeviceAttributes> implements DeviceAttributes {
 	declare id?: number;
 	declare hardwareId: string;
 	declare name: string;
-	declare icon: string;
-	declare color: string;
-	declare tags: string;
-	declare area: string;
+	declare icon?: string;
+	declare color?: string;
+	declare tags?: string;
+	declare area?: string;
 	declare token: string;
 	declare created?: number;
 	declare updated?: number;
@@ -45,19 +45,22 @@ DeviceModel.init({
 	},
 	icon: {
 		type: DataTypes.STRING,
-		allowNull: false
+		allowNull: false,
+		defaultValue: "device"
 	},
 	color: {
 		type: DataTypes.STRING,
-		allowNull: false
+		allowNull: false,
+		defaultValue: "accent"
 	},
 	tags: {
 		type: DataTypes.TEXT,
-		allowNull: false
+		allowNull: false,
+		defaultValue: ""
 	},
 	area: {
 		type: DataTypes.STRING,
-		allowNull: false
+		allowNull: true
 	},
 	token: {
 		type: DataTypes.TEXT,
@@ -65,11 +68,13 @@ DeviceModel.init({
 	},
 	created: {
 		type: DataTypes.INTEGER,
-		allowNull: false
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	},
 	updated: {
 		type: DataTypes.INTEGER,
-		allowNull: false
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	}
 }, {
 	sequelize: database,

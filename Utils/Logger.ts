@@ -1,6 +1,7 @@
 import { SignaleOptions, Signale, type DefaultMethods } from "signale";
 
 export type WebLoggingMethods = "incoming" | "outgoing";
+export type Logger = Signale<DefaultMethods | WebLoggingMethods>;
 
 const options: SignaleOptions<DefaultMethods | WebLoggingMethods> = {
 	disabled: false,
@@ -89,14 +90,14 @@ const options: SignaleOptions<DefaultMethods | WebLoggingMethods> = {
 	}
 };
 
-export const log: Signale<DefaultMethods | WebLoggingMethods> = new Signale(options);
+export const log: Logger = new Signale(options);
 
-export const scope = (scope: string): Signale<DefaultMethods | WebLoggingMethods> => new Signale({
+export const scope = (scope: string): Logger => new Signale({
 	...options,
 	scope
 });
 
-export const interactive = (scope: string): Signale<DefaultMethods | WebLoggingMethods> => new Signale({
+export const interactive = (scope: string): Logger => new Signale({
 	...options,
 	scope,
 	interactive: true

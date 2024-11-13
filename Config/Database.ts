@@ -1,6 +1,5 @@
 import { Sequelize } from "sequelize";
 import { scope } from "../Utils/Logger";
-import moment from "moment";
 
 const log = scope("db");
 
@@ -40,9 +39,9 @@ export const initializeDB = async () => {
 				},
 			}
 		});
+
+		log.success("Đã kết nối tới cơ sở dữ liệu");
 	} catch (error) {
 		log.error("Không thể kết nối tới cơ sở dữ liệu:", error);
 	}
-
-	log.success("Đã kết nối tới cơ sở dữ liệu");
 };

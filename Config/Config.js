@@ -34,7 +34,7 @@ const config = {
 		"dialect": DB_DIALECT
 	},
 
-	host: HOST || "127.0.0.1",
+	host: HOST || "0.0.0.0",
 	port: PORT || "80"
 };
 
