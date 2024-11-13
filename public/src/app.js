@@ -149,7 +149,7 @@ const app = {
 
 					user: { tag: "span", class: "user", child: {
 						fullname: { tag: "div", class: "name", text: app.string("guest") },
-						image: new lazyload({ classes: "userimage" }),
+						image: new lazyload({ source: app.url("/public/images/guest.png"), classes: "userimage" }),
 						icon: { tag: "icon", icon: "caretDown", class: "caret" }
 					}}
 				}}

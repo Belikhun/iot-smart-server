@@ -603,8 +603,6 @@ async function initGroup(group, name, set = () => {}) {
 			separate: true
 		}, `Initialized in ${time() - moduleStart}s`);
 	}
-
-	delete modulesList;
 }
 
 function delayAsync(time) {
