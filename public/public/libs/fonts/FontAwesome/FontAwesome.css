@@ -817,3 +817,19 @@ icon[data-icon="chalkboardUser"]::after {
 icon[data-icon="linkHorizontalSlash"]::after {
 	content: "\e1cc";
 }
+
+icon[data-icon="toggleOn"]::after {
+	content: "\f205";
+}
+
+icon[data-icon="binary"]::after {
+	content: "\e33b";
+}
+
+icon[data-icon="lightbulb"]::after {
+	content: "\f0eb";
+}
+
+icon[data-icon="lightSwitch"]::after {
+	content: "\e017";
+}

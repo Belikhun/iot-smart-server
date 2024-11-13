@@ -397,11 +397,23 @@ class DeviceFeature extends Model {
 		/** @type {any} */
 		this.value = null;
 
+		/** @type {FeatureRenderer} */
+		this.renderer = null;
+
 		/** @type {Number} */
 		this.created = null;
 
 		/** @type {Number} */
 		this.updated = null;
+	}
+
+	render() {
+		if (this.renderer)
+			return this.renderer.render();
+
+		this.renderer = FeatureRenderer.instance(this);
+		this.renderer.control.value = this.value;
+		return this.renderer.render();
 	}
 
 	setValue(newValue = undefined, source = UPDATE_SOURCE_INTERNAL) {
@@ -424,6 +436,8 @@ class DeviceFeature extends Model {
 	}
 
 	doUpdateControl() {
+		if (this.renderer)
+			this.renderer.control.value = this.value;
 
 		return this;
 	}

@@ -200,7 +200,7 @@ const devices = {
 		const view = makeTree("div", ["map-color", "device-info"], {
 			info: { tag: "div", class: "info", child: {
 				type: { tag: "span", class: "type", child: {
-					image: { tag: "icon", icon: device.icon },
+					icon: { tag: "icon", icon: device.icon },
 					typeName: { tag: "span", class: "name", text: device.hardwareId }
 				}},
 
@@ -269,10 +269,9 @@ const devices = {
 			view.footer.replaceChild(timestamp, view.footer.timestamp);
 			view.footer.timestamp = timestamp;
 
-			if (instance.renderedStamp !== instance.device.stamp) {
-				// emptyNode(view.content);
-				// view.content.appendChild(instance.device.render());
-			}
+			emptyNode(view.content);
+			for (const feature of instance.device.features)
+				view.content.appendChild(feature.render());
 
 			if (instance.device.tags.length <= 0) {
 				emptyNode(view.tags);
@@ -284,6 +283,8 @@ const devices = {
 				for (const tag of instance.device.tags)
 					view.tags.appendChild(ScreenUtils.renderTag(tag));
 			}
+
+			menu.disable("config", !instance.device.connected);
 		};
 
 		instance.edit = () => {
