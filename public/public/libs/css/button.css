@@ -1,0 +1,267 @@
+/* stylelint-disable */
+
+/**
+ * /assets/css/button.css
+ *
+ * Button styles definition.
+ *
+ * This file is licensed under the MIT License.
+ * See LICENSE in the project root for license information.
+ *
+ * @author		Belikhun
+ * @version		1.0
+ * @license		MIT
+ * @copyright	2018-2023 Belikhun
+ */
+
+.sq-btn {
+	position: relative;
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+
+	padding: 0.5rem 1rem;
+	min-height: 2.375rem;
+	box-sizing: border-box;
+	background-color: rgb(68, 170, 221);
+	border-radius: 6rem;
+
+	color: white;
+	font-size: 0.75rem;
+	font-family: "Open Sans", var(--primary-font), sans-serif;
+	font-weight: 700;
+	line-height: 1.8;
+	text-align: center;
+	letter-spacing: 0.6px;
+	text-decoration: none;
+
+	border: unset;
+	cursor: pointer;
+	overflow: hidden;
+	user-select: none;
+	z-index: 0;
+
+	transition:
+		filter 1s cubic-bezier(0.06, 0.81, 0, 0.98),
+		transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sq-btn.triBg > .triBgContainer {
+	z-index: -1;
+}
+
+.sq-btn > icon {
+	position: relative;
+	display: flex;
+	justify-content: flex-end;
+	flex-grow: 1;
+	flex-shrink: 1;
+
+	margin: 0 0 0 0.5rem;
+	font-size: 1rem;
+	font-weight: 900;
+
+	z-index: 1;
+}
+
+.sq-btn > icon.left {
+	justify-content: flex-start;
+
+	margin: 0 0.5rem 0 0;
+	order: -1;
+}
+
+.sq-btn > icon,
+body.dark .sq-btn > icon {
+	color: white;
+}
+
+.sq-btn.empty > icon {
+	margin: unset;
+}
+
+.sq-btn > .text {
+	z-index: 1;
+}
+
+.sq-btn > .simpleSpinner {
+	position: absolute;
+	display: none;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	--color: white;
+}
+
+.sq-btn[data-loading="true"] > .simpleSpinner {
+	display: block;
+}
+
+.sq-btn[data-loading="true"] > .text,
+.sq-btn[data-loading="true"] > icon {
+	visibility: hidden;
+}
+
+.sq-btn > .confirmRipple {
+	position: absolute;
+	display: block;
+	top: 0;
+	left: 0;
+	width: 0;
+	height: 100%;
+	opacity: 0.4;
+	background-color: white;
+}
+
+.sq-btn:not([data-tri-style="border"]):not(:disabled):hover {
+	filter: brightness(1.2);
+}
+
+.sq-btn:not(.holdConfirm):active {
+	transition:
+		filter 1s cubic-bezier(0.06, 0.81, 0, 0.98),
+		transform 1.2s cubic-bezier(0.215, 0.61, 0.355, 1);
+
+	transform: scale(0.9);
+}
+
+.sq-btn:focus {
+	outline: solid rgba(36, 36, 36, 0.6) 1px;
+}
+
+body.dark .sq-btn:focus {
+	outline: solid rgba(228, 228, 228, 0.6) 1px;
+}
+
+.sq-btn:disabled {
+	filter: brightness(0.6);
+	cursor: not-allowed;
+}
+
+.sq-btn.pink,
+.sq-btn[data-color="pink"] {
+	background-color: #ff66aa;
+}
+
+.sq-btn.green,
+.sq-btn[data-color="green"] {
+	background-color: #88b400;
+}
+
+.sq-btn.yellow,
+.sq-btn[data-color="yellow"] {
+	background-color: #f6c21c;
+}
+
+.sq-btn.dark,
+.sq-btn[data-color="dark"] {
+	background-color: #042430;
+}
+
+.sq-btn.brown,
+.sq-btn[data-color="brown"] {
+	background-color: #231B22;
+}
+
+.sq-btn.red,
+.sq-btn[data-color="red"] {
+	background-color: rgb(221, 45, 68);
+}
+
+.sq-btn[data-color="whitesmoke"],
+.sq-btn[data-color="lightBlue"] {
+	color: var(--text-primary);
+}
+
+.sq-btn[data-color="whitesmoke"] > icon::after {
+	color: var(--text-primary);
+}
+
+.sq-btn-group {
+	display: flex;
+	flex-direction: row;
+	gap: 0;
+}
+
+.sq-btn-group > .sq-btn {
+	border-radius: 0;
+}
+
+.sq-btn-group > .sq-btn:first-child {
+	border-top-left-radius: 6rem;
+	border-bottom-left-radius: 6rem;
+}
+
+.sq-btn-group > .sq-btn:last-child {
+	border-top-right-radius: 6rem;
+	border-bottom-right-radius: 6rem;
+}
+
+.sq-btn-group > .separator {
+	display: inline-block;
+	width: 0.2rem;
+	height: 40%;
+	min-height: 1.2rem;
+
+	background-color: white;
+	margin: auto -0.1rem;
+	border-radius: 1rem;
+	z-index: 1;
+}
+
+
+/** Simple Text Button */
+
+.text-btn {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	--color: black;
+
+	padding: 18px 0;
+	box-sizing: border-box;
+	background-color: transparent;
+	border: unset;
+
+	font-family: inherit;
+	font-size: 16px;
+	font-weight: 600;
+	text-align: center;
+	letter-spacing: 0.6px;
+	text-decoration: none;
+	color: var(--color);
+
+	cursor: pointer;
+	user-select: none;
+}
+
+.text-btn::before {
+	content: "";
+	position: absolute;
+	display: block;
+
+	top: 0;
+	left: -10px;
+	width: calc(100% + 20px);
+	height: 100%;
+	border-radius: 8px;
+
+	opacity: 0;
+	transition: opacity 150ms linear;
+	background-color: var(--color);
+}
+
+.text-btn:hover {
+	text-decoration: none;
+}
+
+.text-btn:hover::before {
+	opacity: 0.05;
+}
+
+.text-btn:active::before {
+	opacity: 0.12;
+}

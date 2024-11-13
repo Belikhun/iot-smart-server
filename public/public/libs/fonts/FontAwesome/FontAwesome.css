@@ -1,0 +1,815 @@
+/**
+ * /assets/fonts/FontAwesome/FontAwesome.css
+ *
+ * Font Awesome integration with icon styles.
+ *
+ * This file is licensed under the MIT License.
+ * See LICENSE in the project root for license information.
+ *
+ * @author		Belikhun
+ * @version		1.0
+ * @license		MIT
+ * @copyright	2018-2023 Belikhun
+ */
+/* stylelint-disable selector-type-no-unknown */
+
+@font-face {
+	font-family: 'Font Awesome Brands';
+	font-style: normal;
+	font-weight: normal;
+	src: url("fa-brands-400.eot");
+	src: url("fa-brands-400.eot?#iefix") format("embedded-opentype"), url("fa-brands-400.woff2") format("woff2"), url("fa-brands-400.woff") format("woff"), url("fa-brands-400.ttf") format("truetype"), url("fa-brands-400.svg#fontawesome") format("svg");
+}
+
+@font-face {
+	font-family: 'Font Awesome';
+	font-style: normal;
+	font-weight: 100;
+	src: url("fa-thin-100.woff2") format("woff2"), url("fa-thin-100.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: 'Font Awesome';
+	font-style: normal;
+	font-weight: 300;
+	src: url("fa-light-300.woff2") format("woff2"), url("fa-light-300.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: 'Font Awesome';
+	font-style: normal;
+	font-weight: 400;
+	src: url("fa-regular-400.woff2") format("woff2"), url("fa-regular-400.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: 'Font Awesome';
+	font-style: normal;
+	font-weight: 900;
+	src: url("fa-solid-900.woff2") format("woff2"), url("fa-solid-900.ttf") format("truetype");
+}
+
+icon {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	font-size: 1em;
+	font-weight: 400;
+	text-align: center;
+	line-height: 1em;
+}
+
+icon::after {
+	content: "\f111";
+	position: relative;
+
+	font-family: "Font Awesome";
+
+	text-rendering: auto;
+	-webkit-font-smoothing: antialiased;
+}
+
+icon:focus::after {
+	text-decoration: none;
+}
+
+icon.style-solid {
+	font-weight: 900;
+}
+
+icon.style-regular {
+	font-weight: 400;
+}
+
+icon.style-light {
+	font-weight: 300;
+}
+
+icon.style-thin {
+	font-weight: 100;
+}
+
+icon.light,
+body.dark icon {
+	color: #dfdfdf;
+}
+
+icon[data-icon="circle"]::after {
+	font-weight: 200;
+}
+
+icon[data-icon="check"]::after {
+	content: "\f00c";
+}
+
+icon[data-icon="exclamation"]::after {
+	content: "\f071";
+}
+
+icon[data-icon="bomb"]::after {
+	content: "\f1e2";
+}
+
+icon[data-icon="unlink"]::after {
+	content: "\f127";
+}
+
+icon[data-icon="question"]::after {
+	content: "\f128";
+}
+
+icon[data-icon="info"]::after {
+	content: "\f129";
+}
+
+icon[data-icon="key"]::after {
+	content: "\f084";
+}
+
+icon[data-icon="server"]::after {
+	content: "\f233";
+}
+
+icon[data-icon="link"]::after {
+	content: "\f0c1";
+}
+
+icon[data-icon="externalLink"]::after {
+	content: "\f35d";
+}
+
+icon[data-icon="home"]::after {
+	content: "\f015";
+}
+
+icon[data-icon="table"]::after {
+	content: "\f0ce";
+}
+
+icon[data-icon="arrowLeft"]::after {
+	content: "\f104";
+	font-size: 1.2em;
+}
+
+icon[data-icon="arrowRight"]::after {
+	content: "\f105";
+	font-size: 1.2em;
+}
+
+icon[data-icon="arrowDown"]::after {
+	content: "\f107";
+	font-size: 1.2em;
+}
+
+icon[data-icon="arrowUp"]::after {
+	content: "\f106";
+	font-size: 1.2em;
+}
+
+icon[data-icon="pencil"]::after {
+	content: "\f303";
+}
+
+icon[data-icon="user"]::after {
+	content: "\f2bd";
+}
+
+icon[data-icon="userSlash"]::after {
+	content: "\f4fa";
+}
+
+icon[data-icon="userLock"]::after {
+	content: "\f502";
+}
+
+icon[data-icon="userPortrait"]::after {
+	content: "\f007";
+}
+
+icon[data-icon="logout"]::after {
+	content: "\f2f5";
+}
+
+icon[data-icon="scroll"]::after {
+	content: "\f70e";
+}
+
+icon[data-icon="gavel"]::after {
+	content: "\f0e3";
+}
+
+icon[data-icon="trash"]::after {
+	content: "\f2ed";
+}
+
+icon[data-icon="close"]::after {
+	content: "\f00d";
+	font-size: 1.2em;
+}
+
+icon[data-icon="reload"]::after {
+	content: "\f2f9";
+}
+
+icon[data-icon="chart"]::after {
+	content: "\f080";
+}
+
+icon[data-icon="chartLine"]::after {
+	content: "\f201";
+}
+
+icon[data-icon="clock"]::after {
+	content: "\f017";
+}
+
+icon[data-icon="userCog"]::after {
+	content: "\f4fe";
+}
+
+icon[data-icon="upload"]::after {
+	content: "\f093";
+}
+
+icon[data-icon="envelope"]::after {
+	content: "\f658";
+}
+
+icon[data-icon="sync"]::after {
+	content: "\f2f1";
+}
+
+icon[data-icon="forward"]::after {
+	content: "\f04e";
+}
+
+icon[data-icon="backward"]::after {
+	content: "\f04a";
+}
+
+icon[data-icon="book"]::after {
+	content: "\f02d";
+}
+
+icon[data-icon="plus"]::after {
+	content: "\f067";
+}
+
+icon[data-icon="save"]::after {
+	content: "\f0c7";
+}
+
+icon[data-icon="horn"]::after {
+	content: "\f0a1";
+}
+
+icon[data-icon="excel"]::after {
+	content: "\f1c3";
+}
+
+icon[data-icon="csv"]::after {
+	content: "\f6dd";
+}
+
+icon[data-icon="list"]::after {
+	content: "\f00b";
+}
+
+icon[data-icon="listC"]::after {
+	content: "\f03a";
+}
+
+icon[data-icon="search"]::after {
+	content: "\f002";
+}
+
+icon[data-icon="heart"]::after {
+	content: "\f004";
+}
+
+icon[data-icon="heartFill"]::after {
+	content: "\f004";
+}
+
+icon[data-icon="clipboard"]::after {
+	content: "\f328";
+}
+
+icon[data-icon="ban"]::after {
+	content: "\f05e";
+}
+
+icon[data-icon="file"]::after {
+	content: "\f15b";
+}
+
+icon[data-icon="window"]::after {
+	content: "\f2d2";
+}
+
+icon[data-icon="volume"]::after {
+	content: "\f028";
+}
+
+icon[data-icon="calendarWeek"]::after {
+	content: "\f784";
+}
+
+icon[data-icon="poll"]::after {
+	content: "\f681";
+}
+
+icon[data-icon="signin"]::after {
+	content: "\f2f6";
+}
+
+icon[data-icon="signout"]::after {
+	content: "\f2f5";
+}
+
+icon[data-icon="laptop"]::after {
+	content: "\f109";
+}
+
+icon[data-icon="hive"]::after {
+	content: "\e07f";
+	font-family: "Font Awesome Brands";
+}
+
+icon[data-icon="infoCircle"]::after {
+	content: "\f05a";
+}
+
+icon[data-icon="shoppingCart"]::after {
+	content: "\f07a";
+}
+
+icon[data-icon="eye"]::after {
+	content: "\f06e";
+}
+
+icon[data-icon="eyeSlash"]::after {
+	content: "\f070";
+}
+
+icon[data-icon="hand"]::after {
+	content: "\f256";
+}
+
+icon[data-icon="lock"]::after {
+	content: "\f023";
+}
+
+icon[data-icon="play"]::after {
+	content: "\f04b";
+}
+
+icon[data-icon="note"]::after {
+	content: "\f249";
+}
+
+icon[data-icon="print"]::after {
+	content: "\f02f";
+}
+
+icon[data-icon="atom"]::after {
+	content: "\f5d2";
+}
+
+icon[data-icon="shapes"]::after {
+	content: "\f61f";
+}
+
+icon[data-icon="compass"]::after {
+	content: "\f14e";
+}
+
+icon[data-icon="news"]::after {
+	content: "\f1ea";
+}
+
+icon[data-icon="paragraph"]::after {
+	content: "\f1dd";
+}
+
+icon[data-icon="laptopCode"]::after {
+	content: "\f5fc";
+}
+
+icon[data-icon="personChalkboard"]::after {
+	content: "\e53d";
+}
+
+icon[data-icon="userGraduate"]::after {
+	content: "\f501";
+}
+
+icon[data-icon="bell"]::after {
+	content: "\f0f3";
+}
+
+icon[data-icon="microscope"]::after {
+	content: "\f610";
+}
+
+icon[data-icon="bookReader"]::after {
+	content: "\f5da";
+}
+
+icon[data-icon="calendar"]::after {
+	content: "\f133";
+}
+
+icon[data-icon="left"]::after {
+	content: "\f060";
+}
+
+icon[data-icon="minusCircle"]::after {
+	content: "\f056";
+}
+
+icon[data-icon="flaskVial"]::after {
+	content: "\e4f3";
+}
+
+icon[data-icon="wrench"]::after {
+	content: "\f0ad";
+}
+
+icon[data-icon="stopwatch"]::after {
+	content: "\f2f2";
+}
+
+icon[data-icon="database"]::after {
+	content: "\f1c0";
+}
+
+icon[data-icon="hardDrive"]::after {
+	content: "\f0a0";
+}
+
+icon[data-icon="receipt"]::after {
+	content: "\f543";
+}
+
+icon[data-icon="globe"]::after {
+	content: "\f0ac";
+}
+
+icon[data-icon="font"]::after {
+	content: "\f031";
+}
+
+icon[data-icon="caretDown"]::after {
+	content: "\f0d7";
+}
+
+icon[data-icon="gear"]::after {
+	content: "\f013";
+}
+
+icon[data-icon="circleCheck"]::after {
+	content: "\f058";
+}
+
+icon[data-icon="circleXMark"]::after {
+	content: "\f057";
+}
+
+icon[data-icon="circleInfo"]::after {
+	content: "\f05a";
+}
+
+icon[data-icon="circleQuestion"]::after {
+	content: "\f059";
+}
+
+icon[data-icon="triangleExclamation"]::after {
+	content: "\f071";
+}
+
+icon[data-icon="sortDown"]::after {
+	content: "\f0dd";
+}
+
+icon[data-icon="minus"]::after {
+	content: "\f068";
+}
+
+icon[data-icon="squareCaretDown"]::after {
+	content: "\f150";
+}
+
+icon[data-icon="copy"]::after {
+	content: "\f0c5";
+}
+
+icon[data-icon="broom"]::after {
+	content: "\f51a";
+}
+
+icon[data-icon="fileImport"]::after {
+	content: "\f56f";
+}
+
+icon[data-icon="bookCopy"]::after {
+	content: "\e0be";
+}
+
+icon[data-icon="download"]::after {
+	content: "\f019";
+}
+
+icon[data-icon="tableColumns"]::after {
+	content: "\f0db";
+}
+
+icon[data-icon="language"]::after {
+	content: "\f1ab";
+}
+
+icon[data-icon="arrowRightFromBracket"]::after {
+	content: "\f08b";
+}
+
+icon[data-icon="arrowRightToBracket"]::after {
+	content: "\f090";
+}
+
+icon[data-icon="fileChart"]::after {
+	content: "\f65a";
+}
+
+icon[data-icon="screenUsers"]::after {
+	content: "\f63d";
+}
+
+icon[data-icon="arrowDownShapes"]::after {
+	content: "\f888";
+}
+
+icon[data-icon="sitemap"]::after {
+	content: "\f0e8";
+}
+
+icon[data-icon="dashedSquare"]::after {
+	content: "\e269";
+}
+
+icon[data-icon="exclamationCircle"]::after {
+	content: "\f06a";
+}
+
+icon[data-icon="sidebarFlip"]::after {
+	content: "\e24f";
+}
+
+icon[data-icon="hourglassClock"]::after {
+	content: "\e41b";
+}
+
+icon[data-icon="wifiExclamation"]::after {
+	content: "\e2cf";
+}
+
+icon[data-icon="dash"]::after {
+	content: "\e404";
+}
+
+icon[data-icon="slashForward"]::after {
+	content: "\2f";
+}
+
+icon[data-icon="cube"]::after {
+	content: "\f1b2";
+}
+
+icon[data-icon="cube"]::after {
+	content: "\f1b2";
+}
+
+icon[data-icon="fileChartPie"]::after {
+	content: "\f65a";
+}
+
+icon[data-icon="puzzle"]::after {
+	content: "\e443";
+}
+
+icon[data-icon="users"]::after {
+	content: "\f0c0";
+}
+
+icon[data-icon="fileArrowDown"]::after {
+	content: "\f56d";
+}
+
+icon[data-icon="fileExport"]::after {
+	content: "\f56e";
+}
+
+icon[data-icon="frame"]::after {
+	content: "\e495";
+}
+
+icon[data-icon="shelvesEmpty"]::after {
+	content: "\e246";
+}
+
+icon[data-icon="move"]::after {
+	content: "\f047";
+}
+
+icon[data-icon="up"]::after {
+	content: "\f357";
+}
+
+icon[data-icon="down"]::after {
+	content: "\f354";
+}
+
+icon[data-icon="ballotCheck"]::after {
+	content: "\f733";
+}
+
+icon[data-icon="folders"]::after {
+	content: "\f660";
+}
+
+icon[data-icon="cloudConnection"]::after {
+	content: "\e138";
+}
+
+icon[data-icon="cloudConnection"]::after {
+	content: "\e138";
+}
+
+icon[data-icon="calendarEdit"]::after {
+	content: "\e472";
+}
+
+icon[data-icon="userTick"]::after {
+	content: "\f4fc";
+}
+
+icon[data-icon="folderPlus"]::after {
+	content: "\f65e";
+}
+
+icon[data-icon="grid"]::after {
+	content: "\e195";
+}
+
+icon[data-icon="grid2"]::after {
+	content: "\e196";
+}
+
+icon[data-icon="folder"]::after {
+	content: "\f07b";
+}
+
+icon[data-icon="folderArrowUp"]::after {
+	content: "\e054";
+}
+
+icon[data-icon="fileArrowUp"]::after {
+	content: "\f574";
+}
+
+icon[data-icon="penSwirl"]::after {
+	content: "\e214";
+}
+
+icon[data-icon="arrowUpShape"]::after {
+	content: "\f88a";
+}
+
+icon[data-icon="upToLine"]::after {
+	content: "\f34d";
+}
+
+icon[data-icon="fileCircleCheck"]::after {
+	content: "\e5a0";
+}
+
+icon[data-icon="fileCircleXMark"]::after {
+	content: "\e5a1";
+}
+
+icon[data-icon="doubleCheck"]::after {
+	content: "\f560";
+}
+
+icon[data-icon="shuffle"]::after {
+	content: "\f074";
+}
+
+icon[data-icon="medal"]::after {
+	content: "\f5a2";
+}
+
+icon[data-icon="hexagonCheck"]::after {
+	content: "\e416";
+}
+
+icon[data-icon="skull"]::after {
+	content: "\f54c";
+}
+
+icon[data-icon="comment"]::after {
+	content: "\f075";
+}
+
+icon[data-icon="circleDot"]::after {
+	content: "\f192";
+}
+
+icon[data-icon="userPlus"]::after {
+	content: "\f234";
+}
+
+icon[data-icon="left"]::after {
+	content: "\f355";
+}
+
+icon[data-icon="leftFromBracket"]::after {
+	content: "\e66c";
+}
+
+icon[data-icon="leftFromLine"]::after {
+	content: "\f348";
+}
+
+icon[data-icon="right"]::after {
+	content: "\f356";
+}
+
+icon[data-icon="rightFromBracket"]::after {
+	content: "\f2f5";
+}
+
+icon[data-icon="rightFromLine"]::after {
+	content: "\f347";
+}
+
+icon[data-icon="venusMars"]::after {
+	content: "\f228";
+}
+
+icon[data-icon="mars"]::after {
+	content: "\f222";
+}
+
+icon[data-icon="venus"]::after {
+	content: "\f221";
+}
+
+icon[data-icon="male"]::after {
+	content: "\f183";
+}
+
+icon[data-icon="female"]::after {
+	content: "\f182";
+}
+
+icon[data-icon="people"]::after {
+	content: "\e216";
+}
+
+icon[data-icon="creditCard"]::after {
+	content: "\f09d";
+}
+
+icon[data-icon="microchip"]::after {
+	content: "\f2db";
+}
+
+icon[data-icon="handshake"]::after {
+	content: "\f2b5";
+}
+
+icon[data-icon="penNib"]::after {
+	content: "\f5ad";
+}
+
+icon[data-icon="tag"]::after {
+	content: "\f02b";
+}
+
+icon[data-icon="tags"]::after {
+	content: "\f02c";
+}
+
+icon[data-icon="flag"]::after {
+	content: "\f024";
+}
+
+icon[data-icon="cloudArrowUp"]::after {
+	content: "\f0ee";
+}
+
+icon[data-icon="chalkboardUser"]::after {
+	content: "\f51c";
+}

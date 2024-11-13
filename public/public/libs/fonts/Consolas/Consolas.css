@@ -1,0 +1,46 @@
+/**
+ * /assets/fonts/Consolas/Consolas.css
+ * 
+ * Consolas font definition.
+ * 
+ * This file is licensed under the MIT License.
+ * See LICENSE in the project root for license information.
+ * 
+ * @author		Belikhun
+ * @version		1.0
+ * @license		MIT
+ * @copyright	2018-2023 Belikhun
+ */
+
+@font-face {
+    font-family: "Consolas";
+    src: local("Consolas Italic"), local("Consolas-Italic"),
+        url("Consolas-Italic.woff2") format("woff2");
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: "Consolas";
+    src: local("Consolas Bold Italic"), local("Consolas-BoldItalic"),
+        url("Consolas-BoldItalic.woff2") format("woff2");
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: "Consolas";
+    src: local("Consolas Bold"), local("Consolas-Bold"),
+        url("Consolas-Bold.woff2") format("woff2");
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Consolas";
+    src: local("Consolas"),
+        url("Consolas.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+}
+

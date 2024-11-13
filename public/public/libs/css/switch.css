@@ -1,0 +1,199 @@
+/**
+ * /assets/css/switch.css
+ * 
+ * The thing that can toggle on and off by clicking on it.
+ * 
+ * This file is licensed under the MIT License.
+ * See LICENSE in the project root for license information.
+ * 
+ * @author		Belikhun
+ * @version		1.0
+ * @license		MIT
+ * @copyright	2018-2023 Belikhun
+ */
+
+.sq-checkbox {
+    position: relative;
+    display: block;
+    width: 3rem;
+    height: 1.2rem;
+    cursor: pointer;
+    user-select: none;
+
+    --shadow: rgba(160, 220, 250, 0.5);
+    --normal: rgb(68, 170, 221);
+    --checked: rgb(134, 215, 255);
+
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sq-checkbox > input {
+    position: absolute;
+    display: none;
+    height: 0;
+    width: 0;
+}
+
+.sq-checkbox > .checkmark {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+    height: 80%;
+    width: 80%;
+
+    transform: translate(-50%, -50%);
+    border: 0.2rem solid var(--normal);
+    border-radius: 1rem;
+    box-sizing: border-box;
+
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sq-checkbox::before {
+    content: "";
+    position: absolute;
+    display: block;
+
+    top: 50%;
+    left: 50%;
+    width: calc(100% - 0.6rem);
+    height: 80%;
+    transform: translate(-50%, -50%);
+    border-radius: 10px;
+
+    background-color: var(--shadow);
+    box-shadow: 0 0 14px 0 var(--shadow);
+    opacity: 0;
+
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sq-checkbox:hover {
+    width: 3.5rem;
+}
+
+.sq-checkbox:hover::before {
+    opacity: 1;
+}
+
+.sq-checkbox:hover > .checkmark {
+    border-color: var(--checked);
+}
+
+.sq-checkbox > input:checked ~ .checkmark {
+    width: 100%;
+    height: 100%;
+    background-color: var(--normal);
+}
+
+.sq-checkbox:hover > input:checked ~ .checkmark {
+    background-color: var(--checked);
+}
+
+.sq-checkbox > input:disabled ~ .checkmark {
+    filter: brightness(0.6);
+    cursor: not-allowed;
+}
+
+/** SWITCH FROM OSC PACKAGE */
+
+.sq-switch {
+    position: relative;
+    display: inline-block;
+
+    width: 50px;
+    height: 22px;
+
+    --inactive: rgba(138, 138, 138, 0.6);
+    --inactive-hover: rgba(48, 48, 48, 0.6);
+    --active: rgb(68, 170, 221);
+    --active-hover: rgb(35, 135, 186);
+    --disabled: rgb(208, 208, 208);
+
+    user-select: none;
+}
+
+.sq-switch > input {
+    position: absolute;
+    display: none;
+}
+
+.sq-switch > .track {
+    position: relative;
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    box-sizing: border-box;
+    border: 4px solid var(--inactive);
+    border-radius: 15px;
+    cursor: pointer;
+
+    transition: border 0.1s ease-out;
+}
+
+.sq-switch > .track::before {
+    content: "";
+    position: absolute;
+    display: block;
+
+    top: 50%;
+    left: 3px;
+    width: 10px;
+    height: 10px;
+    transform: translateY(-50%);
+    
+    border-radius: 50%;
+    background-color: var(--active);
+
+    transition: left 0.1s cubic-bezier(0.5, 1, 0.89, 1);
+}
+
+.sq-switch > .track:hover {
+    border-color: var(--inactive-hover);
+}
+
+.sq-switch > input:checked + .track {
+    border-color: var(--active);
+}
+
+.sq-switch > input:checked + .track:hover {
+    border-color: var(--active-hover);
+}
+
+.sq-switch > input:checked + .track::before {
+    left: calc(100% - 13px);
+}
+
+.sq-switch > input:disabled + .track.track {
+    cursor: not-allowed;
+    border-color: var(--disabled);
+}
+
+.sq-switch > input:disabled + .track.track::before {
+    background-color: var(--disabled);
+}
+
+/* BLUE LIGHTER */
+
+body.dark .sq-switch {
+    --inactive: rgb(46, 46, 46);
+    --inactive-hover: rgb(95, 95, 95);
+    --active: #4cb8ee;
+    --active-hover: #86d7ff;
+    --disabled: rgb(208, 208, 208);
+}
+
+/* PINK */
+
+.sq-switch[data-color="pink"] {
+    --active: #FF66AA;
+    --active-hover: #eb4a93;
+}
+
+body.dark .sq-switch[data-color="pink"] {
+    --active: #FF66AA;
+    --active-hover: #ff93c4;
+}
