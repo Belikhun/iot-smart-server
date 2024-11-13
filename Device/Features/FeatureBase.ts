@@ -20,7 +20,6 @@ export class FeatureBase {
 	public device: Device;
 	public kind: string;
 	protected log: Logger;
-	protected websocket: WebSocket | null = null;
 
 	protected updateHandler: FeatureValueUpdateHandler | null = null;
 
@@ -29,7 +28,7 @@ export class FeatureBase {
 		this.model = model;
 		this.device = device;
 		this.log = scope(`feature:${model.uuid}`);
-		this.currentValue = this.unserializeValue(model.value);
+		this.currentValue = this.processValue(this.unserializeValue(model.value));
 	}
 
 	public value(newValue: any | undefined = undefined) {
@@ -107,6 +106,13 @@ export class FeatureBase {
 
 	protected unserializeValue(value: string): any {
 		return value;
+	}
+
+	public async getReturnData() {
+		return {
+			...this.model.dataValues,
+			value: this.getValue()
+		}
 	}
 
 	public getUpdateData() {

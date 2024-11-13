@@ -45,6 +45,24 @@ export default class Device {
 		return this;
 	}
 
+	public async getReturnData() {
+		const featureList = [];
+
+		for (const feature of Object.values(this.features))
+			featureList.push(await feature.getReturnData());
+
+		return {
+			...this.model.dataValues,
+			tags: (this.model.tags && this.model.tags.length > 0)
+				? this.model.tags.split(";").filter((i) => !!i)
+				: [],
+
+			features: featureList,
+			connected: this.connected,
+			address: this.websocket?.remoteAddress
+		}
+	}
+
 	public async createFeature({ featureId, uuid, name, kind }: { featureId: string, uuid: string, name: string, kind: string }) {
 		log.info(`Đang lưu tính năng ${name} [${featureId}] vào cơ sở dữ liệu...`);
 		const model = await DeviceFeatureModel.create({

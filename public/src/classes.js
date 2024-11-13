@@ -296,3 +296,136 @@ class User extends Model {
 		return super.processResponses(responses);
 	}
 }
+
+class Device extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {string} */
+		this.hardwareId = null;
+
+		/** @type {string} */
+		this.name = null;
+
+		/** @type {string} */
+		this.icon = null;
+
+		/** @type {string} */
+		this.color = null;
+
+		/** @type {string[]} */
+		this.tags = null;
+
+		/** @type {?string} */
+		this.area = null;
+
+		/** @type {Feature[]} */
+		this.features = null;
+
+		/** @type {string} */
+		this.token = null;
+
+		/** @type {boolean} */
+		this.connected = null;
+
+		/** @type {?string} */
+		this.address = null;
+
+		/** @type {Number} */
+		this.created = null;
+
+		/** @type {Number} */
+		this.updated = null;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}		response
+	 * @returns	{Device}
+	 */
+	static processResponse(response) {
+		return super.processResponse(response);
+	}
+
+	static processField(name, value, response, instance) {
+		switch (name) {
+			case "features":
+				return DeviceFeature.processResponses(value, instance);
+		}
+
+		return super.processField(name, value);
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}		responses
+	 * @returns	{Device[]}
+	 */
+	static processResponses(responses) {
+		return super.processResponses(responses);
+	}
+}
+
+class DeviceFeature extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {number} */
+		this.deviceId = null;
+
+		/** @type {Device} */
+		this.device = null;
+
+		/** @type {string} */
+		this.featureId = null;
+
+		/** @type {string} */
+		this.uuid = null;
+
+		/** @type {string} */
+		this.name = null;
+
+		/** @type {string} */
+		this.kind = null;
+
+		/** @type {any} */
+		this.value = null;
+
+		/** @type {Number} */
+		this.created = null;
+
+		/** @type {Number} */
+		this.updated = null;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}			response
+	 * @param	{Device}			device
+	 * @returns	{DeviceFeature}
+	 */
+	static processResponse(response, device = null) {
+		const instance = super.processResponse(response);
+		instance.device = device;
+		return instance;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}			responses
+	 * @param	{Device}			device
+	 * @returns	{DeviceFeature[]}
+	 */
+	static processResponses(responses, device = null) {
+		const instances = [];
+
+		for (const response of responses)
+			instances.push(this.processResponse(response, device));
+
+		return instances;
+	}
+}

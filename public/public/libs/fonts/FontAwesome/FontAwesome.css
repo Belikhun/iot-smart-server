@@ -813,3 +813,7 @@ icon[data-icon="cloudArrowUp"]::after {
 icon[data-icon="chalkboardUser"]::after {
 	content: "\f51c";
 }
+
+icon[data-icon="linkHorizontalSlash"]::after {
+	content: "\e1cc";
+}
