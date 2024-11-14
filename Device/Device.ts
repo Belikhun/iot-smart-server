@@ -1,6 +1,7 @@
 import DeviceFeatureModel from "../Models/DeviceFeatureModel";
 import DeviceModel from "../Models/DeviceModel";
 import { sendCommand, sendDashboardCommand, type WebSocket } from "../Routes/WebSocket";
+import { time } from "../Utils/belibrary";
 import { scope, type Logger } from "../Utils/Logger";
 import { resolveFeature } from "./FeatureFactory";
 import type { FeatureBase } from "./Features/FeatureBase";
@@ -27,6 +28,8 @@ export default class Device {
 	public connected: boolean = false;
 	protected log: Logger;
 	protected features: { [featureId: string]: FeatureBase } = {};
+	protected heartbeatTask: any = null;
+	public lastHeartbeat: number = 0;
 
 	public constructor(model: DeviceModel) {
 		this.model = model;
@@ -34,13 +37,40 @@ export default class Device {
 	}
 
 	public setWS(websocket: WebSocket | null) {
-		this.websocket = websocket;
 		this.connected = !!websocket;
 
-		if (this.connected)
+		if (this.connected) {
 			this.log.info(`Thiết bị đã kết nối tới máy chủ`);
-		else
+			this.lastHeartbeat = time();
+
+			if (this.heartbeatTask)
+				clearInterval(this.heartbeatTask);
+
+			this.heartbeatTask = setInterval(() => {
+				sendCommand(this.websocket as WebSocket, "heartbeat");
+			}, 5000);
+		} else {
 			this.log.warn(`Thiết bị đã ngắt kết nối tới máy chủ!`);
+
+			if (this.websocket)
+				this.websocket.close();
+
+			if (this.heartbeatTask) {
+				clearInterval(this.heartbeatTask);
+				this.heartbeatTask = null;
+			}
+		}
+
+		this.websocket = websocket;
+
+		sendDashboardCommand(
+			"update:device",
+			{
+				id: this.model.id,
+				hardwareId: this.model.hardwareId
+			},
+			this.model.hardwareId
+		);
 
 		return this;
 	}

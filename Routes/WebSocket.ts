@@ -52,15 +52,6 @@ websocketRouter.ws("/device", {
 
 		delete devices[ws.id];
 		device.setWS(null);
-
-		sendDashboardCommand(
-			"update:device",
-			{
-				id: device.model.id,
-				hardwareId: device.model.hardwareId
-			},
-			device.model.hardwareId
-		);
 		return;
 	},
 
@@ -90,16 +81,6 @@ websocketRouter.ws("/device", {
 
 				// @ts-ignore
 				sendCommand(ws, "features");
-
-				sendDashboardCommand(
-					"update:device",
-					{
-						id: device.model.id,
-						hardwareId: device.model.hardwareId
-					},
-					device.model.hardwareId
-				);
-
 				break;
 			}
 
@@ -110,6 +91,8 @@ websocketRouter.ws("/device", {
 				}
 
 				const device = devices[ws.id];
+				device.lastHeartbeat = time();
+
 				const { value, id, uuid } = data;
 				const feature = device.getFeature(id);
 
@@ -129,6 +112,7 @@ websocketRouter.ws("/device", {
 				}
 
 				const device = devices[ws.id];
+				device.lastHeartbeat = time();
 
 				for (const { id, uuid, name, kind } of data) {
 					if (device.getFeature(id))
@@ -144,6 +128,16 @@ websocketRouter.ws("/device", {
 
 				device.sync();
 				break;
+			}
+
+			case "heartbeat": {
+				if (!devices[ws.id]) {
+					logDev.info(`Không tìm thấy thiết bị của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+					return;
+				}
+
+				const device = devices[ws.id];
+				device.lastHeartbeat = time();
 			}
 		}
 	}

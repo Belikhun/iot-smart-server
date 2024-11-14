@@ -420,13 +420,15 @@ class DeviceFeature extends Model {
 		this.value = newValue;
 		clog("INFO", `DeviceFeature(${this.uuid}).setValue(): value=${newValue} source=${source}`);
 
-		if (source !== UPDATE_SOURCE_SERVER)
+		if (source !== UPDATE_SOURCE_SERVER) {
 			clog("DEBG", "Sẽ thực hiện cập nhật máy chủ");
 			this.doPushValue();
+		}
 
-		if (source !== UPDATE_SOURCE_CONTROL)
+		if (source !== UPDATE_SOURCE_CONTROL) {
 			clog("DEBG", "Sẽ thực hiện cập nhật giao diện điều khiển");
 			this.doUpdateControl();
+		}
 
 		return this.getValue();
 	}
@@ -465,6 +467,7 @@ class DeviceFeature extends Model {
 	static processResponse(response, device = null) {
 		const instance = super.processResponse(response);
 		instance.device = device;
+		instance.setValue(instance.getValue(), UPDATE_SOURCE_SERVER);
 		return instance;
 	}
 

@@ -270,13 +270,15 @@
 	display: block;
 
 	width: 100%;
-	max-width: 8rem;
+	width: 8rem;
 	height: 4rem;
 	margin: 0 auto;
 
 	background-color: var(--background-3);
 	border-radius: 1rem;
 	cursor: pointer;
+
+	transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
 	> .handle {
 		position: absolute;
@@ -289,14 +291,26 @@
 		border-radius: 0.5rem;
 
 		background-color: var(--background);
+		transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	&:active {
+		> .handle {
+			width: 2.5rem;
+		}
 	}
 
 	&.activated {
 		background-color: var(--accent);
 
 		> .handle {
-			left: unset;
-			right: 0.5rem;
+			left: calc(100% - 2.5rem);
+		}
+
+		&:active {
+			> .handle {
+				left: calc(100% - 3rem);
+			}
 		}
 	}
 }
