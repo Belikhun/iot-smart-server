@@ -338,6 +338,11 @@ class Device extends Model {
 		this.updated = null;
 	}
 
+	reset() {
+		websocket.send("reset", true, this.hardwareId);
+		return this;
+	}
+
 	/**
 	 * Process response returned from API.
 	 *

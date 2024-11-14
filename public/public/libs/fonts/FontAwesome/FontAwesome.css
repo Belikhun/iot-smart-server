@@ -833,3 +833,7 @@ icon[data-icon="lightbulb"]::after {
 icon[data-icon="lightSwitch"]::after {
 	content: "\e017";
 }
+
+icon[data-icon="powerOff"]::after {
+	content: "\f011";
+}

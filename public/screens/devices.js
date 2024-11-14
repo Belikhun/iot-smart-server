@@ -242,6 +242,7 @@ const devices = {
 		const menu = new ContextMenu(view.info);
 
 		menu.add({ id: "config", text: "Trang cấu hình", icon: "externalLink" })
+			.add({ id: "reset", text: "Khởi động lại", icon: "powerOff" })
 			.separator()
 			.add({ id: "edit", text: app.string("action.edit"), icon: "pencil" })
 			.add({ id: "unpair", text: app.string("action.unpair"), icon: "linkHorizontalSlash", color: "red" });
@@ -332,6 +333,14 @@ const devices = {
 						return;
 
 					window.open(`http://${instance.device.address}`, "_blank");
+					break;
+				}
+
+				case "reset": {
+					if (!instance.device.connected)
+						return;
+
+					instance.device.reset();
 					break;
 				}
 

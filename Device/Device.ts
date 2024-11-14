@@ -37,7 +37,15 @@ export default class Device {
 	}
 
 	public setWS(websocket: WebSocket | null) {
-		this.connected = !!websocket;
+		const connected = !!websocket;
+
+		if (this.connected == connected)
+			return this;
+
+		if (this.websocket && websocket && this.websocket.id == websocket.id)
+			return this;
+
+		this.connected = connected;
 
 		if (this.connected) {
 			this.log.info(`Thiết bị đã kết nối tới máy chủ`);
@@ -72,6 +80,16 @@ export default class Device {
 			this.model.hardwareId
 		);
 
+		return this;
+	}
+
+	public reset() {
+		if (!this.connected || !this.websocket)
+			return this;
+
+		this.log.warn(`Đang khởi động lại thiết bị...`);
+		sendCommand(this.websocket, "reset");
+		this.setWS(null);
 		return this;
 	}
 

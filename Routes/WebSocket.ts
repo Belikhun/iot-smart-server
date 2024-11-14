@@ -231,6 +231,24 @@ websocketRouter.ws("/dashboard", {
 				}
 
 				feature.setValue(value, FeatureUpdateSource.DASHBOARD);
+				break;
+			}
+
+			case "reset": {
+				if (!sessions[ws.id]) {
+					logDash.info(`Không tìm thấy phiên của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+					return;
+				}
+
+				const device = getDevice(source);
+
+				if (!device) {
+					logDev.info(`Không tìm thấy thiết bị với mã phần cứng ${source}, sẽ bỏ qua gói tin này.`);
+					return;
+				}
+
+				device.reset();
+				break;
 			}
 		}
 	}
