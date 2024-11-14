@@ -10,6 +10,7 @@ interface DeviceFeatureAttributes {
 	name: string;
 	kind: string;
 	value?: any;
+	previousValue?: any;
 	created?: number;
 	updated?: number;
 }
@@ -22,6 +23,7 @@ class DeviceFeatureModel extends Model<DeviceFeatureAttributes> implements Devic
 	declare name: string;
 	declare kind: string;
 	declare value?: any;
+	declare previousValue?: any;
 	declare created?: number;
 	declare updated?: number;
 }
@@ -53,6 +55,10 @@ DeviceFeatureModel.init({
 		allowNull: false
 	},
 	value: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
+	previousValue: {
 		type: DataTypes.STRING,
 		allowNull: true
 	},

@@ -837,3 +837,7 @@ icon[data-icon="lightSwitch"]::after {
 icon[data-icon="powerOff"]::after {
 	content: "\f011";
 }
+
+icon[data-icon="joystick"]::after {
+	content: "\f8c5";
+}

@@ -17,6 +17,7 @@ export class FeatureBase {
 	public currentValue: any;
 	public updated: boolean = false;
 	public needSync: boolean = false;
+	public shouldPushValue: boolean = false;
 	public device: Device;
 	public kind: string;
 	protected log: Logger;
@@ -57,7 +58,8 @@ export class FeatureBase {
 
 		if (source !== FeatureUpdateSource.DEVICE) {
 			this.log.debug("Sẽ thực hiện cập nhật trạng thái phần cứng");
-			this.doPushValue();
+			this.shouldPushValue = true;
+			// this.doPushValue();
 		}
 
 		return this;
@@ -69,6 +71,14 @@ export class FeatureBase {
 
 	public onUpdate(handler: FeatureValueUpdateHandler) {
 		this.updateHandler = handler;
+		return this;
+	}
+
+	public pushValue() {
+		if (!this.shouldPushValue)
+			return;
+
+		this.doPushValue();
 		return this;
 	}
 
@@ -87,10 +97,13 @@ export class FeatureBase {
 		if (this.device.websocket)
 			sendCommand(this.device.websocket, "update", this.getUpdateData(), this.model.uuid)
 
+		this.shouldPushValue = false;
 		return this;
 	}
 
 	public async save() {
+		this.log.debug(`Đang lưu giá trị vào cơ sở dữ liệu...`);
+		this.model.previousValue = this.model.value;
 		this.model.value = this.serializeValue(this.getValue());
 		await this.model.save();
 		this.updated = false;

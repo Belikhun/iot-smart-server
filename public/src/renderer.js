@@ -15,7 +15,8 @@ class FeatureRenderer {
 		return {
 			"FeatureButton": { icon: "lightSwitch" },
 			"FeatureOnOffPin": { icon: "binary" },
-			"FeatureRGBLed": { icon: "lightbulb" }
+			"FeatureRGBLed": { icon: "lightbulb" },
+			"FeatureKnob": { icon: "joystick" }
 		}
 	}
 
@@ -93,6 +94,47 @@ class FeatureRenderer {
 
 				instance = {
 					view,
+					onInput: (handler) => {
+						if (typeof handler !== "function")
+							throw new Error(`onInput(): không phải một hàm hợp lệ`);
+
+						inputHandler = handler;
+						return this;
+					},
+
+					set value(value) {
+						setValue(value);
+					},
+
+					get value() {
+						return currentValue;
+					}
+				};
+
+				break;
+			}
+
+			case "FeatureKnob": {
+				const knob = new KnobComponent();
+
+				let inputHandler = null;
+				let currentValue = false;
+
+				const setValue = (value) => {
+					knob.value = (value / 100);
+					currentValue = value;
+				};
+
+				knob.onInput((value) => {
+					value = Math.round(value * 100);
+
+					if (inputHandler && value != this.model.value)
+						inputHandler(value);
+				});
+
+				instance = {
+					view: knob.container,
+
 					onInput: (handler) => {
 						if (typeof handler !== "function")
 							throw new Error(`onInput(): không phải một hàm hợp lệ`);

@@ -1,5 +1,5 @@
 
-@import "dashboard.scss";
+@use "dashboard.scss";
 
 .login-panel {
 	position: absolute;
@@ -159,7 +159,7 @@
 
 			> .content {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 				gap: 1rem;
 
 				margin: 0 1rem;
@@ -246,6 +246,8 @@
 	}
 
 	> .content {
+		display: grid;
+		place-items: center;
 		flex-grow: 1;
 		margin: 0 1rem;
 	}
@@ -311,6 +313,136 @@
 			> .handle {
 				left: calc(100% - 3rem);
 			}
+		}
+	}
+}
+
+.gauge-component {
+	> .ticks > line {
+		stroke-width: 2px;
+		stroke: var(--background-3);
+	}
+
+	> .background,
+	> .value {
+		stroke-width: var(--arc-width);
+		stroke-linecap: round;
+		fill: transparent;
+	}
+
+	> .background {
+		stroke: var(--background-2);
+	}
+
+	> .hand {
+		--rotation: 0deg;
+
+		transform: rotate(var(--rotation));
+		transition: all 1s cubic-bezier(0.33, 1, 0.68, 1);
+
+		&.shaking {
+			animation-name: perf-gauge-shaking;
+			animation-timing-function: ease-in-out;
+			animation-duration: 0.2s;
+			animation-iteration-count: infinite;
+		}
+	}
+
+	> .center {
+		fill: transparent;
+		stroke-width: 8px;
+	}
+}
+
+.rotate-knob-component {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+
+	width: fit-content;
+	margin: 0 auto;
+	overflow: hidden;
+	user-select: none;
+	cursor: n-resize;
+
+	--border: rgb(225, 225, 225);
+
+	&::after {
+		content: "";
+		position: absolute;
+		left: 30px;
+		right: 30px;
+		height: 0;
+		bottom: 0;
+
+		border-top: 0.2rem solid var(--border);
+	}
+
+	> .knob-arc {
+		> .background,
+		> .value {
+			stroke-width: var(--arc-width);
+			stroke-linecap: round;
+			fill: transparent;
+		}
+
+		> .background {
+			stroke: var(--background-2);
+		}
+
+		> .value {
+			stroke: var(--accent);
+		}
+	}
+
+	> .thumb {
+		--rotation: 0deg;
+
+		position: absolute;
+		display: block;
+
+		left: var(--center-x);
+		top: var(--center-y);
+
+		transform: translate(-50%, -50%) rotate(var(--rotation));
+		border-radius: 50%;
+		border: 0.2rem solid var(--border);
+
+		background-color: var(--background-1);
+
+		&::before {
+			content: "";
+			position: absolute;
+			display: block;
+
+			top: 0.5rem;
+			left: calc(50% - 0.2rem);
+			width: 0.4rem;
+			height: 1rem;
+
+			background-color: var(--accent);
+			border-radius: 0.5rem;
+		}
+	}
+
+	> .value {
+		position: absolute;
+		display: block;
+
+		left: var(--center-x);
+		top: calc(var(--center-y) - 8px);
+
+		font-size: 1.15rem;
+		font-weight: 500;
+
+		transform: translate(-50%, -50%);
+	}
+
+	&:hover {
+		--border: rgb(210, 210, 210);
+
+		> .thumb {
+			background-color: var(--background-2);
 		}
 	}
 }

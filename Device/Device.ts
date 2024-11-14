@@ -26,8 +26,8 @@ export default class Device {
 	public status: DeviceStatus = DeviceStatus.DISCONNECTED;
 	public websocket: WebSocket | null = null;
 	public connected: boolean = false;
+	public features: { [featureId: string]: FeatureBase } = {};
 	protected log: Logger;
-	protected features: { [featureId: string]: FeatureBase } = {};
 	protected heartbeatTask: any = null;
 	public lastHeartbeat: number = 0;
 
@@ -126,6 +126,16 @@ export default class Device {
 			features: featureList,
 			connected: this.connected,
 			address: this.websocket?.remoteAddress || null
+		}
+
+	}
+
+	public async saveUpdatedValues() {
+		for (const feature of Object.values(this.features)) {
+			if (!feature.updated)
+				continue;
+
+			feature.save();
 		}
 	}
 
@@ -234,3 +244,22 @@ export const createDevice = async ({ hardwareId, name, token }: { hardwareId: st
 	sendDashboardCommand("update:device", { id: model.id, hardwareId: model.hardwareId }, model.hardwareId);
 	return device;
 }
+
+setInterval(async () => {
+	for (const feature of Object.values(deviceFeatures)) {
+		if (!feature.updated)
+			continue;
+
+		await feature.save();
+	}
+}, 1000);
+
+// Send update to devices at 20TPS.
+setInterval(async () => {
+	for (const feature of Object.values(deviceFeatures)) {
+		if (!feature.shouldPushValue)
+			continue;
+
+		feature.pushValue();
+	}
+}, 50);
