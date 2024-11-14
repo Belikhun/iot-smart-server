@@ -841,3 +841,11 @@ icon[data-icon="powerOff"]::after {
 icon[data-icon="joystick"]::after {
 	content: "\f8c5";
 }
+
+icon[data-icon="temperatureQuarter"]::after {
+	content: "\f2ca";
+}
+
+icon[data-icon="dropletPercent"]::after {
+	content: "\f750";
+}

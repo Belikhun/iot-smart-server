@@ -16,7 +16,9 @@ class FeatureRenderer {
 			"FeatureButton": { icon: "lightSwitch" },
 			"FeatureOnOffPin": { icon: "binary" },
 			"FeatureRGBLed": { icon: "lightbulb" },
-			"FeatureKnob": { icon: "joystick" }
+			"FeatureKnob": { icon: "joystick" },
+			"FeatureTemperature": { icon: "temperatureQuarter" },
+			"FeatureHumidity": { icon: "dropletPercent" },
 		}
 	}
 
@@ -118,7 +120,7 @@ class FeatureRenderer {
 				const knob = new KnobComponent();
 
 				let inputHandler = null;
-				let currentValue = false;
+				let currentValue = 0;
 
 				const setValue = (value) => {
 					knob.value = (value / 100);
@@ -142,6 +144,62 @@ class FeatureRenderer {
 						inputHandler = handler;
 						return this;
 					},
+
+					set value(value) {
+						setValue(value);
+					},
+
+					get value() {
+						return currentValue;
+					}
+				};
+
+				break;
+			}
+
+			case "FeatureTemperature": {
+				const view = document.createElement("div");
+				view.classList.add("feature-temperature");
+
+				let currentValue = 0;
+
+				const setValue = (value) => {
+					view.innerHTML = `<strong>${value}</strong> °C`
+					currentValue = value;
+				};
+
+				instance = {
+					view,
+
+					onInput: (handler) => {},
+
+					set value(value) {
+						setValue(value);
+					},
+
+					get value() {
+						return currentValue;
+					}
+				};
+
+				break;
+			}
+
+			case "FeatureHumidity": {
+				const view = document.createElement("div");
+				view.classList.add("feature-humidity");
+
+				let currentValue = 0;
+
+				const setValue = (value) => {
+					view.innerHTML = `<strong>${value}</strong>%`
+					currentValue = value;
+				};
+
+				instance = {
+					view,
+
+					onInput: (handler) => {},
 
 					set value(value) {
 						setValue(value);

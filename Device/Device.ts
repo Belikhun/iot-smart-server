@@ -3,7 +3,7 @@ import DeviceModel from "../Models/DeviceModel";
 import { sendCommand, sendDashboardCommand, type WebSocket } from "../Routes/WebSocket";
 import { time } from "../Utils/belibrary";
 import { scope, type Logger } from "../Utils/Logger";
-import { resolveFeature } from "./FeatureFactory";
+import { isFeatureAvailable, resolveFeature } from "./FeatureFactory";
 import type { FeatureBase } from "./Features/FeatureBase";
 
 export enum DeviceStatus {
@@ -140,6 +140,11 @@ export default class Device {
 	}
 
 	public async createFeature({ featureId, uuid, name, kind }: { featureId: string, uuid: string, name: string, kind: string }) {
+		if (!isFeatureAvailable(kind)) {
+			log.warn(`Tính năng ${kind} hiện chưa được hỗ trợ, sẽ bỏ qua tính năng này.`);
+			return null;
+		}
+
 		log.info(`Đang lưu tính năng ${name} [${featureId}] vào cơ sở dữ liệu...`);
 		const model = await DeviceFeatureModel.create({
 			deviceId: this.model.id as number,
@@ -183,6 +188,11 @@ export default class Device {
 		this.log.success(`Đã tìm thấy ${deviceFeatureModels.length} tính năng được đăng ký`);
 
 		for (const featureModel of deviceFeatureModels) {
+			if (!isFeatureAvailable(featureModel.kind)) {
+				log.warn(`Tính năng ${featureModel.kind} hiện chưa được hỗ trợ, sẽ bỏ qua tính năng này.`);
+				continue;
+			}
+
 			try {
 				const feature = resolveFeature(featureModel, this);
 				this.features[feature.model.featureId] = feature;

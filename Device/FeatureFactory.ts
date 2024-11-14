@@ -2,24 +2,33 @@ import type DeviceFeatureModel from "../Models/DeviceFeatureModel";
 import type Device from "./Device";
 import type { FeatureBase } from "./Features/FeatureBase";
 import { FeatureButton } from "./Features/FeatureButton";
+import { FeatureHumidity } from "./Features/FeatureHumidity";
 import { FeatureKnob } from "./Features/FeatureKnob";
 import { FeatureOnOffPin } from "./Features/FeatureOnOffPin";
 import { FeatureRGBLed } from "./Features/FeatureRGBLed";
+import { FeatureTemperature } from "./Features/FeatureTemperature";
+
+const RegisteredFeatures = {
+	"FeatureButton": FeatureButton,
+	"FeatureOnOffPin": FeatureOnOffPin,
+	"FeatureRGBLed": FeatureRGBLed,
+	"FeatureKnob": FeatureKnob,
+	"FeatureTemperature": FeatureTemperature,
+	"FeatureHumidity": FeatureHumidity
+}
 
 export function resolveFeature(model: DeviceFeatureModel, device: Device): FeatureBase {
-	switch (model.kind) {
-		case "FeatureButton":
-			return new FeatureButton(model, device);
+	if (!isFeatureAvailable(model.kind))
+		throw new Error(`Tính năng không hợp lệ hoặc chưa được hỗ trợ: ${model.kind}`);
 
-		case "FeatureOnOffPin":
-			return new FeatureOnOffPin(model, device);
+	// @ts-ignore
+	return new RegisteredFeatures[model.kind](model, device);
+}
 
-		case "FeatureRGBLed":
-			return new FeatureRGBLed(model, device);
+export function isFeatureAvailable(kind: string): boolean {
+	// @ts-ignore
+	if (RegisteredFeatures[kind])
+		return true;
 
-		case "FeatureKnob":
-			return new FeatureKnob(model, device);
-	}
-
-	throw new Error(`Tính năng không hợp lệ hoặc chưa được hỗ trợ: ${model.kind}`);
+	return false;
 }
