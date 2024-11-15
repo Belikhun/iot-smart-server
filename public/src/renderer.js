@@ -157,47 +157,29 @@ class FeatureRenderer {
 				break;
 			}
 
-			case "FeatureTemperature": {
-				const view = document.createElement("div");
-				view.classList.add("feature-temperature");
-
-				let currentValue = 0;
-
-				const setValue = (value) => {
-					view.innerHTML = `<strong>${value}</strong> °C`
-					currentValue = value;
-				};
-
-				instance = {
-					view,
-
-					onInput: (handler) => {},
-
-					set value(value) {
-						setValue(value);
-					},
-
-					get value() {
-						return currentValue;
-					}
-				};
-
-				break;
-			}
-
+			case "FeatureTemperature":
 			case "FeatureHumidity": {
-				const view = document.createElement("div");
-				view.classList.add("feature-humidity");
+				const { min, max, unit, dangerous } = {
+					FeatureTemperature: { min: 0, max: 60, dangerous: 42, unit: "°C" },
+					FeatureHumidity: { min: 0, max: 100, dangerous: 90, unit: "%" }
+				}[this.model.kind];
+
+				const gauge = new GaugeComponent({
+					minValue: min,
+					maxValue: max,
+					dangerousValue: dangerous,
+					unit
+				});
 
 				let currentValue = 0;
 
 				const setValue = (value) => {
-					view.innerHTML = `<strong>${value}</strong>%`
+					gauge.value = value;
 					currentValue = value;
 				};
 
 				instance = {
-					view,
+					view: gauge.container,
 
 					onInput: (handler) => {},
 
