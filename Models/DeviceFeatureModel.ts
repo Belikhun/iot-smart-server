@@ -97,7 +97,7 @@ DeviceFeatureModel.init({
 	}
 }, {
 	sequelize: database,
-	tableName: "devicefeatures",
+	tableName: "device_features",
 	createdAt: "created",
 	updatedAt: "updated",
 	timestamps: true,

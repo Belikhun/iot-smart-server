@@ -2,42 +2,31 @@ import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
 import moment from "moment";
 
-interface DeviceAttributes {
+interface TriggerAttributes {
 	id?: number;
-	hardwareId: string;
 	name: string;
 	icon?: string;
 	color?: string;
-	tags?: string;
-	area?: string;
-	token: string;
+	lastTrigger?: number;
 	created?: number;
 	updated?: number;
 }
 
-class DeviceModel extends Model<DeviceAttributes> implements DeviceAttributes {
+class TriggerModel extends Model<TriggerAttributes> implements TriggerAttributes {
 	declare id?: number;
-	declare hardwareId: string;
 	declare name: string;
 	declare icon?: string;
 	declare color?: string;
-	declare tags?: string;
-	declare area?: string;
-	declare token: string;
+	declare lastTrigger?: number;
 	declare created?: number;
 	declare updated?: number;
 }
 
-DeviceModel.init({
+TriggerModel.init({
 	id: {
 		type: DataTypes.INTEGER,
 		autoIncrement: true,
 		primaryKey: true
-	},
-	hardwareId: {
-		type: DataTypes.STRING,
-		allowNull: false,
-		unique: true
 	},
 	name: {
 		type: DataTypes.STRING,
@@ -46,25 +35,17 @@ DeviceModel.init({
 	icon: {
 		type: DataTypes.STRING,
 		allowNull: false,
-		defaultValue: "houseSignal"
+		defaultValue: "lassoSparkles"
 	},
 	color: {
 		type: DataTypes.STRING,
 		allowNull: false,
 		defaultValue: "accent"
 	},
-	tags: {
-		type: DataTypes.TEXT,
+	lastTrigger: {
+		type: DataTypes.NUMBER,
 		allowNull: false,
 		defaultValue: ""
-	},
-	area: {
-		type: DataTypes.STRING,
-		allowNull: true
-	},
-	token: {
-		type: DataTypes.TEXT,
-		allowNull: false
 	},
 	created: {
 		type: DataTypes.INTEGER,
@@ -78,7 +59,7 @@ DeviceModel.init({
 	}
 }, {
 	sequelize: database,
-	tableName: "devices",
+	tableName: "triggers",
 	createdAt: "created",
 	updatedAt: "updated",
 	timestamps: true,
@@ -93,4 +74,4 @@ DeviceModel.init({
 	}
 });
 
-export default DeviceModel;
+export default TriggerModel;

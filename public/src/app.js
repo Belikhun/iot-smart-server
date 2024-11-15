@@ -56,6 +56,7 @@ const app = {
 		this.loadingOverlay.loading = true;
 
 		popup.init();
+		ConnectionState.init();
 		addEventListener("resize", () => this.updateScreenMode());
 		this.updateScreenMode();
 		initGroup(this, "app");

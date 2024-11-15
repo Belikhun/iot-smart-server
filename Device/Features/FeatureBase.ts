@@ -2,6 +2,8 @@ import type DeviceFeatureModel from "../../Models/DeviceFeatureModel";
 import { sendCommand, sendDashboardCommand, type WebSocket } from "../../Routes/WebSocket";
 import { scope, type Logger } from "../../Utils/Logger";
 import type Device from "../Device";
+import type { TriggerConditionItem } from "../Triggers/TriggerConditionItem";
+import type { Trigger } from "../TriggerService";
 
 export enum FeatureUpdateSource {
 	DEVICE = "device",
@@ -26,7 +28,9 @@ export class FeatureBase {
 	public device: Device;
 	public kind: string;
 	public flags: number;
+
 	protected log: Logger;
+	public relatedTriggerItems: TriggerConditionItem[] = [];
 
 	protected updateHandler: FeatureValueUpdateHandler | null = null;
 
@@ -51,7 +55,12 @@ export class FeatureBase {
 	}
 
 	public setValue(newValue: any, source: FeatureUpdateSource = FeatureUpdateSource.INTERNAL): FeatureBase {
-		this.currentValue = this.processValue(newValue)
+		const processedValue = this.processValue(newValue);
+
+		if (this.currentValue === newValue)
+			return this;
+
+		this.currentValue = processedValue;
 		this.updated = true;
 		this.log.info(`value=`, this.currentValue, ` src=${source}`);
 
@@ -66,7 +75,19 @@ export class FeatureBase {
 		if (source !== FeatureUpdateSource.DEVICE) {
 			this.log.debug("Sẽ thực hiện cập nhật trạng thái phần cứng");
 			this.shouldPushValue = true;
-			// this.doPushValue();
+		}
+
+		if (this.relatedTriggerItems.length > 0) {
+			this.log.info(`Đang chạy ${this.relatedTriggerItems.length} nhóm điều kiện liên quan...`);
+
+			for (const item of this.relatedTriggerItems) {
+				if (!item.evaluate()) {
+					this.log.info(`Thử kiểm tra điều kiện thất bại, sẽ bỏ qua nhóm điều kiện này`);
+					continue;
+				}
+
+				item.trigger.evaluate();
+			}
 		}
 
 		return this;
@@ -122,7 +143,7 @@ export class FeatureBase {
 		return this;
 	}
 
-	protected processValue(value: any): any {
+	public processValue(value: any): any {
 		return value;
 	}
 

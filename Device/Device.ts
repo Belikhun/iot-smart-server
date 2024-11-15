@@ -15,10 +15,12 @@ export enum DeviceStatus {
 
 type DeviceDict = { [hardwareId: string]: Device };
 type DeviceFeatureDict = { [uuid: string]: FeatureBase };
+type DeviceFeatureIdMap = { [id: number]: FeatureBase };
 
 const log = scope("devices");
 const devices: DeviceDict = {};
 const deviceFeatures: DeviceFeatureDict = {};
+const deviceFeatureIdMap: DeviceFeatureIdMap = {};
 
 export default class Device {
 
@@ -198,6 +200,7 @@ export default class Device {
 				const feature = resolveFeature(featureModel, this);
 				this.features[feature.model.featureId] = feature;
 				deviceFeatures[feature.model.uuid] = feature;
+				deviceFeatureIdMap[feature.model.id as number] = feature;
 				this.log.success(`Đã tải thành công tính năng ${feature.kind} [${feature.model.uuid}]`);
 			} catch (e) {
 				this.log.warn(`Lỗi đã xảy ra khi xử lý tính năng ${featureModel.kind}, sẽ bỏ qua tính năng này.`, e);
@@ -209,7 +212,7 @@ export default class Device {
 
 export const initializeDevices = async () => {
 	log.info(`Đang lấy thông tin các thiết bị đã đăng ký...`);
-	const deviceModels = await DeviceModel.findAll();
+	const deviceModels = await DeviceModel.findAll({ order: [["id", "DESC"]] });
 	log.success(`Tìm thấy ${deviceModels.length} thiết bị đã đăng ký`);
 
 	for (const deviceModel of deviceModels) {
@@ -235,6 +238,13 @@ export const getDevices = (): DeviceDict => {
 export const getDeviceFeature = (uuid: string): FeatureBase | null => {
 	if (deviceFeatures[uuid])
 		return deviceFeatures[uuid];
+
+	return null;
+}
+
+export const getDeviceFeatureById = (id: number): FeatureBase | null => {
+	if (deviceFeatureIdMap[id])
+		return deviceFeatureIdMap[id];
 
 	return null;
 }

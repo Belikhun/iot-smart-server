@@ -5,7 +5,7 @@ export class FeatureKnob extends FeatureBase {
 		return 0;
 	}
 
-	protected processValue(value: number): number {
+	public processValue(value: number): number {
 		if (value === null)
 			return this.defaultValue();
 

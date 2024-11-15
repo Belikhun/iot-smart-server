@@ -849,3 +849,11 @@ icon[data-icon="temperatureQuarter"]::after {
 icon[data-icon="dropletPercent"]::after {
 	content: "\f750";
 }
+
+icon[data-icon="houseSignal"]::after {
+	content: "\e012";
+}
+
+icon[data-icon="lassoSparkles"]::after {
+	content: "\e1c9";
+}

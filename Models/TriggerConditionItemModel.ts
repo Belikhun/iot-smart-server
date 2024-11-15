@@ -2,69 +2,60 @@ import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
 import moment from "moment";
 
-interface DeviceAttributes {
+interface TriggerConditionItemAttributes {
 	id?: number;
-	hardwareId: string;
-	name: string;
-	icon?: string;
-	color?: string;
-	tags?: string;
-	area?: string;
-	token: string;
+	triggerId: number;
+	groupId: number;
+	deviceFeatureId: number;
+	comparator: string;
+	value?: any;
+	order: number;
 	created?: number;
 	updated?: number;
 }
 
-class DeviceModel extends Model<DeviceAttributes> implements DeviceAttributes {
+class TriggerConditionItemModel extends Model<TriggerConditionItemAttributes> implements TriggerConditionItemAttributes {
 	declare id?: number;
-	declare hardwareId: string;
-	declare name: string;
-	declare icon?: string;
-	declare color?: string;
-	declare tags?: string;
-	declare area?: string;
-	declare token: string;
+	declare triggerId: number;
+	declare groupId: number;
+	declare deviceFeatureId: number;
+	declare comparator: string;
+	declare value?: any;
+	declare order: number;
 	declare created?: number;
 	declare updated?: number;
 }
 
-DeviceModel.init({
+TriggerConditionItemModel.init({
 	id: {
 		type: DataTypes.INTEGER,
 		autoIncrement: true,
 		primaryKey: true
 	},
-	hardwareId: {
-		type: DataTypes.STRING,
-		allowNull: false,
-		unique: true
+	triggerId: {
+		type: DataTypes.NUMBER,
+		allowNull: false
 	},
-	name: {
+	groupId: {
+		type: DataTypes.NUMBER,
+		allowNull: false
+	},
+	deviceFeatureId: {
+		type: DataTypes.NUMBER,
+		allowNull: false
+	},
+	comparator: {
 		type: DataTypes.STRING,
 		allowNull: false
 	},
-	icon: {
-		type: DataTypes.STRING,
-		allowNull: false,
-		defaultValue: "houseSignal"
-	},
-	color: {
-		type: DataTypes.STRING,
-		allowNull: false,
-		defaultValue: "accent"
-	},
-	tags: {
-		type: DataTypes.TEXT,
-		allowNull: false,
-		defaultValue: ""
-	},
-	area: {
+	value: {
 		type: DataTypes.STRING,
 		allowNull: true
 	},
-	token: {
-		type: DataTypes.TEXT,
-		allowNull: false
+	order: {
+		type: DataTypes.NUMBER,
+		allowNull: false,
+		defaultValue: 0
 	},
 	created: {
 		type: DataTypes.INTEGER,
@@ -78,7 +69,7 @@ DeviceModel.init({
 	}
 }, {
 	sequelize: database,
-	tableName: "devices",
+	tableName: "trigger_condition_items",
 	createdAt: "created",
 	updatedAt: "updated",
 	timestamps: true,
@@ -93,4 +84,4 @@ DeviceModel.init({
 	}
 });
 
-export default DeviceModel;
+export default TriggerConditionItemModel;

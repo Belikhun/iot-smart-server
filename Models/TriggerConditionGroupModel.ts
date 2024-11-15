@@ -2,69 +2,48 @@ import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
 import moment from "moment";
 
-interface DeviceAttributes {
+interface TriggerConditionGroupAttributes {
 	id?: number;
-	hardwareId: string;
-	name: string;
-	icon?: string;
-	color?: string;
-	tags?: string;
-	area?: string;
-	token: string;
+	triggerId: number;
+	parentId: number | null;
+	operator: string;
+	order: number;
 	created?: number;
 	updated?: number;
 }
 
-class DeviceModel extends Model<DeviceAttributes> implements DeviceAttributes {
+class TriggerConditionGroupModel extends Model<TriggerConditionGroupAttributes> implements TriggerConditionGroupAttributes {
 	declare id?: number;
-	declare hardwareId: string;
-	declare name: string;
-	declare icon?: string;
-	declare color?: string;
-	declare tags?: string;
-	declare area?: string;
-	declare token: string;
+	declare triggerId: number;
+	declare parentId: number | null;
+	declare operator: string;
+	declare order: number;
 	declare created?: number;
 	declare updated?: number;
 }
 
-DeviceModel.init({
+TriggerConditionGroupModel.init({
 	id: {
 		type: DataTypes.INTEGER,
 		autoIncrement: true,
 		primaryKey: true
 	},
-	hardwareId: {
-		type: DataTypes.STRING,
-		allowNull: false,
-		unique: true
-	},
-	name: {
-		type: DataTypes.STRING,
+	triggerId: {
+		type: DataTypes.NUMBER,
 		allowNull: false
 	},
-	icon: {
-		type: DataTypes.STRING,
-		allowNull: false,
-		defaultValue: "houseSignal"
-	},
-	color: {
-		type: DataTypes.STRING,
-		allowNull: false,
-		defaultValue: "accent"
-	},
-	tags: {
-		type: DataTypes.TEXT,
-		allowNull: false,
-		defaultValue: ""
-	},
-	area: {
-		type: DataTypes.STRING,
+	parentId: {
+		type: DataTypes.NUMBER,
 		allowNull: true
 	},
-	token: {
-		type: DataTypes.TEXT,
+	operator: {
+		type: DataTypes.STRING,
 		allowNull: false
+	},
+	order: {
+		type: DataTypes.NUMBER,
+		allowNull: false,
+		defaultValue: 0
 	},
 	created: {
 		type: DataTypes.INTEGER,
@@ -78,7 +57,7 @@ DeviceModel.init({
 	}
 }, {
 	sequelize: database,
-	tableName: "devices",
+	tableName: "trigger_condition_groups",
 	createdAt: "created",
 	updatedAt: "updated",
 	timestamps: true,
@@ -93,4 +72,4 @@ DeviceModel.init({
 	}
 });
 
-export default DeviceModel;
+export default TriggerConditionGroupModel;
