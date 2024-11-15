@@ -5,7 +5,7 @@ import type { Trigger } from "../TriggerService";
 import type { TriggerCondition } from "./TriggerCondition";
 import { TriggerConditionItem } from "./TriggerConditionItem";
 
-enum GroupOperator {
+export enum GroupOperator {
 	AND = "and",
 	OR = "or"
 }

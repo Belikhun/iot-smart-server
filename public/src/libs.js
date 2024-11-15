@@ -1922,15 +1922,18 @@ class ScreenUtils {
 	 * @param   {object}				options
 	 * @param   {boolean}				options.newTab		Open link in new tab.
 	 * @param   {boolean}				options.isExternal	Is target link external from current screen.
+	 * @param   {string}				options.color		Link color.
 	 * @returns {HTMLElement}
 	 */
-	static renderLink(display, link = () => {}, { newTab = false, isExternal = true } = {}) {
-		const node = makeTree("a", "screen-link", {
+	static renderLink(display, link = () => {}, { newTab = false, isExternal = true, color = "accent" } = {}) {
+		const node = makeTree("a", ["map-color", "screen-link"], {
 			display: { tag: "span", class: "display" },
 			icon: (isExternal)
 				? { tag: "icon", icon: "externalLink" }
 				: null
 		});
+
+		node.dataset.color = color;
 
 		if (isElement(display)) {
 			node.display.appendChild(display);
@@ -2138,7 +2141,7 @@ class ScreenUtils {
 	 * @returns	{HTMLElement}
 	 */
 	static renderIcon(icon, {
-		color = "default",
+		color = undefined,
 		style = "solid",
 		classes = undefined
 	} = {}) {

@@ -513,3 +513,94 @@ class DeviceFeature extends Model {
 		return instances;
 	}
 }
+
+class Trigger extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {string} */
+		this.name = null;
+
+		/** @type {string} */
+		this.icon = null;
+
+		/** @type {string} */
+		this.color = null;
+
+		/** @type {number} */
+		this.lastTrigger = null;
+
+		/** @type {boolean} */
+		this.active = null;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	async save() {
+		const data = {
+			name: this.name,
+			icon: this.icon,
+			color: this.color,
+			active: this.active,
+			...this.extraSaveData
+		};
+
+		if (this.id) {
+			const response = await myajax({
+				url: app.api(`/trigger/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+
+			Trigger.processResponse(response.data);
+			this.extraSaveData = {};
+			return response;
+		} else {
+			if (this.parent)
+				data.parent = this.parent.id;
+
+			const response = await myajax({
+				url: app.api(`/trigger/create`),
+				method: "POST",
+				json: data
+			});
+
+			Trigger.processResponse(response.data);
+			this.extraSaveData = {};
+			return response;
+		}
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}		response
+	 * @returns	{Trigger}
+	 */
+	static processResponse(response) {
+		return super.processResponse(response);
+	}
+
+	static processField(name, value, response, instance) {
+		// switch (name) {
+		// 	case "features":
+		// 		return TriggerFeature.processResponses(value, instance);
+		// }
+
+		return super.processField(name, value);
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}		responses
+	 * @returns	{Trigger[]}
+	 */
+	static processResponses(responses) {
+		return super.processResponses(responses);
+	}
+}

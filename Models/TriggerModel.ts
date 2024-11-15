@@ -8,6 +8,7 @@ interface TriggerAttributes {
 	icon?: string;
 	color?: string;
 	lastTrigger?: number;
+	active?: boolean;
 	created?: number;
 	updated?: number;
 }
@@ -18,6 +19,7 @@ class TriggerModel extends Model<TriggerAttributes> implements TriggerAttributes
 	declare icon?: string;
 	declare color?: string;
 	declare lastTrigger?: number;
+	declare active?: boolean;
 	declare created?: number;
 	declare updated?: number;
 }
@@ -45,7 +47,12 @@ TriggerModel.init({
 	lastTrigger: {
 		type: DataTypes.NUMBER,
 		allowNull: false,
-		defaultValue: ""
+		defaultValue: 0
+	},
+	active: {
+		type: DataTypes.BOOLEAN,
+		allowNull: false,
+		defaultValue: true
 	},
 	created: {
 		type: DataTypes.INTEGER,

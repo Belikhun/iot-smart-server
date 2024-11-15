@@ -54,7 +54,11 @@ export class FeatureBase {
 		return false;
 	}
 
-	public setValue(newValue: any, source: FeatureUpdateSource = FeatureUpdateSource.INTERNAL): FeatureBase {
+	public setValue(
+		newValue: any,
+		source: FeatureUpdateSource = FeatureUpdateSource.INTERNAL,
+		sourceWS: WebSocket | null = null
+	): FeatureBase {
 		const processedValue = this.processValue(newValue);
 
 		if (this.currentValue === newValue)
@@ -67,9 +71,9 @@ export class FeatureBase {
 		if (this.updateHandler)
 			this.updateHandler(this.currentValue);
 
-		if (source !== FeatureUpdateSource.DASHBOARD) {
+		if (source !== FeatureUpdateSource.DASHBOARD || sourceWS) {
 			this.log.debug("Sẽ thực hiện cập nhật bảng điều khiển");
-			this.doUpdateDashboard();
+			this.doUpdateDashboard(sourceWS);
 		}
 
 		if (source !== FeatureUpdateSource.DEVICE) {
@@ -116,9 +120,17 @@ export class FeatureBase {
 
 	/**
 	 * Push this value to dashboard.
+	 *
+	 * @param	{WebSocket}		[sourceWS=null]		The source websocket that triggered this update.
 	 */
-	protected doUpdateDashboard() {
-		sendDashboardCommand("update", this.getUpdateData(), this.model.uuid);
+	protected doUpdateDashboard(sourceWS: WebSocket | null = null) {
+		sendDashboardCommand(
+			"update",
+			this.getUpdateData(),
+			this.model.uuid,
+			sourceWS ? [sourceWS.id] : []
+		);
+
 		return this;
 	}
 

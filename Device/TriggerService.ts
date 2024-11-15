@@ -4,7 +4,7 @@ import TriggerModel from "../Models/TriggerModel";
 import { time } from "../Utils/belibrary";
 import { scope, type Logger } from "../Utils/Logger";
 import { TriggerAction } from "./Triggers/TriggerAction";
-import { TriggerConditionGroup } from "./Triggers/TriggerConditionGroup";
+import { GroupOperator, TriggerConditionGroup } from "./Triggers/TriggerConditionGroup";
 
 type TriggerDict = { [id: number]: Trigger };
 
@@ -14,8 +14,8 @@ const triggers: TriggerDict = {};
 export class Trigger {
 
 	public model: TriggerModel;
-
 	protected log: Logger;
+	public lastResult: boolean = false;
 
 	// @ts-expect-error
 	public group: TriggerConditionGroup;
@@ -29,15 +29,21 @@ export class Trigger {
 
 	public async load() {
 		this.log.info(`Đang lấy thông tin nhóm điều kiện chính...`);
-		const groupModel = await TriggerConditionGroupModel.findOne({
+		let groupModel = await TriggerConditionGroupModel.findOne({
 			where: {
 				triggerId: this.model.id,
 				parentId: null
 			}
 		});
 
-		if (!groupModel)
-			throw new Error(`Không tìm thấy nhóm điều kiện chính!`);
+		if (!groupModel) {
+			groupModel = await TriggerConditionGroupModel.create({
+				triggerId: this.model.id as number,
+				parentId: null,
+				operator: GroupOperator.AND,
+				order: 0
+			});
+		}
 
 		this.group = new TriggerConditionGroup(groupModel, this);
 		await this.group.load();
@@ -52,10 +58,15 @@ export class Trigger {
 	}
 
 	public evaluate() {
-		this.log.info(`Đang kiểm tra điều kiện để thực hiện hành động...`);
-		const result = this.group.evaluate();
+		if (!this.model.active) {
+			this.log.info(`Nhóm điều kiện này hiện không hoạt động.`);
+			return false;
+		}
 
-		if (!result) {
+		this.log.info(`Đang kiểm tra điều kiện để thực hiện hành động...`);
+		this.lastResult = this.group.evaluate();
+
+		if (!this.lastResult) {
 			this.log.info(`Điều kiện không thỏa mãn.`);
 			return false;
 		}
@@ -68,6 +79,13 @@ export class Trigger {
 		this.model.lastTrigger = time();
 		this.model.save();
 		return true;
+	}
+
+	public async getReturnData() {
+		return {
+			...this.model.dataValues,
+			lastResult: this.lastResult
+		}
 	}
 }
 
@@ -83,4 +101,22 @@ export const initializeTriggers = async () => {
 		triggers[trigger.model.id as number] = trigger;
 		log.success(`Nạp luật tự động hóa ${trigger.model.name} thành công!`);
 	}
+}
+
+export const getTriggers = () => {
+	return triggers;
+}
+
+export const getTrigger = (id: number): Trigger | null => {
+	if (triggers[id])
+		return triggers[id];
+
+	return null;
+}
+
+export const registerTrigger = async (triggerModel: TriggerModel): Promise<Trigger> => {
+	const trigger = new Trigger(triggerModel);
+	await trigger.load();
+	triggers[trigger.model.id as number] = trigger;
+	return trigger;
 }

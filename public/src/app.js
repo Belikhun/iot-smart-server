@@ -46,7 +46,15 @@ const app = {
 	/** @type {?ContextMenu} */
 	currentContextMenu: null,
 
-	init() {
+	initialized: false,
+
+	/** @type {string[]} */
+	colors: [],
+	
+	/** @type {string[]} */
+	icons: [],
+
+	async init() {
 		this.root.style.setProperty("--accent", this.data.accent);
 		this.root.style.setProperty("--accent-raw", this.data.accentRaw.join(" "));
 
@@ -59,7 +67,14 @@ const app = {
 		ConnectionState.init();
 		addEventListener("resize", () => this.updateScreenMode());
 		this.updateScreenMode();
-		initGroup(this, "app");
+		await initGroup(this, "app");
+
+		this.initialized = true;
+		this.loaded();
+	},
+
+	loaded() {
+		screens.activate();
 	},
 
 	set loading(loading) {

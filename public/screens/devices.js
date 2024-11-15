@@ -55,7 +55,7 @@ const devices = {
 	/** @type {{ [uuid: string]: DeviceFeature }} */
 	features: {},
 
-	init() {
+	async init() {
 		this.view = makeTree("div", "device-list", {
 			devices: { tag: "div", class: "devices" }
 		});
@@ -74,7 +74,7 @@ const devices = {
 
 		this.screen.content = this.view;
 		this.screen.addAction(this.updateButton);
-		this.screen.onActivate(() => this.update());
+		await this.update()
 	},
 
 	/**

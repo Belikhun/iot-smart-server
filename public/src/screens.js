@@ -26,15 +26,32 @@ const screens = {
 	/** @type {ScreenGroup} */
 	system: undefined,
 
+	/** @type {ScreenGroup} */
+	automation: undefined,
+
 	locationHash: undefined,
+
+	called: false,
 
     init() {
 		this.locationHash = location.hash;
 		this.system = new ScreenGroup("system", app.string("system"));
+		this.automation = new ScreenGroup("automation", "Tự động hóa");
     },
 
 	activate() {
+		if (!app.initialized)
+			return;
+
+		if (!app.session)
+			return;
+
+		if (this.called)
+			return;
+
+		this.log("INFO", `Initializing app...`);
 		websocket.connect();
 		app.screen.activateByHash(this.locationHash);
+		this.called = true;
 	}
 }

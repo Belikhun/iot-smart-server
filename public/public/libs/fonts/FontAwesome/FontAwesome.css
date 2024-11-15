@@ -96,6 +96,10 @@ body.dark icon {
 	color: #dfdfdf;
 }
 
+icon.map-color {
+	color: var(--color);
+}
+
 icon[data-icon="circle"]::after {
 	font-weight: 200;
 }

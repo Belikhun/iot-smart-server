@@ -326,36 +326,6 @@ code {
 		--color: var(--osc-color-navyBlue);
 		--text: white;
 	}
-
-	&[color="viettelRed"],
-	&[data-color="viettelRed"] {
-		--color: #FF3B30;
-		--text: white;
-	}
-
-	&[color="viettelOrange"],
-	&[data-color="viettelOrange"] {
-		--color: #FF6B00;
-		--text: white;
-	}
-
-	&[color="viettelBlue"],
-	&[data-color="viettelBlue"] {
-		--color: #2D84FF;
-		--text: white;
-	}
-
-	&[color="viettelGreen"],
-	&[data-color="viettelGreen"] {
-		--color: #39B54A;
-		--text: white;
-	}
-
-	&[color="viettelPurple"],
-	&[data-color="viettelPurple"] {
-		--color: #BA52FF;
-		--text: white;
-	}
 }
 
 .sq-btn {
@@ -2525,7 +2495,7 @@ code {
 }
 
 .screen-link {
-	color: var(--accent);
+	color: var(--color);
 	text-decoration: none;
 	cursor: pointer;
 

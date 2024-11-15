@@ -129,7 +129,6 @@ export default class Device {
 			connected: this.connected,
 			address: this.websocket?.remoteAddress || null
 		}
-
 	}
 
 	public async saveUpdatedValues() {

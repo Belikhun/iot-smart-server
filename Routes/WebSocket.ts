@@ -144,7 +144,7 @@ websocketRouter.ws("/device", {
 const sessions: { [id: string]: SessionModel } = {}
 const dashboards: { [sessionId: string]: WebSocket } = {}
 
-export const sendDashboardCommand = (command: string, data: any = null, target = "system") => {
+export const sendDashboardCommand = (command: string, data: any = null, target = "system", ignores: string[] = []) => {
 	const timestamp = runtime()
 
 	const payload = {
@@ -155,6 +155,9 @@ export const sendDashboardCommand = (command: string, data: any = null, target =
 	};
 
 	for (const [sessionId, ws] of Object.entries(dashboards)) {
+		if (ignores.includes(ws.id))
+			continue;
+
 		logDev.outgoing(`[${ws.id}@${timestamp}] ${command} -> ${sessionId}`);
 		ws.send(payload);
 	}
@@ -228,7 +231,8 @@ websocketRouter.ws("/dashboard", {
 					return;
 				}
 
-				feature.setValue(value, FeatureUpdateSource.DASHBOARD);
+				// @ts-expect-error
+				feature.setValue(value, FeatureUpdateSource.DASHBOARD, ws);
 				break;
 			}
 
