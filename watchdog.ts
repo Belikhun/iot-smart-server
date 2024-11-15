@@ -28,7 +28,7 @@ export const startWatchdog = () => {
 	if (watchdogTask)
 		clearInterval(watchdogTask);
 
-	watchdogTask = setInterval(() => run(), 10000);
+	watchdogTask = setInterval(() => run(), 5000);
 }
 
 export const stopWatchdog = () => {

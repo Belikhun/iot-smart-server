@@ -376,6 +376,8 @@ class Device extends Model {
 const UPDATE_SOURCE_INTERNAL = "internal";
 const UPDATE_SOURCE_SERVER = "server";
 const UPDATE_SOURCE_CONTROL = "control";
+const FEATURE_FLAG_READ = 1;
+const FEATURE_FLAG_WRITE = 2;
 
 class DeviceFeature extends Model {
 	constructor(id) {
@@ -402,6 +404,15 @@ class DeviceFeature extends Model {
 		/** @type {any} */
 		this.value = null;
 
+		/** @type {any} */
+		this.previousValue = null;
+
+		/** @type {number} */
+		this.flags = null;
+
+		/** @type {object} */
+		this.extras = null;
+
 		/** @type {FeatureRenderer} */
 		this.renderer = null;
 
@@ -410,6 +421,16 @@ class DeviceFeature extends Model {
 
 		/** @type {Number} */
 		this.updated = null;
+	}
+
+	/**
+	 * Does this feature support the specified flag?
+	 * 
+	 * @param		{number}	flag 
+	 * @returns		{boolean}
+	 */
+	support(flag) {
+		return ((this.flags & flag) > 0);
 	}
 
 	render() {

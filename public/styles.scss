@@ -240,6 +240,7 @@
 			margin: auto 0;
 
 			> .name {
+				display: inline-block;
 				font-size: 0.85rem;
 			}
 		}
@@ -314,43 +315,6 @@
 				left: calc(100% - 3rem);
 			}
 		}
-	}
-}
-
-.gauge-component {
-	> .ticks > line {
-		stroke-width: 2px;
-		stroke: var(--background-3);
-	}
-
-	> .background,
-	> .value {
-		stroke-width: var(--arc-width);
-		stroke-linecap: round;
-		fill: transparent;
-	}
-
-	> .background {
-		stroke: var(--background-2);
-	}
-
-	> .hand {
-		--rotation: 0deg;
-
-		transform: rotate(var(--rotation));
-		transition: all 1s cubic-bezier(0.33, 1, 0.68, 1);
-
-		&.shaking {
-			animation-name: perf-gauge-shaking;
-			animation-timing-function: ease-in-out;
-			animation-duration: 0.2s;
-			animation-iteration-count: infinite;
-		}
-	}
-
-	> .center {
-		fill: transparent;
-		stroke-width: 8px;
 	}
 }
 
@@ -445,9 +409,129 @@
 			background-color: var(--background-2);
 		}
 	}
+
+	&.dragging {
+		--border: var(--accent);
+
+		> .thumb {
+			background-color: var(--background-3);
+		}
+	}
+}
+
+.gauge-component {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+
+	width: fit-content;
+	margin: 0 auto;
+	overflow: hidden;
+	user-select: none;
+
+	--border: rgb(225, 225, 225);
+
+	> .gauge-arc {
+		> .background,
+		> .dangerous,
+		> .value {
+			stroke-width: var(--arc-width);
+			stroke-linecap: round;
+			fill: transparent;
+		}
+
+		> .background {
+			stroke: var(--background-2);
+		}
+
+		> .dangerous {
+			stroke: var(--osc-color-red);
+			stroke-opacity: 0.2;
+		}
+
+		> .value {
+			stroke: var(--accent);
+		}
+	}
+
+	> .value {
+		position: absolute;
+		display: block;
+
+		left: var(--center-x);
+		top: calc(var(--center-y) - 8px);
+		text-align: center;
+
+		transform: translate(-50%, -50%);
+
+		> .current {
+			font-size: 1.15rem;
+			font-weight: 700;
+		}
+
+		> .unit {
+			font-size: 0.85rem;
+			font-weight: 600;
+		}
+	}
+
+	> .min-value,
+	> .max-value {
+		position: absolute;
+		bottom: 0;
+
+		font-size: 0.65rem;
+		line-height: 1;
+		color: var(--text-secondary);
+	}
+
+	> .min-value {
+		left: 1.5rem;
+	}
+
+	> .max-value {
+		right: 1.5rem;
+	}
+
+	> .hand {
+		position: absolute;
+		bottom: 0;
+
+		left: calc(var(--center-x) - 0.1rem);
+		top: var(--center-y);
+
+		height: var(--radius);
+		transform: translateY(-100%) rotate(var(--rotation));
+		transform-origin: center bottom;
+		width: 0;
+
+		&::before {
+			content: "";
+			position: absolute;
+
+			top: 0.5rem;
+			left: -6px;
+
+			width: 0;
+			height: 0;
+			border-style: solid;
+			border-width: 0 6px 10.4px 6px;
+			border-color: transparent transparent var(--accent) transparent;
+		}
+	}
+
+	&.dangerous {
+		> .gauge-arc > .value {
+			stroke: var(--osc-color-red);
+		}
+	}
 }
 
 .feature-temperature,
 .feature-humidity {
 	font-size: 2.25rem;
+
+	> strong {
+		font-size: 3.5rem;
+	}
 }

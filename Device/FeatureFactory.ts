@@ -6,6 +6,7 @@ import { FeatureHumidity } from "./Features/FeatureHumidity";
 import { FeatureKnob } from "./Features/FeatureKnob";
 import { FeatureOnOffPin } from "./Features/FeatureOnOffPin";
 import { FeatureRGBLed } from "./Features/FeatureRGBLed";
+import { FeatureSensorValue } from "./Features/FeatureSensorValue";
 import { FeatureTemperature } from "./Features/FeatureTemperature";
 
 const RegisteredFeatures = {
@@ -14,7 +15,8 @@ const RegisteredFeatures = {
 	"FeatureRGBLed": FeatureRGBLed,
 	"FeatureKnob": FeatureKnob,
 	"FeatureTemperature": FeatureTemperature,
-	"FeatureHumidity": FeatureHumidity
+	"FeatureHumidity": FeatureHumidity,
+	"FeatureSensorValue": FeatureSensorValue
 }
 
 export function resolveFeature(model: DeviceFeatureModel, device: Device): FeatureBase {

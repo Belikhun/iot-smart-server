@@ -139,7 +139,7 @@ export default class Device {
 		}
 	}
 
-	public async createFeature({ featureId, uuid, name, kind }: { featureId: string, uuid: string, name: string, kind: string }) {
+	public async createFeature({ featureId, uuid, name, kind, flags, ...extras }: { featureId: string, uuid: string, name: string, kind: string, flags: number }) {
 		if (!isFeatureAvailable(kind)) {
 			log.warn(`Tính năng ${kind} hiện chưa được hỗ trợ, sẽ bỏ qua tính năng này.`);
 			return null;
@@ -151,7 +151,8 @@ export default class Device {
 			featureId,
 			uuid,
 			name,
-			kind
+			kind,
+			extras
 		});
 
 		log.info(`Đang đăng kí tính năng vào hệ thống... (id=${model.id})`);

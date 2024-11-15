@@ -9,6 +9,11 @@ export enum FeatureUpdateSource {
 	INTERNAL = "internal"
 }
 
+export enum FeatureFlag {
+	READ = 1,
+	WRITE = 2
+}
+
 type FeatureValueUpdateHandler = (value: any) => void | Promise<void>;
 
 export class FeatureBase {
@@ -20,6 +25,7 @@ export class FeatureBase {
 	public shouldPushValue: boolean = false;
 	public device: Device;
 	public kind: string;
+	public flags: number;
 	protected log: Logger;
 
 	protected updateHandler: FeatureValueUpdateHandler | null = null;
@@ -28,6 +34,7 @@ export class FeatureBase {
 		this.kind = this.constructor.name;
 		this.model = model;
 		this.device = device;
+		this.flags = model.flags || 3;
 		this.log = scope(`feature:${model.uuid}`);
 		this.currentValue = this.processValue(this.unserializeValue(model.value));
 	}
@@ -67,6 +74,10 @@ export class FeatureBase {
 
 	public getValue(): any {
 		return this.currentValue;
+	}
+
+	public support(flag: FeatureFlag): boolean {
+		return ((this.flags & flag) > 0);
 	}
 
 	public onUpdate(handler: FeatureValueUpdateHandler) {
@@ -126,7 +137,8 @@ export class FeatureBase {
 	public async getReturnData() {
 		return {
 			...this.model.dataValues,
-			value: this.getValue()
+			value: this.getValue(),
+			extras: this.model.get("extras")
 		}
 	}
 

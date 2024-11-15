@@ -114,16 +114,14 @@ websocketRouter.ws("/device", {
 				const device = devices[ws.id];
 				device.lastHeartbeat = time();
 
-				for (const { id, uuid, name, kind } of data) {
-					if (device.getFeature(id))
+				for (const feature of data) {
+					feature.featureId = feature.id;
+					delete feature.id;
+
+					if (device.getFeature(feature.featureId))
 						continue;
 
-					await device.createFeature({
-						featureId: id,
-						uuid,
-						name,
-						kind
-					});
+					await device.createFeature(feature);
 				}
 
 				device.sync();

@@ -212,6 +212,40 @@ class FeatureRenderer {
 
 				break;
 			}
+
+			case "FeatureSensorValue": {
+				const { min, max, unit, dangerous } = this.model.extras;
+
+				const gauge = new GaugeComponent({
+					minValue: min,
+					maxValue: max,
+					dangerousValue: dangerous,
+					unit
+				});
+
+				let currentValue = 0;
+
+				const setValue = (value) => {
+					gauge.value = value;
+					currentValue = value;
+				};
+
+				instance = {
+					view: gauge.container,
+
+					onInput: (handler) => {},
+
+					set value(value) {
+						setValue(value);
+					},
+
+					get value() {
+						return currentValue;
+					}
+				};
+
+				break;
+			}
 		
 			default: {
 				const view = document.createElement("div");

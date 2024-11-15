@@ -11,6 +11,8 @@ interface DeviceFeatureAttributes {
 	kind: string;
 	value?: any;
 	previousValue?: any;
+	flags?: number;
+	extras?: object;
 	created?: number;
 	updated?: number;
 }
@@ -24,6 +26,8 @@ class DeviceFeatureModel extends Model<DeviceFeatureAttributes> implements Devic
 	declare kind: string;
 	declare value?: any;
 	declare previousValue?: any;
+	declare flags?: number;
+	declare extras?: object;
 	declare created?: number;
 	declare updated?: number;
 }
@@ -62,11 +66,30 @@ DeviceFeatureModel.init({
 		type: DataTypes.STRING,
 		allowNull: true
 	},
+	flags: {
+		type: DataTypes.INTEGER,
+		allowNull: false,
+		defaultValue: 3
+	},
+	extras: {
+		type: DataTypes.TEXT,
+		allowNull: true,
+		get() {
+			// @ts-expect-error
+			return JSON.parse(this.getDataValue("extras"));
+		},
+
+		set(value) {
+			// @ts-expect-error
+			this.setDataValue("extras", JSON.stringify(value));
+		},
+	},
 	created: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
 		defaultValue: () => moment().unix()
 	},
+
 	updated: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
