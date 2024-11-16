@@ -366,9 +366,51 @@ function renderActionValue(action) {
 		}
 
 		case "setFromFeature": {
-			const input = createInput({
-				type: "number",
-				label: "Tính năng"
+			/** @type {AutocompleteInputInstance<DeviceFeature>} */
+			const input = createAutocompleteInput({
+				id: `action_value_renderer_${randString(7)}`,
+				label: "Tính năng nguồn",
+				color: "accent",
+	
+				fetch: async (search) => {
+					const features = Object.values(devices.features);
+	
+					if (!search)
+						return features.slice(0, 30);
+	
+					const tokens = search
+						.toLocaleLowerCase()
+						.split(" ");
+	
+					return features.filter((value) => {
+						const target = [value.name, value.kind, value.uuid, value.featureId, value.device.name]
+							.join(" ")
+							.toLocaleLowerCase();
+	
+						for (const token of tokens) {
+							if (!target.includes(token))	
+								return false;
+						}
+	
+						return true;
+					});
+				},
+	
+				process: (item) => {
+					return {
+						label: item.renderItem(),
+						value: item.id
+					}
+				},
+	
+				onInput: (value, { trusted }) => {
+					this.deviceFeature = value;
+	
+					if (this.view && trusted) {
+						this.render();
+						this.doSave();
+					}
+				}
 			});
 
 			return {
@@ -377,15 +419,23 @@ function renderActionValue(action) {
 				input: input.input,
 
 				onInput: (handler) => {
-					input.input.addEventListener("input", () => handler(input.input.value));
+					input.onInput((value, { trusted }) => {
+						if (!trusted)
+							return;
+
+						handler(value.uuid);
+					});
 				},
 
 				set value(value) {
-					input.input.value = value;
+					input.value = devices.getDeviceFeature(value);
 				},
 
 				get value() {
-					return input.value;
+					if (input.value)
+						return input.value.uuid;
+
+					return null;
 				},
 
 				set disabled(disabled) {

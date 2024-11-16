@@ -1,6 +1,6 @@
 import TriggerActionModel from "../../Models/TriggerActionModel";
 import { scope, type Logger } from "../../Utils/Logger";
-import { getDeviceFeatureById } from "../Device";
+import { getDeviceFeature, getDeviceFeatureById } from "../Device";
 import type { FeatureBase } from "../Features/FeatureBase";
 import type { Trigger } from "../TriggerService";
 
@@ -34,6 +34,8 @@ export class TriggerAction {
 	}
 
 	public load() {
+		this.action = this.model.action as ActionType;
+
 		if (this.feature.model.id == this.model.deviceFeatureId)
 			return this;
 
@@ -43,7 +45,6 @@ export class TriggerAction {
 			throw new Error(`Không tìm thấy tính năng với mã ${this.model.deviceFeatureId}`);
 
 		this.feature = feature;
-		this.action = this.model.action as ActionType;
 		return this;
 	}
 
@@ -57,7 +58,7 @@ export class TriggerAction {
 			}
 
 			case ActionType.SET_FROM_FEATURE: {
-				const source = getDeviceFeatureById(this.model.newValue as number);
+				const source = getDeviceFeature(this.model.newValue);
 
 				if (!source) {
 					this.log.warn(`Không tìm thấy tính năng với mã #${this.model.newValue}`);

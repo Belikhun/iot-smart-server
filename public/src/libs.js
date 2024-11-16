@@ -85,7 +85,7 @@ function createDashboardCheckbox() {
 }
 
 /**
- * @template	{Model}		AIT
+ * @template	{Model}		T
  * @typedef {{
  *	group: HTMLElement
  *  input: HTMLInputElement
@@ -94,7 +94,7 @@ function createDashboardCheckbox() {
  *  disabled: boolean
  *  loading: boolean
  * 	message: string
- *  onInput: (f: (value: any, { trusted: bool }) => void) => void
+ *  onInput: (f: (value: T, { trusted: bool }) => void) => void
  * }} AutocompleteInputInstance
  */
 
