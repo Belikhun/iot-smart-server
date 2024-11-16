@@ -925,3 +925,7 @@ icon[data-icon="rightLeft"]::after {
 icon[data-icon="inputNumeric"]::after {
 	content: "\e1bd";
 }
+
+icon[data-icon="device"]::after {
+	content: "\e1f0";
+}

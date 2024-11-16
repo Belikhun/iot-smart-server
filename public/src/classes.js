@@ -320,9 +320,6 @@ class User extends Model {
 			this.extraSaveData = {};
 			return User.processResponse(response.data);
 		} else {
-			if (this.parent)
-				data.parent = this.parent.id;
-
 			const response = await myajax({
 				url: app.api(`/user/create`),
 				method: "POST",
@@ -415,6 +412,32 @@ class Device extends Model {
 	reset() {
 		websocket.send("reset", true, this.hardwareId);
 		return this;
+	}
+
+	async save() {
+		const data = {
+			name: this.name,
+			icon: this.icon,
+			color: this.color,
+			tags: this.tags.join(";"),
+			area: this.area,
+			...this.extraSaveData
+		};
+
+		let response;
+
+		if (this.id) {
+			response = await myajax({
+				url: app.api(`/device/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+		} else {
+			throw new Error("NOT_SUPPORTED");
+		}
+
+		this.extraSaveData = {};
+		return Device.processResponse(response.data);
 	}
 
 	/**

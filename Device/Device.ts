@@ -14,11 +14,13 @@ export enum DeviceStatus {
 }
 
 type DeviceDict = { [hardwareId: string]: Device };
+type DeviceIdMap = { [id: number]: Device };
 type DeviceFeatureDict = { [uuid: string]: FeatureBase };
 type DeviceFeatureIdMap = { [id: number]: FeatureBase };
 
 const log = scope("devices");
 const devices: DeviceDict = {};
+const deviceIdMap: DeviceIdMap = {};
 const deviceFeatures: DeviceFeatureDict = {};
 const deviceFeatureIdMap: DeviceFeatureIdMap = {};
 
@@ -221,6 +223,7 @@ export const initializeDevices = async () => {
 		const device = new Device(deviceModel);
 		await device.loadFeatures();
 		devices[device.model.hardwareId] = device;
+		deviceIdMap[device.model.id as number] = device;
 		log.success(`Nạp thông tin thiết bị ${device.model.name} thành công!`);
 	}
 }
@@ -228,6 +231,13 @@ export const initializeDevices = async () => {
 export const getDevice = (hardwareId: string): Device | null => {
 	if (devices[hardwareId])
 		return devices[hardwareId];
+
+	return null;
+}
+
+export const getDeviceById = (id: number): Device | null => {
+	if (deviceIdMap[id])
+		return deviceIdMap[id];
 
 	return null;
 }
@@ -261,8 +271,11 @@ export const createDevice = async ({ hardwareId, name, token }: { hardwareId: st
 	log.info(`Đang đăng kí thiết bị vào hệ thống... (id=${model.id})`);
 	const device = new Device(model);
 	await device.loadFeatures();
+
 	devices[device.model.hardwareId] = device;
+	deviceIdMap[device.model.id as number] = device;
 	log.success(`Nạp thông tin thiết bị ${device.model.name} thành công!`);
+
 	sendDashboardCommand("update:device", { id: model.id, hardwareId: model.hardwareId }, model.hardwareId);
 	return device;
 }

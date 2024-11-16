@@ -222,6 +222,8 @@ code {
 .map-color {
 	--color: var(--background-2);
 	--text: var(--text-primary);
+	--map-color: var(--color);
+	--map-text: var(--text);
 
 	&[color="accent"],
 	&[data-color="accent"] {

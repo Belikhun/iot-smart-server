@@ -283,6 +283,8 @@
 
 	transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
+	--main-color: var(--color, var(--accent));
+
 	> .handle {
 		position: absolute;
 		display: block;
@@ -304,7 +306,7 @@
 	}
 
 	&.activated {
-		background-color: var(--accent);
+		background-color: var(--main-color);
 
 		> .handle {
 			left: calc(100% - 2.5rem);
@@ -330,6 +332,7 @@
 	cursor: n-resize;
 
 	--border: rgb(225, 225, 225);
+	--main-color: var(--color, var(--accent));
 
 	&::after {
 		content: "";
@@ -355,7 +358,7 @@
 		}
 
 		> .value {
-			stroke: var(--accent);
+			stroke: var(--main-color);
 		}
 	}
 
@@ -384,7 +387,7 @@
 			width: 0.4rem;
 			height: 1rem;
 
-			background-color: var(--accent);
+			background-color: var(--main-color);
 			border-radius: 0.5rem;
 		}
 	}
@@ -411,7 +414,7 @@
 	}
 
 	&.dragging {
-		--border: var(--accent);
+		--border: var(--main-color);
 
 		> .thumb {
 			background-color: var(--background-3);
@@ -430,6 +433,7 @@
 	user-select: none;
 
 	--border: rgb(225, 225, 225);
+	--main-color: var(--color, var(--accent));
 
 	> .gauge-arc {
 		> .background,
@@ -450,7 +454,7 @@
 		}
 
 		> .value {
-			stroke: var(--accent);
+			stroke: var(--main-color);
 		}
 	}
 
@@ -516,7 +520,7 @@
 			height: 0;
 			border-style: solid;
 			border-width: 0 6px 10.4px 6px;
-			border-color: transparent transparent var(--accent) transparent;
+			border-color: transparent transparent var(--main-color) transparent;
 		}
 	}
 

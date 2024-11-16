@@ -55,7 +55,14 @@ const devices = {
 	/** @type {{ [uuid: string]: DeviceFeature }} */
 	features: {},
 
+	/** @type {ScreenForm<Device>} */
+	form: undefined,
+
+	name: "",
+
 	async init() {
+		this.name = "Thiết bị";
+
 		this.view = makeTree("div", "device-list", {
 			devices: { tag: "div", class: "devices" }
 		});
@@ -70,6 +77,95 @@ const devices = {
 		this.updateButton = createButton("", {
 			icon: "reload",
 			onClick: () => this.update()
+		});
+
+		this.form = new ScreenForm({
+			main: {
+				name: app.string("form.group.main"),
+				rows: [
+					{
+						name: {
+							type: "text",
+							label: app.string("table.name"),
+							required: true
+						}
+					}
+				]
+			},
+
+			specification: {
+				name: app.string("form.group.specification"),
+				rows: [
+					{
+						icon: {
+							type: "autocomplete",
+							label: app.string("table.icon"),
+							required: true,
+
+							options: {
+								/** @type {AutocompleteInputFetch} */
+								fetch: async (search) => {
+									if (!search)
+										return app.icons;
+
+									return app.icons.filter((v) => v.includes(search));
+								},
+
+								/** @type {AutocompleteInputProcess} */
+								process: (item) => {
+									return {
+										label: ScreenUtils.renderSpacedRow(
+											ScreenUtils.renderIcon(item),
+											item
+										),
+										value: item
+									};
+								}
+							}
+						},
+
+						color: {
+							type: "autocomplete",
+							label: app.string("table.color"),
+							required: true,
+
+							options: {
+								/** @type {AutocompleteInputFetch} */
+								fetch: async (search) => {
+									if (!search)
+										return app.colors;
+
+									return app.colors.filter((v) => v.includes(search));
+								},
+
+								/** @type {AutocompleteInputProcess} */
+								process: (item) => {
+									return {
+										label: ScreenUtils.renderBadge(app.string(`color.${item}`), item),
+										value: item
+									};
+								}
+							}
+						}
+					},
+					{
+						tags: {
+							type: "text",
+							label: app.string("table.tags")
+						},
+
+						area: {
+							type: "text",
+							label: app.string("table.area")
+						}
+					}
+				]
+			}
+		});
+
+		this.screen.onSideToggle((showing) => {
+			if (!showing)
+				this.form.show = false;
 		});
 
 		this.screen.content = this.view;
@@ -101,6 +197,55 @@ const devices = {
 			return null;
 
 		return this.features[uuid];
+	},
+
+	/**
+	 * Start editing device.
+	 *
+	 * @param   {Device}     instance
+	 */
+	edit(instance) {
+		devices.screen.showSide({
+			title: app.string("model_editing", { model: this.name, name: instance.name }),
+			content: this.form.form
+		});
+
+		this.form.defaults = {
+			...instance,
+			tags: instance.tags.join(";")
+		};
+
+		this.form.reset();
+		this.form.title = app.string("model_editing", { model: this.name, name: instance.name });
+
+		setTimeout(() => {
+			this.form.show = true;
+		}, 200);
+
+		this.form.onSubmit(async (values) => {
+			for (const [name, value] of Object.entries(values))
+				instance[name] = value;
+
+			instance.tags = instance.tags.split(";");
+
+			try {
+				await instance.save();
+			} catch (e) {
+				// 221 is FieldError
+				if (e.data && e.data.code === 221) {
+					this.form.setError(e.data.data.name, e.data.details);
+					return;
+				}
+
+				throw e;
+			}
+
+			devices.screen.alert("OKAY", app.string("model_edited", { model: this.name, name: instance.name }));
+
+			// Set new default and reload table.
+			this.form.defaults = instance;
+			this.renderDevices();
+		});
 	},
 
 	async update() {
@@ -188,7 +333,7 @@ const devices = {
 		const editButton = createButton("", {
 			icon: "pencil",
 			color: "blue",
-			onClick: () => instance.edit()
+			onClick: () => this.edit(instance.device)
 		});
 
 		const actionButton = createButton("", {
@@ -255,6 +400,8 @@ const devices = {
 		};
 
 		instance.update = () => {
+			view.dataset.color = instance.device.color;
+			view.info.type.icon.dataset.icon = instance.device.icon;
 			view.info.info.qName.innerText = instance.device.name;
 			view.info.info.status.innerText = instance.device.connected ? "Trực Tuyến" : "Ngoại Tuyến";
 			view.info.info.status.dataset.color = instance.device.connected ? "green" : "red";
@@ -288,24 +435,7 @@ const devices = {
 			menu.disable("config", !instance.device.connected);
 		};
 
-		instance.edit = () => {
-			// if (!this.currentDepartment)
-			// 	return;
-
-			// const url = this.route(`question/${device.id}/editQuestionUrl?embeded=true`);
-
-			// this.editQuestionFrame.source = {
-			// 	type: "iframe",
-			// 	src: url
-			// };
-
-			// this.screen.showPanel({
-			// 	title: app.string("model_editing", { model: app.string("question"), name: question.name }),
-			// 	content: this.editQuestionFrame.container
-			// });
-
-			// this.editQuestionFrame.load();
-		};
+		instance.edit = () => this.edit(instance.device);
 
 		instance.delete = async () => {
 			// try {

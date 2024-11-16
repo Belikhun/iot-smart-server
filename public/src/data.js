@@ -58,10 +58,14 @@ app.strings = {
 	"table.sessionId": "Mã phiên",
 	"table.expire": "Hiệu lực",
 	"table.status": "Trạng thái",
+	"table.tags": "Các thẻ",
+	"table.area": "Vùng",
 
 	"model_user": "Người dùng",
 	"status_never": "Chưa truy cập",
 	"user_password_optional": "Mật khẩu (nhập để đổi)",
+	"model_created": "Tạo thành công :model: mới, ID :id:",
+	"model_edited": "Cập nhật thông tin :model: thành công cho :name:",
 
 	"operator.and": "Tất cả các điều kiện thỏa mãn",
 	"operator.andNot": "Tất cả các điều kiện không thỏa mãn",

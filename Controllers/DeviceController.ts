@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import APIResponse from "../Classes/APIResponse";
-import { getDevice, getDevices } from "../Device/Device";
+import { getDevice, getDeviceById, getDevices } from "../Device/Device";
 
 export const deviceController = new Elysia({ prefix: "/device" });
 
@@ -12,6 +12,24 @@ deviceController.get("/list", async ({ request }) => {
 		instances.push(await device.getReturnData());
 
 	return new APIResponse(0, `Danh sách các thiết bị`, 200, instances);
+});
+
+deviceController.post("/:id/edit", async ({ params: { id }, request }) => {
+	const instance = getDeviceById(parseInt(id));
+
+	if (!instance)
+		throw new Error(`Thiết bị với mã #${id} không tồn tại!`);
+
+	const { name, icon, color, tags, area } = await request.json();
+
+	instance.model.name = name;
+	instance.model.icon = icon;
+	instance.model.color = color;
+	instance.model.tags = (tags) ? tags.join(";") : "";
+	instance.model.area = area;
+	await instance.model.save();
+
+	return new APIResponse(0, `Danh sách các thiết bị`, 200, await instance.getReturnData());
 });
 
 deviceController.get("/:hardwareId/info", async ({ params: { hardwareId }, request }) => {
