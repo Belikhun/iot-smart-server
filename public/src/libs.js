@@ -6639,7 +6639,9 @@ class ScreenInfoGrid {
 			const collapseGroup = new ScreenCollapsableGroup({
 				label,
 				collapsed,
-				headerLine: (!group.headerLine) ? false : headerLine
+				headerLine: (typeof group.headerLine !== "undefined")
+					? group.headerLine
+					: headerLine
 			});
 
 			collapseGroup.container.classList.add("group");

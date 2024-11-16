@@ -4,6 +4,7 @@ import APIResponse from "../Classes/APIResponse";
 import UserModel from "../Models/UserModel";
 import { validatePassword } from "../Utils/Password";
 import SessionModel from "../Models/SessionModel";
+import { time } from "../Utils/belibrary";
 
 export const authController = new Elysia({ prefix: "/auth" });
 
@@ -19,8 +20,10 @@ authController.post("/login", async ({ request, server, cookie }: HttpServerCont
 		return new APIResponse(2, "Mật khẩu không chính xác!", 403);
 
 	user.lastIP = server?.requestIP(request)?.address || "";
+	user.lastAccess = time();
 	const session = await SessionModel.start(user);
 	cookie.Session.value = session.sessionId;
+	await user.save();
 
 	return new APIResponse(0, "Đăng nhập thành công!", 200, await session.getReturnData());
 });

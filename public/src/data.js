@@ -35,7 +35,9 @@ app.strings = {
 
 	"button.actions": "Hành động",
 	"button.create": "Tạo mới",
-	"button.tryAgain ": "Thử lại",
+	"button.tryAgain": "Thử lại",
+
+	"tab.info": "Thông tin",
 
 	"table.id": "ID",
 	"table.name": "Tên",
@@ -46,6 +48,20 @@ app.strings = {
 	"table.trigger": "Luật kích hoạt",
 	"table.created": "Đã tạo",
 	"table.updated": "Đã cập nhật",
+	"table.user": "Người dùng",
+	"table.username": "Tên tài khoản",
+	"table.email": "Email",
+	"table.lastAccess": "Truy cập cuối",
+	"table.lastIP": "Địa chỉ IP",
+	"table.isAdmin": "Quản trị viên",
+	"table.password": "Mật khẩu",
+	"table.sessionId": "Mã phiên",
+	"table.expire": "Hiệu lực",
+	"table.status": "Trạng thái",
+
+	"model_user": "Người dùng",
+	"status_never": "Chưa truy cập",
+	"user_password_optional": "Mật khẩu (nhập để đổi)",
 
 	"operator.and": "Tất cả các điều kiện thỏa mãn",
 	"operator.andNot": "Tất cả các điều kiện không thỏa mãn",

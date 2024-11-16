@@ -11,6 +11,7 @@ interface UserAttributes {
 	lastPassword?: string;
 	lastIP?: string;
 	isAdmin: boolean;
+	lastAccess?: number;
 	created?: number;
 	updated?: number;
 }
@@ -24,6 +25,7 @@ class UserModel extends Model<UserAttributes> implements UserAttributes {
 	declare lastPassword: string;
 	declare lastIP: string;
 	declare isAdmin: boolean;
+	declare lastAccess: number;
 	declare created: number;
 	declare updated: number;
 
@@ -74,13 +76,19 @@ UserModel.init({
 		allowNull: false,
 		defaultValue: false
 	},
+	lastAccess: {
+		type: DataTypes.NUMBER,
+		allowNull: true
+	},
 	created: {
 		type: DataTypes.INTEGER,
-		allowNull: false
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	},
 	updated: {
 		type: DataTypes.INTEGER,
-		allowNull: false
+		allowNull: false,
+		defaultValue: () => moment().unix()
 	}
 }, {
 	sequelize: database,

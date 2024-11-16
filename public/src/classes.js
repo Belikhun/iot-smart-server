@@ -265,6 +265,12 @@ class User extends Model {
 		/** @type {boolean} */
 		this.isAdmin = null;
 
+		/** @type {?number} */
+		this.lastAccess = null;
+
+		/** @type {?string} */
+		this.password = null;
+
 		/** @type {Number} */
 		this.created = null;
 
@@ -274,6 +280,67 @@ class User extends Model {
 
 	getAvatarUrl() {
 		return app.api(`/user/${this.username}/avatar`);
+	}
+
+	/**
+	 * Render mini profile of this user.
+	 *
+	 * @returns {HTMLDivElement}
+	 */
+	render() {
+		const node = makeTree("a", "user-info", {
+			image: new lazyload({ source: this.getAvatarUrl(), classes: "avatar" }),
+			fullname: { tag: "div", class: "name", text: this.name },
+
+			badge: (this.isAdmin)
+				? ScreenUtils.renderBadge("ADMIN", "blue")
+				: null
+		});
+
+		return node;
+	}
+
+	async save() {
+		const data = {
+			username: this.username,
+			name: this.name,
+			email: this.email,
+			isAdmin: this.isAdmin,
+			password: this.password,
+			...this.extraSaveData
+		};
+
+		if (this.id) {
+			const response = await myajax({
+				url: app.api(`/user/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+
+			this.extraSaveData = {};
+			return User.processResponse(response.data);
+		} else {
+			if (this.parent)
+				data.parent = this.parent.id;
+
+			const response = await myajax({
+				url: app.api(`/user/create`),
+				method: "POST",
+				json: data
+			});
+
+			this.extraSaveData = {};
+			return User.processResponse(response.data);
+		}
+	}
+
+	async delete() {
+		await myajax({
+			url: app.api(`/user/${this.id}/delete`),
+			method: "DELETE"
+		});
+
+		this.id = null;
 	}
 
 	/**
