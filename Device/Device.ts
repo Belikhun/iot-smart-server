@@ -153,6 +153,7 @@ export default class Device {
 			uuid,
 			name,
 			kind,
+			flags,
 			extras
 		});
 
