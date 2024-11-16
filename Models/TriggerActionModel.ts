@@ -6,6 +6,7 @@ interface TriggerActionAttributes {
 	id?: number;
 	triggerId: number;
 	deviceFeatureId: number;
+	action?: string;
 	newValue?: any;
 	created?: number;
 	updated?: number;
@@ -15,6 +16,7 @@ class TriggerActionModel extends Model<TriggerActionAttributes> implements Trigg
 	declare id?: number;
 	declare triggerId: number;
 	declare deviceFeatureId: number;
+	declare action?: string;
 	declare newValue?: any;
 	declare created?: number;
 	declare updated?: number;
@@ -33,6 +35,11 @@ TriggerActionModel.init({
 	deviceFeatureId: {
 		type: DataTypes.NUMBER,
 		allowNull: false
+	},
+	action: {
+		type: DataTypes.STRING,
+		allowNull: true,
+		defaultValue: "setValue"
 	},
 	newValue: {
 		type: DataTypes.STRING,

@@ -5,6 +5,7 @@ import TriggerModel from "../Models/TriggerModel";
 import { TriggerConditionGroup, TriggerGroups, TriggerItems } from "../Device/Triggers/TriggerConditionGroup";
 import { getDeviceFeatureById } from "../Device/Device";
 import { TriggerConditionItem } from "../Device/Triggers/TriggerConditionItem";
+import { TriggerAction } from "../Device/Triggers/TriggerAction";
 
 export const triggerController = new Elysia({ prefix: "/trigger" });
 
@@ -159,6 +160,74 @@ triggerController.post("/:id/group/:gid/item/create", async ({ params: { id, gid
 		deviceFeature: feature,
 		comparator,
 		value
+	});
+
+	return new APIResponse(0, `Tạo điều kiện mới thành công!`, 200, await instance.getReturnData());
+});
+
+triggerController.get("/:id/action", async ({ params: { id }, request }) => {
+	const trigger = getTrigger(parseInt(id));
+
+	if (!trigger)
+		throw new Error(`Không tìm thấy luật kích hoạt với mã #${id}`);
+
+	const actions = [];
+
+	for (const action of Object.values(trigger.actions))
+		actions.push(await action.getReturnData());
+
+	return new APIResponse(0, `Các hành động của luật ${trigger.model.name}`, 200, actions);
+});
+
+triggerController.post("/:id/action/:aid/edit", async ({ params: { id, aid }, request }) => {
+	const trigger = getTrigger(parseInt(id));
+	if (!trigger)
+		throw new Error(`Không tìm thấy luật kích hoạt với mã #${id}`);
+
+	const instance = trigger.actions[parseInt(aid)];
+	if (!instance)
+		throw new Error(`Không tìm thấy hành động với mã #${aid}`);
+
+	const { deviceFeature, action, newValue } = await request.json();
+
+	instance.model.deviceFeatureId = deviceFeature;
+	instance.model.action = action;
+	instance.model.newValue = newValue;
+	await instance.model.save();
+	instance.load();
+
+	return new APIResponse(0, `Cập nhật thành công!`, 200, await instance.getReturnData());
+});
+
+triggerController.delete("/:id/action/:aid/delete", async ({ params: { id, aid }, request }) => {
+	const trigger = getTrigger(parseInt(id));
+	if (!trigger)
+		throw new Error(`Không tìm thấy luật kích hoạt với mã #${id}`);
+
+	const instance = trigger.actions[parseInt(aid)];
+	if (!instance)
+		throw new Error(`Không tìm thấy hành động với mã #${aid}`);
+
+	await instance.delete();
+	return new APIResponse(0, `Xóa bỏ thành công!`, 200);
+});
+
+triggerController.post("/:id/action/create", async ({ params: { id }, request }) => {
+	const trigger = getTrigger(parseInt(id));
+	if (!trigger)
+		throw new Error(`Không tìm thấy luật kích hoạt với mã #${id}`);
+
+	const { deviceFeature, action, newValue } = await request.json();
+
+	const feature = getDeviceFeatureById(deviceFeature);
+	if (!feature)
+		throw new Error(`Không tìm thấy tính năng với mã #${deviceFeature}`);
+
+	const instance = await TriggerAction.create({
+		trigger,
+		deviceFeature: feature,
+		action,
+		newValue
 	});
 
 	return new APIResponse(0, `Tạo điều kiện mới thành công!`, 200, await instance.getReturnData());

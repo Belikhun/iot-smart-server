@@ -1210,10 +1210,14 @@ class TriggerItem extends Model {
 			if (this.currentComparator)
 				this.currentComparator.disabled = true;
 
-			await this.save();
-
-			if (this.view)
-				this.render();
+			try {
+				await this.save();
+	
+				if (this.view)
+					this.render();
+			} catch (e) {
+				app.screen.active.handleError(e);
+			}
 
 			this.featureInput.disabled = false;
 			this.comparatorInput.disabled = false;
@@ -1302,6 +1306,311 @@ class TriggerItem extends Model {
 	 *
 	 * @param	{object[]}				responses
 	 * @returns	{Promise<TriggerItem[]>}
+	 */
+	static async processResponses(responses) {
+		const instances = [];
+
+		for (const response of responses)
+			instances.push(await this.processResponse(response));
+
+		return instances;
+	}
+}
+
+class TriggerAction extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {Trigger} */
+		this.trigger = null;
+
+		/** @type {DeviceFeature} */
+		this.deviceFeature = null;
+
+		/** @type {"setValue" | "setFromFeature" | "toggleValue"} */
+		this.action = null;
+
+		/** @type {any} */
+		this.newValue = null;
+
+		/** @type {TreeDOM} */
+		this.view = null;
+
+		this.deleteButton = createButton("", {
+			icon: "trash",
+			color: "red",
+			onClick: () => this.delete()
+		});
+
+		/** @type {AutocompleteInputInstance<DeviceFeature>} */
+		this.featureInput = createAutocompleteInput({
+			id: `trigger_item_select_feature_${randString(7)}`,
+			label: "Tính năng",
+			color: "accent",
+
+			fetch: async (search) => {
+				const features = Object.values(devices.features)
+					.filter((feature) => feature.support(FEATURE_FLAG_WRITE));
+
+				if (!search)
+					return features.slice(0, 30);
+
+				const tokens = search
+					.toLocaleLowerCase()
+					.split(" ");
+
+				return features.filter((value) => {
+					const target = [value.name, value.kind, value.uuid, value.featureId, value.device.name]
+						.join(" ")
+						.toLocaleLowerCase();
+
+					for (const token of tokens) {
+						if (!target.includes(token))	
+							return false;
+					}
+
+					return true;
+				});
+			},
+
+			process: (item) => {
+				return {
+					label: item.renderItem(),
+					value: item.id
+				}
+			},
+
+			onInput: (value, { trusted }) => {
+				this.deviceFeature = value;
+
+				if (this.view && trusted) {
+					this.render();
+					this.doSave();
+				}
+			}
+		});
+
+		this.actionInput = createAutocompleteInput({
+			id: `trigger_item_select_action_${randString(7)}`,
+			label: "Hành động",
+			color: "accent",
+
+			fetch: async (search) => {
+				const actions = Object.keys(ActionTypes);
+
+				if (!search)
+					return actions;
+
+				const tokens = search
+					.toLocaleLowerCase()
+					.split(" ");
+
+				return actions.filter((value) => {
+					value = value.toLocaleLowerCase();
+
+					for (const token of tokens) {
+						if (!value.includes(token))	
+							return false;
+					}
+
+					return true;
+				});
+			},
+
+			process: (item) => {
+				return {
+					label: ScreenUtils.renderSpacedRow(
+						ScreenUtils.renderIcon(ActionTypes[item].icon),
+						app.string(`action.${item}`)
+					),
+
+					value: item
+				}
+			},
+
+			onInput: (value, { trusted }) => {
+				this.action = value;
+
+				if (this.view && trusted) {
+					this.render();
+					this.doSave();
+				}
+			}
+		});
+
+		this.saveTimeout = null;
+		this.currentAction = null;
+		this.valueRequired = true;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	render() {
+		if (!this.view) {
+			this.view = makeTree("div", "trigger-item", {
+				header: { tag: "div", class: "header", child: {
+					titl: { tag: "span", class: "title", child: {
+						icon: { tag: "icon", icon: "device" },
+						content: { tag: "div", class: "content", text: "Thiết bị" }
+					}},
+
+					actions: { tag: "span", class: "actions", child: {
+						create: this.deleteButton
+					}}
+				}},
+
+				editor: { tag: "div", class: "editor", child: {
+					feature: this.featureInput,
+					action: this.actionInput,
+					value: { tag: "span", class: "value-wrapper" }
+				}}
+			});
+		}
+
+		if (this.deviceFeature) {
+			this.view.header.titl.icon.dataset.icon = this.deviceFeature.getIcon();
+			this.view.header.titl.content.innerText = this.deviceFeature.name;
+		} else {
+			this.view.header.titl.icon.dataset.icon = "toggleOn";
+			this.view.header.titl.content.innerText = "Chọn tính năng";
+		}
+
+		if (!this.id)
+			this.view.header.titl.content.innerText += " [CHƯA LƯU]";
+
+		this.featureInput.value = this.deviceFeature;
+		this.actionInput.value = this.action;
+
+		if (!this.currentAction || this.currentAction.action !== this.action) {
+			emptyNode(this.view.editor.value);
+			this.currentAction = renderActionValue(this.action);
+
+			if (this.currentAction.view) {
+				this.view.editor.value.style.display = null;
+				this.view.editor.value.appendChild(this.currentAction.view);
+				this.currentAction.value = this.newValue;
+				this.valueRequired = true;
+				
+				this.currentAction.onInput((value) => {
+					if (typeof value === "string" && value.length === 0)
+						return;
+
+					this.newValue = value;
+					this.doSave();
+				});
+			} else {
+				this.view.editor.value.style.display = "none";
+				this.newValue = null;
+				this.valueRequired = false;
+			}
+		}
+
+		return this.view;
+	}
+
+	doSave() {
+		clearTimeout(this.saveTimeout);
+
+		if (!this.deviceFeature || !this.action)
+			return;
+
+		if (this.valueRequired && !this.newValue)
+			return;
+
+		this.saveTimeout = setTimeout(async () => {
+			this.featureInput.disabled = true;
+			this.actionInput.disabled = true;
+
+			if (this.currentAction)
+				this.currentAction.disabled = true;
+
+			try {
+				await this.save();
+	
+				if (this.view)
+					this.render();
+			} catch (e) {
+				app.screen.active.handleError(e);
+			}
+
+			this.featureInput.disabled = false;
+			this.actionInput.disabled = false;
+
+			if (this.currentAction && this.currentAction.input)
+				this.currentAction.disabled = false;
+
+			this.saveTimeout = null;
+		}, 500);
+	}
+
+	async save() {
+		const data = {
+			deviceFeature: this.deviceFeature.id,
+			action: this.action,
+			newValue: this.newValue,
+			...this.extraSaveData
+		};
+
+		let response;
+
+		if (this.id) {
+			response = await myajax({
+				url: app.api(`/trigger/${this.trigger.id}/action/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+		} else {
+			response = await myajax({
+				url:  app.api(`/trigger/${this.trigger.id}/action/create`),
+				method: "POST",
+				json: data
+			});
+
+			if (!MODEL_INSTANCES[this.constructor.name])
+				MODEL_INSTANCES[this.constructor.name] = {};
+
+			this.id = response.data.id;
+			MODEL_INSTANCES[this.constructor.name][this.id] = this;
+		}
+
+		this.extraSaveData = {};
+		const instance = TriggerAction.processResponse(response.data);
+		return instance;
+	}
+
+	async delete() {
+		if (this.id) {
+			await myajax({
+				url: app.api(`/trigger/${this.trigger.id}/action/${this.id}/delete`),
+				method: "DELETE"
+			});
+		}
+
+		await triggers.info.updateActions();
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}				response
+	 * @returns	{Promise<TriggerAction>}
+	 */
+	static async processResponse(response) {
+		const instance = super.processResponse(response);
+		instance.trigger = await Trigger.get(response.triggerId);
+		instance.deviceFeature = await DeviceFeature.get(response.deviceFeatureId);
+		return instance;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}				responses
+	 * @returns	{Promise<TriggerAction[]>}
 	 */
 	static async processResponses(responses) {
 		const instances = [];

@@ -123,18 +123,27 @@ export class TriggerConditionGroup implements TriggerCondition {
 	}
 
 	public async delete() {
+		this.log.info(`Đang xóa toàn bộ các thành phần trong nhóm điều kiện này...`);
 		await Promise.all(this.items.map((item) => item.delete()));
+
+		this.log.info(`Đang xóa các liên kết liên quan tới nhóm điều kiện...`);
 		delete TriggerGroups[this.model.id as number];
+
+		this.log.info(`Đang xóa bản ghi trong cơ sở dữ liệu...`);
 		await this.model.destroy({ force: true });
 		this.items = [];
 
 		if (this.parent) {
+			this.log.info(`Đang loại bỏ liên kết với nhóm cha... (#${this.parent.model.id})`);
 			const index = this.parent.items.indexOf(this);
 
-			if (index >= 0)
+			if (index >= 0) {
+				this.log.debug(`Loại bỏ khỏi danh sách tại vị trí #${index}`);
 				this.parent.items.splice(index, 1);
-			else
+			} else {
+				this.log.debug(`Ép cha tải lại danh sách`);
 				await this.parent.load();
+			}
 		}
 
 		return this;
@@ -174,6 +183,7 @@ export class TriggerConditionGroup implements TriggerCondition {
 		});
 
 		const instance = new this(model, trigger);
+		instance.parent = parent;
 		await instance.load();
 
 		if (parent)

@@ -61,6 +61,7 @@ app.strings = {
 	"comparator.inRange": "Nằm trong khoảng",
 	"comparator.isOn": "Đang bật",
 	"comparator.isOff": "Đang tắt",
+	"comparator.valueChanged": "Giá trị thay đổi",
 
 	"model_creating": "Đang tạo :model: mới",
 	"model_editing": "Đang chỉnh sửa :model: :name:",
@@ -72,6 +73,10 @@ app.strings = {
 	"select": "Đã chọn :item: đối tượng",
 	"form.reset": "Đặt lại",
 	"form.submit": "Xác nhận",
+
+	"action.setValue": "Đặt giá trị",
+	"action.setFromFeature": "Lấy giá trị từ",
+	"action.toggleValue": "Lật trạng thái (bật/tắt)",
 
 	"model_info": "Thông tin chi tiết của :model: :name:",
 	"conditions": "Các điều kiện",

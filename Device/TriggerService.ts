@@ -21,7 +21,7 @@ export class Trigger {
 	// @ts-expect-error
 	public group: TriggerConditionGroup;
 
-	public actions: TriggerAction[] = [];
+	public actions: { [id: number]: TriggerAction } = [];
 
 	public constructor(model: TriggerModel) {
 		this.model = model;
@@ -55,7 +55,7 @@ export class Trigger {
 		});
 
 		for (const actionModel of actionModels)
-			this.actions.push(new TriggerAction(actionModel));
+			this.actions[actionModel.id as number] = new TriggerAction(actionModel, this);
 	}
 
 	public evaluate() {
@@ -74,7 +74,7 @@ export class Trigger {
 
 		this.log.success(`Điều kiện thỏa mãn! Bắt đầu chạy các hành động...`);
 
-		for (const action of this.actions)
+		for (const action of Object.values(this.actions))
 			action.execute();
 
 		this.model.lastTrigger = time();

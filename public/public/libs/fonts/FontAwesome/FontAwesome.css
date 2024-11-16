@@ -913,3 +913,15 @@ icon[data-icon="inboxIn"]::after {
 icon[data-icon="sliderSimple"]::after {
 	content: "\e253";
 }
+
+icon[data-icon="arrowLeftFromArc"]::after {
+	content: "\e615";
+}
+
+icon[data-icon="rightLeft"]::after {
+	content: "\f362";
+}
+
+icon[data-icon="inputNumeric"]::after {
+	content: "\e1bd";
+}

@@ -572,6 +572,24 @@ const triggers = {
 		/** @type {SQButton} */
 		conditionExecute: undefined,
 
+		/** @type {TreeDOM} */
+		actionView: undefined,
+
+		/** @type {TreeDOM} */
+		actionEmpty: undefined,
+
+		/** @type {SQButton} */
+		actionReload: undefined,
+
+		/** @type {SQButton} */
+		actionCreate: undefined,
+
+		/** @type {SQButton} */
+		actionEmptyCreate: undefined,
+		
+		/** @type {TriggerAction[]} */
+		actions: [],
+
 		init() {
 			this.container = document.createElement("div");
 			this.container.classList.add("screen-info");
@@ -615,12 +633,12 @@ const triggers = {
 					}},
 
 					actions: { tag: "span", class: "actions", child: {
-						g1: ScreenUtils.buttonGroup(
-							this.conditionReload,
-							this.conditionCreate
-						),
+						exec: this.conditionExecute,
 
-						exec: this.conditionExecute
+						g1: ScreenUtils.buttonGroup(
+							this.conditionCreate,
+							this.conditionReload
+						)
 					}}
 				}},
 
@@ -628,6 +646,53 @@ const triggers = {
 					empty: this.conditionEmpty
 				}}
 			});
+
+
+			this.actionReload = createButton("", {
+				icon: "reload",
+				color: "blue",
+				onClick: () => this.updateActions()
+			});
+
+			this.actionCreate = createButton("Thêm", {
+				icon: "plus",
+				color: "accent",
+				onClick: () => this.createAction()
+			});
+
+			this.actionEmptyCreate = createButton("Thêm hành động mới", {
+				icon: "plus",
+				color: "accent",
+				onClick: () => this.createAction()
+			});
+
+			this.actionEmpty = makeTree("div", "empty-message", {
+				message: { tag: "div", class: "message", text: "Hiện chưa có hành động nào" },
+				content: { tag: "div", class: "content", text: "Các hành động sẽ được thực thi khi các điều kiện được thỏa mãn." },
+				actions: { tag: "div", class: "actions", child: {
+					create: this.actionEmptyCreate
+				}}
+			});
+
+			this.actionView = makeTree("div", "trigger-actions", {
+				header: { tag: "div", class: "header", child: {
+					titl: { tag: "span", class: "title", child: {
+						content: { tag: "div", class: "content", text: "Hành động" }
+					}},
+
+					actions: { tag: "span", class: "actions", child: {
+						g1: ScreenUtils.buttonGroup(
+							this.actionCreate,
+							this.actionReload
+						)
+					}}
+				}},
+
+				editor: { tag: "div", class: "editor", child: {
+					empty: this.actionEmpty
+				}}
+			});
+
 
 			this.grid = new ScreenInfoGrid(this.container, {
 				info: {
@@ -695,6 +760,12 @@ const triggers = {
 					label: app.string("conditions"),
 					node: this.conditionView,
 					headerLine: false
+				},
+
+				actions: {
+					label: app.string("actions"),
+					node: this.actionView,
+					headerLine: false
 				}
 			}, { columns: 3 });
 
@@ -720,7 +791,8 @@ const triggers = {
 
 			await Promise.all([
 				this.grid.update(),
-				this.updateConditions()
+				this.updateConditions(),
+				this.updateActions()
 			]);
 		},
 
@@ -767,6 +839,47 @@ const triggers = {
 			for (const item of this.conditionGroup.items) {
 				this.conditionView.editor.appendChild(item.render());
 			}
+		},
+
+		async updateActions() {
+			this.actionReload.loading = true;
+
+			try {
+				const response = await myajax({
+					url: app.api(`/trigger/${this.instance.id}/action`),
+					method: "GET"
+				});
+
+				this.actions = await TriggerAction.processResponses(response.data);
+				this.renderActions();
+			} catch (e) {
+				triggers.screen.handleError(e);
+			}
+			
+			this.actionReload.loading = false;
+		},
+
+		renderActions() {
+			emptyNode(this.actionView.editor);
+
+			if (this.actions.length === 0) {
+				this.actionView.editor.appendChild(this.actionEmpty);
+				return;
+			}
+
+			for (const item of this.actions) {
+				this.actionView.editor.appendChild(item.render());
+			}
+		},
+
+		async createAction() {
+			const instance = new TriggerAction(null);
+			instance.trigger = this.instance;
+			instance.action = "setValue";
+
+			this.actions.push(instance);
+			this.renderActions();
+			return instance;
 		}
 	}
 }

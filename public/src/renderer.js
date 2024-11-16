@@ -264,10 +264,14 @@ const Comparators = {
 	contains: { icon: "inboxIn" },
 	inRange: { icon: "sliderSimple" },
 	isOn: { icon: "toggleOn" },
-	isOff: { icon: "toggleOff" }
+	isOff: { icon: "toggleOff" },
+	valueChanged: { icon: "inputNumeric" }
 };
 
 function renderComparatorValue(comparator) {
+	if (!comparator)
+		return { comparator, view: undefined }
+
 	switch (comparator) {
 		case "equal":
 		case "less":
@@ -303,7 +307,8 @@ function renderComparatorValue(comparator) {
 		}
 
 		case "isOn":
-		case "isOff": {
+		case "isOff":
+		case "valueChanged": {
 			return { comparator, view: undefined }
 		}
 	}
@@ -313,6 +318,92 @@ function renderComparatorValue(comparator) {
 
 	return {
 		comparator,
+		view,
+		input: undefined,
+		onInput: () => {},
+		value: false
+	};
+}
+
+const ActionTypes = {
+	setValue: { icon: "equals" },
+	setFromFeature: { icon: "rightLeft" },
+	toggleValue: { icon: "lightSwitch" }
+};
+
+function renderActionValue(action) {
+	if (!action)
+		return { action, view: undefined }
+
+	switch (action) {
+		case "setValue": {
+			const input = createInput({
+				type: "number",
+				label: "Giá trị"
+			});
+
+			return {
+				action,
+				view: input.group,
+				input: input.input,
+
+				onInput: (handler) => {
+					input.input.addEventListener("input", () => handler(input.input.value));
+				},
+
+				set value(value) {
+					input.input.value = value;
+				},
+
+				get value() {
+					return input.value;
+				},
+
+				set disabled(disabled) {
+					input.disabled = disabled;
+				}
+			};
+		}
+
+		case "setFromFeature": {
+			const input = createInput({
+				type: "number",
+				label: "Tính năng"
+			});
+
+			return {
+				action,
+				view: input.group,
+				input: input.input,
+
+				onInput: (handler) => {
+					input.input.addEventListener("input", () => handler(input.input.value));
+				},
+
+				set value(value) {
+					input.input.value = value;
+				},
+
+				get value() {
+					return input.value;
+				},
+
+				set disabled(disabled) {
+					input.disabled = disabled;
+				}
+			};
+		}
+
+		case "toggleValue": {
+			return { action, view: undefined }
+		}
+	}
+
+	const view = document.createElement("div");
+	view.innerText = `Chưa hỗ trợ render so sánh ${action}`;
+
+	return {
+		action,
 		view,
 		input: undefined,
 		onInput: () => {},
