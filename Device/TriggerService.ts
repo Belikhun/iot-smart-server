@@ -82,6 +82,13 @@ export class Trigger {
 		return true;
 	}
 
+	public test() {
+		const result = {};
+		this.log.info(`Đang chạy thử các điều kiện...`);
+		this.lastResult = this.group.evaluate(result);
+		return result;
+	}
+
 	public async getReturnData() {
 		return {
 			...this.model.dataValues,

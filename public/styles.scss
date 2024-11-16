@@ -538,8 +538,8 @@
 	> .header {
 		display: flex;
 		flex-direction: row;
-		justify-content: space-between;
 		align-items: center;
+		gap: 1rem;
 
 		padding: 1rem;
 		border-bottom: 0.1rem solid var(--border);
@@ -547,6 +547,11 @@
 		border-bottom-right-radius: 1rem;
 
 		> .title {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			flex-grow: 1;
+
 			> .content {
 				font-weight: 600;
 			}
@@ -578,6 +583,10 @@
 					background-color: var(--background-1);
 				}
 			}
+		}
+
+		> .status {
+			font-size: 0.85rem;
 		}
 
 		> .actions {
@@ -622,7 +631,8 @@
 	}
 }
 
-.trigger-group {
+.trigger-group,
+.trigger-item {
 	display: flex;
 	flex-direction: column;
 
@@ -632,8 +642,8 @@
 	> .header {
 		display: flex;
 		flex-direction: row;
-		justify-content: space-between;
 		align-items: center;
+		gap: 1rem;
 
 		border-bottom: 0.1rem solid var(--border);
 		border-radius: 1rem;
@@ -643,6 +653,7 @@
 			display: flex;
 			flex-direction: row;
 			align-items: center;
+			flex-grow: 1;
 			gap: 0.5rem;
 
 			margin-left: 1rem;
@@ -684,6 +695,10 @@
 					background-color: var(--background-2);
 				}
 			}
+		}
+
+		> .status {
+			font-size: 0.85rem;
 		}
 
 		> .actions {
@@ -750,80 +765,6 @@
 }
 
 .trigger-item {
-	display: flex;
-	flex-direction: column;
-
-	border: 0.1rem solid var(--border);
-	border-radius: 1rem;
-
-	> .header {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
-		align-items: center;
-
-		border-bottom: 0.1rem solid var(--border);
-		border-radius: 1rem;
-		background-color: var(--background-1);
-
-		> .title {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			gap: 0.5rem;
-
-			margin-left: 1rem;
-
-			> icon {
-				width: 1.5rem;
-				margin-right: 0.5rem;
-				font-size: 1.25rem;
-			}
-
-			> .content {
-				font-size: 0.85rem;
-				font-weight: 600;
-			}
-
-			> .condition {
-				position: relative;
-
-				padding: 0.25rem 0.5rem;
-				border-radius: 0.5rem;
-
-				font-size: 0.85rem;
-				cursor: pointer;
-
-				user-select: none;
-
-				&::after {
-					content: "\f303";
-					margin-left: 0.5rem;
-					font-family: "Font Awesome";
-					font-size: 1em;
-					font-weight: 400;
-					text-rendering: auto;
-					color: var(--text-secondary);
-					-webkit-font-smoothing: antialiased;
-				}
-
-				&:hover {
-					background-color: var(--background-2);
-				}
-			}
-		}
-
-		> .actions {
-			display: flex;
-			flex-direction: row;
-			gap: 0.5rem;
-
-			> .sq-btn {
-				border-radius: 1rem;
-			}
-		}
-	}
-
 	> .editor {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);

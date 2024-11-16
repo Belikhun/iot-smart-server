@@ -233,10 +233,11 @@ triggerController.post("/:id/action/create", async ({ params: { id }, request })
 	return new APIResponse(0, `Tạo điều kiện mới thành công!`, 200, await instance.getReturnData());
 });
 
-triggerController.post("/:id/check", async ({ params: { id }, request }) => {
+triggerController.get("/:id/test", async ({ params: { id }, request }) => {
 	const trigger = getTrigger(parseInt(id));
 	if (!trigger)
 		throw new Error(`Không tìm thấy luật kích hoạt với mã #${id}`);
 
-
+	const result = trigger.test();
+	return new APIResponse(0, `Chạy thử thành công!`, 200, result);
 });

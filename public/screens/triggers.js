@@ -614,7 +614,8 @@ const triggers = {
 
 			this.conditionExecute = createButton("Chạy", {
 				icon: "play",
-				color: "green"
+				color: "green",
+				onClick: () => this.testConditions()
 			});
 
 			this.conditionEmpty = makeTree("div", "empty-message", {
@@ -632,6 +633,8 @@ const triggers = {
 						condition: { tag: "div", class: "condition", text: "---" }
 					}},
 
+					status: { tag: "div", class: "status" },
+
 					actions: { tag: "span", class: "actions", child: {
 						exec: this.conditionExecute,
 
@@ -647,6 +650,7 @@ const triggers = {
 				}}
 			});
 
+			this.conditionView.header.status.style.display = "none";
 
 			this.actionReload = createButton("", {
 				icon: "reload",
@@ -692,7 +696,6 @@ const triggers = {
 					empty: this.actionEmpty
 				}}
 			});
-
 
 			this.grid = new ScreenInfoGrid(this.container, {
 				info: {
@@ -830,6 +833,7 @@ const triggers = {
 
 		renderConditions() {
 			emptyNode(this.conditionView.editor);
+			this.conditionView.header.status.style.display = "none";
 
 			if (this.conditionGroup.items.length === 0) {
 				this.conditionView.editor.appendChild(this.conditionEmpty);
@@ -838,6 +842,19 @@ const triggers = {
 
 			for (const item of this.conditionGroup.items) {
 				this.conditionView.editor.appendChild(item.render());
+			}
+		},
+
+		async testConditions() {
+			try {
+				const response = await myajax({
+					url: app.api(`/trigger/${this.instance.id}/test`),
+					method: "GET"
+				});
+
+				this.conditionGroup.displayTestResult(response.data, this.conditionView.header.status);
+			} catch (e) {
+				triggers.screen.handleError(e, "WARN");
 			}
 		},
 

@@ -102,11 +102,18 @@ export class TriggerConditionItem implements TriggerCondition {
 		return this;
 	}
 
-	public evaluate(): boolean {
+	public evaluate(result: object = {}): boolean {
 		const cType = this.model.comparator;
 
 		if (!Comparators[cType]) {
 			this.log.warn(`Bộ so sánh không tồn tại (${cType})! Sẽ trả về tín hiệu "không"`);
+
+			// @ts-ignore
+			result[this.model.id as number] = {
+				type: "item",
+				result: false
+			};
+
 			return false;
 		}
 
@@ -114,7 +121,15 @@ export class TriggerConditionItem implements TriggerCondition {
 			? this.feature.processValue(this.model.value)
 			: JSON.parse(this.model.value);
 
-		return Comparators[cType](this.feature.getValue(), condValue);
+		const value = Comparators[cType](this.feature.getValue(), condValue);
+
+		// @ts-ignore
+		result[this.model.id as number] = {
+			type: "item",
+			result: value
+		};
+
+		return value;
 	}
 
 	public async getReturnData() {

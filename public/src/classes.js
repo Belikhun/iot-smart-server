@@ -824,6 +824,8 @@ class TriggerGroup extends Model {
 						condition: { tag: "div", class: "condition", text: app.string(`operator.${this.operator}`) }
 					}},
 	
+					status: { tag: "div", class: "status" },
+
 					actions: { tag: "span", class: "actions", child: {
 						group: ScreenUtils.buttonGroup(this.createButton, this.deleteButton)
 					}}
@@ -834,10 +836,12 @@ class TriggerGroup extends Model {
 				}}
 			});
 	
+			this.view.header.status.style.display = "none";
 			this.view.header.titl.condition.addEventListener("click", (e) => this.operatorMenu.openByMouseEvent(e));
 			this.view.header.titl.condition.addEventListener("contextmenu", (e) => this.operatorMenu.openByMouseEvent(e));
 		}
 		
+		this.view.header.status.style.display = "none";
 		this.setOperator(this.operator);
 		emptyNode(this.view.editor);
 
@@ -850,6 +854,41 @@ class TriggerGroup extends Model {
 		}
 
 		return this.view;
+	}
+
+	displayTestResult(resultData, container = null) {
+		const thisResult = resultData[this.id];
+
+		if (!container && this.view)
+			container = this.view.header.status;
+
+		if (container) {
+			container.style.display = null;
+			emptyNode(container);
+		}
+
+		if (!thisResult) {
+			if (container) {
+				container.appendChild(
+					ScreenUtils.renderStatus("INFO", "Không có kết quả")
+				);
+			}
+
+			return;
+		}
+
+		const { type, result, items } = thisResult;
+
+		if (container) {
+			container.appendChild(
+				(result)
+					? ScreenUtils.renderStatus("OKAY", "Đạt")
+					: ScreenUtils.renderStatus("ERROR", "Không đạt")
+			);
+		}
+
+		for (const item of this.items)
+			item.displayTestResult(items);
 	}
 
 	async setOperator(operator) {
@@ -1139,6 +1178,8 @@ class TriggerItem extends Model {
 						icon: { tag: "icon", icon: "device" },
 						content: { tag: "div", class: "content", text: "Thiết bị" }
 					}},
+
+					status: { tag: "div", class: "status" },
 	
 					actions: { tag: "span", class: "actions", child: {
 						create: this.deleteButton
@@ -1151,7 +1192,11 @@ class TriggerItem extends Model {
 					value: { tag: "span", class: "value-wrapper" }
 				}}
 			});
+
+			this.view.header.status.style.display = "none";
 		}
+
+		this.view.header.status.style.display = "none";
 
 		if (this.deviceFeature) {
 			this.view.header.titl.icon.dataset.icon = this.deviceFeature.getIcon();
@@ -1192,6 +1237,35 @@ class TriggerItem extends Model {
 		}
 
 		return this.view;
+	}
+
+	displayTestResult(resultData) {
+		const thisResult = resultData[this.id];
+
+		if (this.view) {
+			this.view.header.status.style.display = null;
+			emptyNode(this.view.header.status);
+		}
+
+		if (!thisResult) {
+			if (this.view) {
+				this.view.header.status.appendChild(
+					ScreenUtils.renderStatus("INFO", "Không có kết quả")
+				);
+			}
+
+			return;
+		}
+
+		const { type, result } = thisResult;
+
+		if (this.view) {
+			this.view.header.status.appendChild(
+				(result)
+					? ScreenUtils.renderStatus("OKAY", "Đạt")
+					: ScreenUtils.renderStatus("ERROR", "Không đạt")
+			);
+		}
 	}
 
 	doSave() {

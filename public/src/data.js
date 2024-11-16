@@ -313,5 +313,20 @@ app.icons = [
 	"temperatureQuarter",
 	"dropletPercent",
 	"houseSignal",
-	"lassoSparkles"
+	"lassoSparkles",
+	"layers",
+	"calculatorSimple",
+	"ampersand",
+	"notEqual",
+	"equals",
+	"lessThan",
+	"lessThanEqual",
+	"greaterThan",
+	"greaterThanEqual",
+	"listTree",
+	"inboxIn",
+	"sliderSimple",
+	"arrowLeftFromArc",
+	"rightLeft",
+	"inputNumeric"
 ];

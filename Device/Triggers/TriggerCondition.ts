@@ -6,7 +6,7 @@ export interface TriggerCondition {
 	order: number;
 	parent: TriggerConditionGroup | null;
 
-	evaluate(): boolean;
+	evaluate(result: object): boolean;
 	getReturnData(): Promise<object>
 	delete(): Promise<this>
 }

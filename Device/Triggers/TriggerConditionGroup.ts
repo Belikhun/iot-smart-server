@@ -89,36 +89,73 @@ export class TriggerConditionGroup implements TriggerCondition {
 		return this;
 	}
 
-	public evaluate(): boolean {
+	public evaluate(result: object = {}): boolean {
+		const thisResult = {
+			type: "group",
+			result: false,
+			items: {}
+		};
+
 		switch (this.operator) {
 			case GroupOperator.AND: {
 				for (const item of this.items) {
-					if (!item.evaluate())
+					if (!item.evaluate(thisResult.items)) {
+						thisResult.result = false;
+
+						// @ts-ignore
+						result[this.model.id as number] = thisResult;
 						return false;
+					}
 				}
 
+				thisResult.result = true;
+
+				// @ts-ignore
+				result[this.model.id as number] = thisResult;
 				return true;
 			}
 
 			case GroupOperator.AND_NOT: {
 				for (const item of this.items) {
-					if (item.evaluate())
+					if (item.evaluate(thisResult.items)) {
+						thisResult.result = false;
+
+						// @ts-ignore
+						result[this.model.id as number] = thisResult;
 						return false;
+					}
 				}
 
+				thisResult.result = true;
+
+				// @ts-ignore
+				result[this.model.id as number] = thisResult;
 				return true;
 			}
 
 			case GroupOperator.OR: {
 				for (const item of this.items) {
-					if (item.evaluate())
+					if (item.evaluate(thisResult.items)) {
+						thisResult.result = true;
+
+						// @ts-ignore
+						result[this.model.id as number] = thisResult;
 						return true;
+					}
 				}
 
+				thisResult.result = false;
+
+				// @ts-ignore
+				result[this.model.id as number] = thisResult;
 				return false;
 			}
 		}
 
+		thisResult.result = false;
+
+		// @ts-ignore
+		result[this.model.id as number] = thisResult;
 		return false;
 	}
 

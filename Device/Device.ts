@@ -163,6 +163,7 @@ export default class Device {
 			const feature = resolveFeature(model, this);
 			this.features[feature.model.featureId] = feature;
 			deviceFeatures[feature.model.uuid] = feature;
+			deviceFeatureIdMap[feature.model.id as number] = feature;
 			feature.setValue(feature.defaultValue());
 			await feature.save();
 
