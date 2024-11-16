@@ -254,3 +254,68 @@ class FeatureRenderer {
 		return featureRenderers[model.uuid];
 	}
 }
+
+const Comparators = {
+	equal: { icon: "equals" },
+	less: { icon: "lessThan" },
+	lessEq: { icon: "lessThanEqual" },
+	more: { icon: "greaterThan" },
+	moreEq: { icon: "greaterThanEqual" },
+	contains: { icon: "inboxIn" },
+	inRange: { icon: "sliderSimple" },
+	isOn: { icon: "toggleOn" },
+	isOff: { icon: "toggleOff" }
+};
+
+function renderComparatorValue(comparator) {
+	switch (comparator) {
+		case "equal":
+		case "less":
+		case "lessEq":
+		case "more":
+		case "moreEq": {
+			const input = createInput({
+				type: "number",
+				label: "Giá trị"
+			});
+
+			return {
+				comparator,
+				view: input.group,
+				input: input.input,
+
+				onInput: (handler) => {
+					input.input.addEventListener("input", () => handler(input.input.value));
+				},
+
+				set value(value) {
+					input.input.value = value;
+				},
+
+				get value() {
+					return input.value;
+				},
+
+				set disabled(disabled) {
+					input.disabled = disabled;
+				}
+			};
+		}
+
+		case "isOn":
+		case "isOff": {
+			return { comparator, view: undefined }
+		}
+	}
+
+	const view = document.createElement("div");
+	view.innerText = `Chưa hỗ trợ render so sánh ${comparator}`;
+
+	return {
+		comparator,
+		view,
+		input: undefined,
+		onInput: () => {},
+		value: false
+	};
+}

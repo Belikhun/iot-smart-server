@@ -826,6 +826,10 @@ icon[data-icon="toggleOn"]::after {
 	content: "\f205";
 }
 
+icon[data-icon="toggleOff"]::after {
+	content: "\f204";
+}
+
 icon[data-icon="binary"]::after {
 	content: "\e33b";
 }
@@ -860,4 +864,52 @@ icon[data-icon="houseSignal"]::after {
 
 icon[data-icon="lassoSparkles"]::after {
 	content: "\e1c9";
+}
+
+icon[data-icon="layers"]::after {
+	content: "\f5fd";
+}
+
+icon[data-icon="calculatorSimple"]::after {
+	content: "\f64c";
+}
+
+icon[data-icon="ampersand"]::after {
+	content: "\26";
+}
+
+icon[data-icon="notEqual"]::after {
+	content: "\f53e";
+}
+
+icon[data-icon="equals"]::after {
+	content: "\3d";
+}
+
+icon[data-icon="lessThan"]::after {
+	content: "\3c";
+}
+
+icon[data-icon="lessThanEqual"]::after {
+	content: "\f537";
+}
+
+icon[data-icon="greaterThan"]::after {
+	content: "\3e";
+}
+
+icon[data-icon="greaterThanEqual"]::after {
+	content: "\f532";
+}
+
+icon[data-icon="listTree"]::after {
+	content: "\e1d2";
+}
+
+icon[data-icon="inboxIn"]::after {
+	content: "\f310";
+}
+
+icon[data-icon="sliderSimple"]::after {
+	content: "\e253";
 }

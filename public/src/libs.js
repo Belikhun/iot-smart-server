@@ -1941,18 +1941,21 @@ class ScreenUtils {
 			node.display.innerHTML = display;
 		}
 
-		if (typeof link === "string") {
-			node.href = link;
-
-			if (newTab) {
-				node.target = "_blank";
-				node.rel = "nofollow";
+		if (link) {
+			if (typeof link === "string") {
+				node.href = link;
+	
+				if (newTab) {
+					node.target = "_blank";
+					node.rel = "nofollow";
+				}
+	
+				return node;
 			}
-
-			return node;
+	
+			node.addEventListener("click", () => link());
 		}
 
-		node.addEventListener("click", () => link());
 		return node;
 	}
 
@@ -6579,6 +6582,7 @@ class ScreenInfoGrid {
 	 *      label: string
 	 * 		columns: number|number[]
 	 *      collapsed: boolean = false
+	 * 		headerLine: boolean = true,
 	 *      items: ScreenGridCell[]
 	 *      node: HTMLElement
 	 *  }
@@ -6635,7 +6639,7 @@ class ScreenInfoGrid {
 			const collapseGroup = new ScreenCollapsableGroup({
 				label,
 				collapsed,
-				headerLine
+				headerLine: (!group.headerLine) ? false : headerLine
 			});
 
 			collapseGroup.container.classList.add("group");

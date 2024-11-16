@@ -5,6 +5,7 @@ import { time } from "../Utils/belibrary";
 import { scope, type Logger } from "../Utils/Logger";
 import { TriggerAction } from "./Triggers/TriggerAction";
 import { GroupOperator, TriggerConditionGroup } from "./Triggers/TriggerConditionGroup";
+import type { TriggerConditionItem } from "./Triggers/TriggerConditionItem";
 
 type TriggerDict = { [id: number]: Trigger };
 

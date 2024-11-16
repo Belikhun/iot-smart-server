@@ -64,7 +64,7 @@ const triggers = {
 		name: "",
 
 		init() {
-			this.name = "Luật kích hoạt";
+			this.name = app.string("table.trigger");
 
 			this.reloadButton = createButton("", { icon: "reload", color: "blue" });
 			this.actions = createButton(app.string("button.actions"), {
@@ -532,6 +532,241 @@ const triggers = {
 			}
 
 			return node;
+		}
+	},
+
+	info: {
+		/** @type {HTMLElement} */
+		container: undefined,
+
+		/** @type {SQButton} */
+		
+		reload: undefined,
+		/** @type {Trigger} */
+		instance: null,
+
+		/** @type {ScreenInfoGrid} */
+		grid: undefined,
+
+		/** @type {TreeDOM} */
+		conditionView: undefined,
+
+		/** @type {TriggerGroup} */
+		conditionGroup: undefined,
+
+		/** @type {ContextMenu} */
+		conditionCreateMenu: undefined,
+
+		/** @type {TreeDOM} */
+		conditionEmpty: undefined,
+
+		/** @type {SQButton} */
+		conditionReload: undefined,
+
+		/** @type {SQButton} */
+		conditionCreate: undefined,
+
+		/** @type {SQButton} */
+		conditionEmptyCreate: undefined,
+
+		/** @type {SQButton} */
+		conditionExecute: undefined,
+
+		init() {
+			this.container = document.createElement("div");
+			this.container.classList.add("screen-info");
+
+			this.conditionReload = createButton("", {
+				icon: "reload",
+				color: "blue",
+				onClick: () => this.updateConditions()
+			});
+
+			this.conditionCreate = createButton("Thêm", {
+				icon: "plus",
+				color: "accent",
+				onClick: () => this.instance.group.createMenu.openAtElement(this.conditionCreate)
+			});
+
+			this.conditionEmptyCreate = createButton("Thêm điều kiện mới", {
+				icon: "plus",
+				color: "accent",
+				onClick: () => this.instance.group.createMenu.openAtElement(this.conditionEmptyCreate)
+			});
+
+			this.conditionExecute = createButton("Chạy", {
+				icon: "play",
+				color: "green"
+			});
+
+			this.conditionEmpty = makeTree("div", "empty-message", {
+				message: { tag: "div", class: "message", text: "Nhóm điều kiện này hiện đang trống" },
+				content: { tag: "div", class: "content", text: "Bạn có thể thêm một điều kiện mới hoặc một nhóm điều kiện mới vào đây." },
+				actions: { tag: "div", class: "actions", child: {
+					create: this.conditionEmptyCreate
+				}}
+			});
+
+			this.conditionView = makeTree("div", "trigger-conditions", {
+				header: { tag: "div", class: "header", child: {
+					titl: { tag: "span", class: "title", child: {
+						content: { tag: "div", class: "content", text: "Nếu" },
+						condition: { tag: "div", class: "condition", text: "---" }
+					}},
+
+					actions: { tag: "span", class: "actions", child: {
+						g1: ScreenUtils.buttonGroup(
+							this.conditionReload,
+							this.conditionCreate
+						),
+
+						exec: this.conditionExecute
+					}}
+				}},
+
+				editor: { tag: "div", class: "editor", child: {
+					empty: this.conditionEmpty
+				}}
+			});
+
+			this.grid = new ScreenInfoGrid(this.container, {
+				info: {
+					label: app.string("info"),
+					items: [
+						{
+							label: app.string("table.id"),
+							value: () => this.instance.id,
+							copyable: true
+						},
+						{
+							label: app.string("table.name"),
+							value: () => this.instance.name,
+							copyable: true
+						},
+						{
+							label: app.string("table.lastTrigger"),
+							value: () => (this.instance.lastTrigger)
+								? relativeTime(this.instance.lastTrigger)
+								: "Chưa được chạy"
+						},
+						{
+							label: app.string("table.created"),
+							value: () => ScreenUtils.renderDate(this.instance.created, true)
+						},
+						{
+							label: app.string("table.updated"),
+							value: () => ScreenUtils.renderDate(this.instance.updated, true)
+						}
+					]
+				},
+
+				specification: {
+					label: app.string("specification"),
+					items: [
+						{
+							label: app.string("table.icon"),
+							value: () => [
+								ScreenUtils.renderSpacedRow(
+									ScreenUtils.renderIcon(this.instance.icon),
+									this.instance.icon
+								),
+								this.instance.icon
+							],
+
+							copyable: true
+						},
+						{
+							label: app.string("table.color"),
+							value: () => [
+								ScreenUtils.renderBadge(app.string(`color.${this.instance.color}`), this.instance.color),
+								this.instance.color
+							],
+
+							copyable: true
+						},
+						{
+							label: app.string("table.active"),
+							value: () => ScreenUtils.renderBoolean(this.instance.active)
+						}
+					]
+				},
+
+				conditions: {
+					label: app.string("conditions"),
+					node: this.conditionView,
+					headerLine: false
+				}
+			}, { columns: 3 });
+
+			this.reload = createButton("", {
+				icon: "reload",
+				onClick: async () => await this.grid.update()
+			});
+		},
+
+		/**
+		 * View trigger info
+		 *
+		 * @param	{Trigger}	instance
+		 */
+		async view(instance) {
+			triggers.screen.showSide({
+				title: app.string("model_info", { model: app.string("table.trigger"), name: instance.name }),
+				content: this.container,
+				actions: [this.reload]
+			});
+
+			this.instance = instance;
+
+			await Promise.all([
+				this.grid.update(),
+				this.updateConditions()
+			]);
+		},
+
+		async updateConditions() {
+			this.conditionReload.loading = true;
+
+			try {
+				const response = await myajax({
+					url: app.api(`/trigger/${this.instance.id}/condition`),
+					method: "GET"
+				});
+
+				const group = await TriggerGroup.processResponse(response.data);
+				const condNode = this.conditionView.header.titl.condition;
+
+				if (!this.conditionGroup) {
+					condNode.addEventListener("click", (e) => group.operatorMenu.openByMouseEvent(e));
+					condNode.addEventListener("contextmenu", (e) => group.operatorMenu.openByMouseEvent(e));
+
+					group.onSaved(() => {
+						condNode.innerText = app.string(`operator.${group.operator}`);
+					});
+				}
+
+				condNode.innerText = app.string(`operator.${group.operator}`);
+				this.conditionGroup = group;
+				this.instance.group = group;
+				this.renderConditions();
+			} catch (e) {
+				triggers.screen.handleError(e);
+			}
+			
+			this.conditionReload.loading = false;
+		},
+
+		renderConditions() {
+			emptyNode(this.conditionView.editor);
+
+			if (this.conditionGroup.items.length === 0) {
+				this.conditionView.editor.appendChild(this.conditionEmpty);
+				return;
+			}
+
+			for (const item of this.conditionGroup.items) {
+				this.conditionView.editor.appendChild(item.render());
+			}
 		}
 	}
 }

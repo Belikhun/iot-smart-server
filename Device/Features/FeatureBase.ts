@@ -30,7 +30,7 @@ export class FeatureBase {
 	public flags: number;
 
 	protected log: Logger;
-	public relatedTriggerItems: TriggerConditionItem[] = [];
+	public relatedTriggerItems: { [id: number]: TriggerConditionItem } = {};
 
 	protected updateHandler: FeatureValueUpdateHandler | null = null;
 
@@ -81,10 +81,11 @@ export class FeatureBase {
 			this.shouldPushValue = true;
 		}
 
-		if (this.relatedTriggerItems.length > 0) {
-			this.log.info(`Đang chạy ${this.relatedTriggerItems.length} nhóm điều kiện liên quan...`);
+		const relatedTriggers = Object.values(this.relatedTriggerItems);
+		if (relatedTriggers.length > 0) {
+			this.log.info(`Đang chạy ${relatedTriggers.length} nhóm điều kiện liên quan...`);
 
-			for (const item of this.relatedTriggerItems) {
+			for (const item of relatedTriggers) {
 				if (!item.evaluate()) {
 					this.log.info(`Thử kiểm tra điều kiện thất bại, sẽ bỏ qua nhóm điều kiện này`);
 					continue;

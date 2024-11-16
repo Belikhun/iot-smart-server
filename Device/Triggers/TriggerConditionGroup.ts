@@ -7,11 +7,17 @@ import { TriggerConditionItem } from "./TriggerConditionItem";
 
 export enum GroupOperator {
 	AND = "and",
+	AND_NOT = "andNot",
 	OR = "or"
 }
 
-export class TriggerConditionGroup implements TriggerCondition {
+type TriggerGroupDict = { [id: number]: TriggerConditionGroup };
+type TriggerItemDict = { [id: number]: TriggerConditionItem };
 
+export const TriggerGroups: TriggerGroupDict = {};
+export const TriggerItems: TriggerItemDict = {};
+
+export class TriggerConditionGroup implements TriggerCondition {
 	public trigger: Trigger;
 	public order: number;
 	public parent: TriggerConditionGroup | null = null;
@@ -29,9 +35,20 @@ export class TriggerConditionGroup implements TriggerCondition {
 		this.order = this.model.order;
 		this.operator = this.model.operator as GroupOperator;
 		this.log = scope(`trigger:group:#${this.model.id}`);
+
+		TriggerGroups[this.model.id as number] = this;
+	}
+
+	public async setOperator(operator: GroupOperator) {
+		this.operator = operator;
+		this.model.operator = operator;
+		await this.model.save();
+		return this;
 	}
 
 	public async load() {
+		this.items = [];
+
 		this.log.info("Đang tìm các thành phần thuộc nhóm này... (nhóm/điều kiện)");
 		const groupModels = await TriggerConditionGroupModel.findAll({
 			where: {
@@ -63,25 +80,105 @@ export class TriggerConditionGroup implements TriggerCondition {
 		}
 
 		this.log.info(`Sắp xếp các thành phần theo thứ tự...`);
+		this.reOrder();
+		return this;
+	}
+
+	public reOrder() {
 		this.items = this.items.sort((a, b) => a.order - b.order);
 		return this;
 	}
 
 	public evaluate(): boolean {
-		if (this.operator === GroupOperator.OR) {
-			for (const item of this.items) {
-				if (item.evaluate())
-					return true;
+		switch (this.operator) {
+			case GroupOperator.AND: {
+				for (const item of this.items) {
+					if (!item.evaluate())
+						return false;
+				}
+
+				return true;
 			}
 
-			return false;
-		}
+			case GroupOperator.AND_NOT: {
+				for (const item of this.items) {
+					if (item.evaluate())
+						return false;
+				}
 
-		for (const item of this.items) {
-			if (!item.evaluate())
+				return true;
+			}
+
+			case GroupOperator.OR: {
+				for (const item of this.items) {
+					if (item.evaluate())
+						return true;
+				}
+
 				return false;
+			}
 		}
 
-		return true;
+		return false;
+	}
+
+	public async delete() {
+		await Promise.all(this.items.map((item) => item.delete()));
+		delete TriggerGroups[this.model.id as number];
+		await this.model.destroy({ force: true });
+		this.items = [];
+
+		if (this.parent) {
+			const index = this.parent.items.indexOf(this);
+
+			if (index >= 0)
+				this.parent.items.splice(index, 1);
+			else
+				await this.parent.load();
+		}
+
+		return this;
+	}
+
+	public async getReturnData() {
+		const items = [];
+
+		for (const item of this.items)
+			items.push(await item.getReturnData());
+
+		return {
+			...this.model.dataValues,
+			kind: "group",
+			items
+		}
+	}
+
+	public static async create({
+		trigger,
+		parent = null,
+		operator
+	}: {
+		trigger: Trigger,
+		parent: TriggerConditionGroup | null,
+		operator: GroupOperator
+	}) {
+		const order = (parent)
+			? ((parent.items.length > 0) ? (parent.items[parent.items.length - 1].order + 1) : 0)
+			: 0;
+
+		const model = await TriggerConditionGroupModel.create({
+			triggerId: trigger.model.id as number,
+			parentId: (parent) ? parent.model.id as number : null,
+			operator,
+			order
+		});
+
+		const instance = new this(model, trigger);
+		await instance.load();
+
+		if (parent)
+			parent.items.push(instance);
+
+		return instance;
 	}
 }

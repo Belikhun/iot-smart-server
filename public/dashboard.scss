@@ -443,15 +443,18 @@ code {
 				font-size: 0.8rem;
 				cursor: pointer;
 
-				&:hover {
-					color: white;
-					background-color: var(--accent);
-				}
-
+				&:hover,
 				&.selected {
 					color: white;
 					background-color: var(--accent);
 
+					icon,
+					.map-color {
+						color: white;
+					}
+				}
+
+				&.selected {
 					&::before {
 						content: "\f058";
 						position: absolute;
@@ -1805,6 +1808,14 @@ code {
 
 			&:hover {
 				background-color: rgba(255, 99, 138, 0.1);
+			}
+		}
+
+		&[data-color="accent"] {
+			--text-color: var(--accent);
+
+			&:hover {
+				background-color: color-mix(in srgb, var(--accent) 5%, transparent);
 			}
 		}
 

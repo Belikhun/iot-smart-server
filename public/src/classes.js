@@ -338,6 +338,13 @@ class Device extends Model {
 		this.updated = null;
 	}
 
+	renderItem() {
+		return ScreenUtils.renderSpacedRow(
+			ScreenUtils.renderIcon(this.icon, { color: this.color }),
+			ScreenUtils.renderLink(this.name, null, { isExternal: false, color: this.color })
+		);
+	}
+
 	reset() {
 		websocket.send("reset", true, this.hardwareId);
 		return this;
@@ -421,6 +428,38 @@ class DeviceFeature extends Model {
 
 		/** @type {Number} */
 		this.updated = null;
+	}
+
+	getIcon() {
+		const { icon } = (FeatureRenderer.FEATURES[this.kind])
+			? FeatureRenderer.FEATURES[this.kind]
+			: { icon: "toggleOn" };
+
+		return icon;
+	}
+
+	renderItem() {
+		return ScreenUtils.renderInstanceDisplay(
+			ScreenUtils.renderSpacedRow(
+				ScreenUtils.renderIcon(this.getIcon(), { color: this.device.color }),
+				ScreenUtils.renderLink(this.name, null, { isExternal: false, color: this.color })
+			),
+			[this.device.renderItem()]
+		)
+	}
+
+	/**
+	 * Get instance by ID, will return cached version
+	 * if available.
+	 *
+	 * @param		{Number}				id
+	 * @returns		{Promise<DeviceFeature>}
+	 */
+	static async get(id) {
+		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+			return MODEL_INSTANCES[this.name][id];
+
+		throw new Error("Not Implemented");
 	}
 
 	/**
@@ -533,11 +572,28 @@ class Trigger extends Model {
 		/** @type {boolean} */
 		this.active = null;
 
+		/** @type {TriggerGroup} */
+		this.group = null;
+
 		/** @type {number} */
 		this.created = null;
 
 		/** @type {number} */
 		this.updated = null;
+	}
+
+	/**
+	 * Get instance by ID, will return cached version
+	 * if available.
+	 *
+	 * @param		{Number}				id
+	 * @returns		{Promise<Trigger>}
+	 */
+	static async get(id) {
+		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+			return MODEL_INSTANCES[this.name][id];
+
+		throw new Error("Not Implemented");
 	}
 
 	async save() {
@@ -556,9 +612,8 @@ class Trigger extends Model {
 				json: data
 			});
 
-			Trigger.processResponse(response.data);
 			this.extraSaveData = {};
-			return response;
+			return Trigger.processResponse(response.data);
 		} else {
 			if (this.parent)
 				data.parent = this.parent.id;
@@ -569,9 +624,8 @@ class Trigger extends Model {
 				json: data
 			});
 
-			Trigger.processResponse(response.data);
 			this.extraSaveData = {};
-			return response;
+			return Trigger.processResponse(response.data);
 		}
 	}
 
@@ -602,5 +656,659 @@ class Trigger extends Model {
 	 */
 	static processResponses(responses) {
 		return super.processResponses(responses);
+	}
+}
+
+class TriggerGroup extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {Trigger} */
+		this.trigger = null;
+
+		/** @type {TriggerGroup | null} */
+		this.parent = null;
+
+		/** @type {"and" | "andNot" | "or"} */
+		this.operator = null;
+
+		/** @type {number} */
+		this.order = null;
+
+		/** @type {"group"} */
+		this.kind = "group";
+
+		/** @type {(TriggerGroup | TriggerItem)[]} */
+		this.items = [];
+
+		this.operatorMenu = new ContextMenu()
+			.add({ id: "and", text: app.string("operator.and"), icon: "check" })
+			.add({ id: "andNot", text: app.string("operator.andNot"), icon: "check" })
+			.separator()
+			.add({ id: "or", text: app.string("operator.or"), icon: "check" });
+
+		this.operatorMenu.items.and.icon.style.display = "none";
+		this.operatorMenu.items.andNot.icon.style.display = "none";
+		this.operatorMenu.items.or.icon.style.display = "none";
+
+		this.operatorMenu.onOpen(() => {
+			this.operatorMenu.items[this.operator].icon.style.display = null;
+			this.operatorMenu.items[this.operator].dataset.color = "accent";
+		});
+
+		this.operatorMenu.onSelect(async (operator) => {
+			if (operator === this.operator)
+				return;
+
+			this.operatorMenu.items[this.operator].icon.style.display = "none";
+			this.operatorMenu.items[this.operator].dataset.color = "default";
+
+			this.operatorMenu.items[operator].icon.style.display = null;
+			this.operatorMenu.items[operator].dataset.color = "accent";
+
+			try {
+				await this.setOperator(operator);
+			} catch (e) {
+				app.screen.active.handleError(e);
+			}
+		});
+
+		this.createMenu = new ContextMenu()
+			.add({ id: "addGroup", text: "Thêm nhóm điều kiện", icon: "layers" })
+			.add({ id: "addItem", text: "Thêm điều kiện", icon: "calculatorSimple" });
+
+		this.createMenu.onSelect(async (action) => {
+			if (action === "addGroup") {
+				await this.createGroup();
+				return;
+			}
+
+			if (action === "addItem") {
+				await this.createItem();
+				return;
+			}
+		});
+
+		/** @type {TreeDOM} */
+		this.view = null;
+
+		/** @type {TreeDOM} */
+		this.emptyView = null;
+
+		this.createButton = createButton("Thêm", {
+			icon: "plus",
+			color: "accent",
+			onClick: () => this.createMenu.openAtElement(this.createButton)
+		});
+
+		this.emptyCreateButton = createButton("Thêm điều kiện mới", {
+			icon: "plus",
+			color: "accent",
+			onClick: () => this.createMenu.openAtElement(this.emptyCreateButton)
+		});
+
+		this.deleteButton = createButton("", {
+			icon: "trash",
+			color: "red",
+			onClick: () => this.delete()
+		});
+
+		this.savedHandlers = [];
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	/**
+	 * Handle saved event
+	 * 
+	 * @param	{(instance: TriggerGroup) => void}	handler 
+	 */
+	onSaved(handler) {
+		this.savedHandlers.push(handler);
+		return this;
+	}
+
+	async createGroup() {
+		const instance = new TriggerGroup(null);
+		instance.trigger = this.trigger;
+		instance.parent = this;
+		instance.operator = "and";
+		await instance.save();
+
+		this.items.push(instance);
+
+		if (this.parent) {
+			this.render();
+		} else {
+			triggers.info.renderConditions();
+		}
+
+		return instance;
+	}
+
+	async createItem() {
+		const instance = new TriggerItem(null);
+		instance.trigger = this.trigger;
+		instance.group = this;
+
+		this.items.push(instance);
+		
+		if (this.parent) {
+			this.render();
+		} else {
+			triggers.info.renderConditions();
+		}
+
+		return instance;
+	}
+
+	render() {
+		if (!this.view) {
+			this.emptyView = makeTree("div", "empty-message", {
+				message: { tag: "div", class: "message", text: "Nhóm điều kiện này hiện đang trống" },
+				content: { tag: "div", class: "content", text: "Bạn có thể thêm một điều kiện mới hoặc một nhóm điều kiện mới vào đây." },
+				actions: { tag: "div", class: "actions", child: {
+					create: this.emptyCreateButton
+				}}
+			});
+	
+			this.view = makeTree("div", "trigger-group", {
+				header: { tag: "div", class: "header", child: {
+					titl: { tag: "span", class: "title", child: {
+						icon: { tag: "icon", icon: "ampersand" },
+						content: { tag: "div", class: "content", text: "Nếu" },
+						condition: { tag: "div", class: "condition", text: app.string(`operator.${this.operator}`) }
+					}},
+	
+					actions: { tag: "span", class: "actions", child: {
+						group: ScreenUtils.buttonGroup(this.createButton, this.deleteButton)
+					}}
+				}},
+	
+				editor: { tag: "div", class: "editor", child: {
+					empty: this.emptyView
+				}}
+			});
+	
+			this.view.header.titl.condition.addEventListener("click", (e) => this.operatorMenu.openByMouseEvent(e));
+			this.view.header.titl.condition.addEventListener("contextmenu", (e) => this.operatorMenu.openByMouseEvent(e));
+		}
+		
+		this.setOperator(this.operator);
+		emptyNode(this.view.editor);
+
+		if (this.items.length === 0) {
+			this.view.editor.appendChild(this.emptyView);
+		} else {
+			for (const item of this.items) {
+				this.view.editor.appendChild(item.render());
+			}
+		}
+
+		return this.view;
+	}
+
+	async setOperator(operator) {
+		if (this.operator !== operator) {
+			this.operator = operator;
+			await this.save();
+		}
+
+		if (this.view) {
+			this.view.header.titl.icon.dataset.icon = {
+				"and": "ampersand",
+				"andNot": "notEqual",
+				"or": "hexagonCheck"
+			}[this.operator];
+
+			this.view.header.titl.condition.innerText = app.string(`operator.${this.operator}`);
+		}
+	
+		return this;
+	}
+
+	async delete() {
+		if (this.id) {
+			await myajax({
+				url: app.api(`/trigger/${this.trigger.id}/group/${this.id}/delete`),
+				method: "DELETE"
+			});
+		}
+
+		if (this.parent) {
+			const index = this.parent.items.indexOf(this);
+
+			if (index >= 0)
+				this.parent.items.splice(index, 1);
+
+			triggers.info.renderConditions();
+		} else {
+			await triggers.info.updateConditions();
+		}
+	}
+
+	async save() {
+		const data = {
+			operator: this.operator,
+			...this.extraSaveData
+		};
+
+		let response;
+
+		if (this.id) {
+			response = await myajax({
+				url: app.api(`/trigger/${this.trigger.id}/group/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+		} else {
+			if (!this.parent)
+				throw new Error(`Không thể tạo nhóm khi không có cha!`);
+
+			response = await myajax({
+				url: app.api(`/trigger/${this.trigger.id}/group/${this.parent.id}/create`),
+				method: "POST",
+				json: data
+			});
+
+			if (!MODEL_INSTANCES[this.constructor.name])
+				MODEL_INSTANCES[this.constructor.name] = {};
+
+			this.id = response.data.id;
+			MODEL_INSTANCES[this.constructor.name][this.id] = this;
+		}
+
+		this.extraSaveData = {};
+		const instance = TriggerGroup.processResponse(response.data);
+
+		for (const handler of this.savedHandlers) {
+			try {
+				await handler(instance);
+			} catch (e) {
+				app.screen.active.handleError(e, "WARN");
+			}
+		}
+
+		return instance;
+	}
+
+	/**
+	 * Get instance by ID, will return cached version
+	 * if available.
+	 *
+	 * @param		{Number}				id
+	 * @returns		{Promise<TriggerGroup>}
+	 */
+	static async get(id) {
+		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+			return MODEL_INSTANCES[this.name][id];
+
+		throw new Error("Not Implemented");
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}				response
+	 * @returns	{Promise<TriggerGroup>}
+	 */
+	static async processResponse(response) {
+		const instance = super.processResponse(response);
+		instance.trigger = await Trigger.get(response.triggerId);
+		instance.parent = (response.parentId)
+			? await TriggerGroup.get(response.parentId)
+			: null;
+
+		instance.items = [];
+
+		for (const item of response.items) {
+			if (item.kind === "group")
+				instance.items.push(await TriggerGroup.processResponse(item));
+			else if (item.kind === "item")
+				instance.items.push(await TriggerItem.processResponse(item));
+		}
+
+		return instance;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}				responses
+	 * @returns	{Promise<TriggerGroup>[]}
+	 */
+	static async processResponses(responses) {
+		const instances = [];
+
+		for (const response of responses)
+			instances.push(await this.processResponse(response));
+
+		return instances;
+	}
+}
+
+class TriggerItem extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {Trigger} */
+		this.trigger = null;
+
+		/** @type {TriggerGroup | null} */
+		this.group = null;
+		
+		/** @type {DeviceFeature} */
+		this.deviceFeature = null;
+
+		/** @type {"equal" | "less" | "lessEq" | "more" | "moreEq" | "contains" | "isOn" | "isOff"} */
+		this.comparator = null;
+
+		/** @type {any} */
+		this.value = null;
+
+		/** @type {number} */
+		this.order = null;
+		
+		/** @type {"item"} */
+		this.kind = "item";
+
+		/** @type {TreeDOM} */
+		this.view = null;
+
+		this.deleteButton = createButton("", {
+			icon: "trash",
+			color: "red",
+			onClick: () => this.delete()
+		});
+
+		/** @type {AutocompleteInputInstance<DeviceFeature>} */
+		this.featureInput = createAutocompleteInput({
+			id: `trigger_item_select_feature_${randString(7)}`,
+			label: "Tính năng",
+			color: "accent",
+
+			fetch: async (search) => {
+				const features = Object.values(devices.features);
+
+				if (!search)
+					return features.slice(0, 30);
+
+				const tokens = search
+					.toLocaleLowerCase()
+					.split(" ");
+
+				return features.filter((value) => {
+					const target = [value.name, value.kind, value.uuid, value.featureId, value.device.name]
+						.join(" ")
+						.toLocaleLowerCase();
+
+					for (const token of tokens) {
+						if (!target.includes(token))	
+							return false;
+					}
+
+					return true;
+				});
+			},
+
+			process: (item) => {
+				return {
+					label: item.renderItem(),
+					value: item.id
+				}
+			},
+
+			onInput: (value, { trusted }) => {
+				this.deviceFeature = value;
+
+				if (this.view && trusted) {
+					this.render();
+					this.doSave();
+				}
+			}
+		});
+
+		this.comparatorInput = createAutocompleteInput({
+			id: `trigger_item_select_comparator_${randString(7)}`,
+			label: "Phép so sánh",
+			color: "accent",
+
+			fetch: async (search) => {
+				const comparators = Object.keys(Comparators);
+
+				if (!search)
+					return comparators;
+
+				const tokens = search
+					.toLocaleLowerCase()
+					.split(" ");
+
+				return comparators.filter((value) => {
+					value = value.toLocaleLowerCase();
+
+					for (const token of tokens) {
+						if (!value.includes(token))	
+							return false;
+					}
+
+					return true;
+				});
+			},
+
+			process: (item) => {
+				return {
+					label: ScreenUtils.renderSpacedRow(
+						ScreenUtils.renderIcon(Comparators[item].icon),
+						app.string(`comparator.${item}`)
+					),
+
+					value: item
+				}
+			},
+
+			onInput: (value, { trusted }) => {
+				this.comparator = value;
+
+				if (this.view && trusted) {
+					this.render();
+					this.doSave();
+				}
+			}
+		});
+
+		this.saveTimeout = null;
+		this.currentComparator = null;
+		this.valueRequired = true;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	render() {
+		if (!this.view) {
+			this.view = makeTree("div", "trigger-item", {
+				header: { tag: "div", class: "header", child: {
+					titl: { tag: "span", class: "title", child: {
+						icon: { tag: "icon", icon: "device" },
+						content: { tag: "div", class: "content", text: "Thiết bị" }
+					}},
+	
+					actions: { tag: "span", class: "actions", child: {
+						create: this.deleteButton
+					}}
+				}},
+
+				editor: { tag: "div", class: "editor", child: {
+					feature: this.featureInput,
+					comparator: this.comparatorInput,
+					value: { tag: "span", class: "value-wrapper" }
+				}}
+			});
+		}
+
+		if (this.deviceFeature) {
+			this.view.header.titl.icon.dataset.icon = this.deviceFeature.getIcon();
+			this.view.header.titl.content.innerText = this.deviceFeature.name;
+		} else {
+			this.view.header.titl.icon.dataset.icon = "toggleOn";
+			this.view.header.titl.content.innerText = "Chọn tính năng";
+		}
+
+		if (!this.id)
+			this.view.header.titl.content.innerText += " [CHƯA LƯU]";
+
+		this.featureInput.value = this.deviceFeature;
+		this.comparatorInput.value = this.comparator;
+
+		if (!this.currentComparator || this.currentComparator.comparator !== this.comparator) {
+			emptyNode(this.view.editor.value);
+			this.currentComparator = renderComparatorValue(this.comparator);
+
+			if (this.currentComparator.view) {
+				this.view.editor.value.style.display = null;
+				this.view.editor.value.appendChild(this.currentComparator.view);
+				this.currentComparator.value = this.value;
+				this.valueRequired = true;
+				
+				this.currentComparator.onInput((value) => {
+					if (typeof value === "string" && value.length === 0)
+						return;
+
+					this.value = value;
+					this.doSave();
+				});
+			} else {
+				this.view.editor.value.style.display = "none";
+				this.value = null;
+				this.valueRequired = false;
+			}
+		}
+
+		return this.view;
+	}
+
+	doSave() {
+		clearTimeout(this.saveTimeout);
+
+		if (!this.deviceFeature || !this.comparator)
+			return;
+
+		if (this.valueRequired && !this.value)
+			return;
+
+		this.saveTimeout = setTimeout(async () => {
+			this.featureInput.disabled = true;
+			this.comparatorInput.disabled = true;
+
+			if (this.currentComparator)
+				this.currentComparator.disabled = true;
+
+			await this.save();
+
+			if (this.view)
+				this.render();
+
+			this.featureInput.disabled = false;
+			this.comparatorInput.disabled = false;
+
+			if (this.currentComparator && this.currentComparator.input)
+				this.currentComparator.disabled = false;
+
+			this.saveTimeout = null;
+		}, 500);
+	}
+
+	async save() {
+		const data = {
+			deviceFeature: this.deviceFeature.id,
+			comparator: this.comparator,
+			value: this.value,
+			...this.extraSaveData
+		};
+
+		let response;
+
+		if (this.id) {
+			response = await myajax({
+				url: app.api(`/trigger/${this.trigger.id}/item/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+		} else {
+			if (!this.group)
+				throw new Error(`Không thể tạo điều kiện khi không có cha!`);
+
+			response = await myajax({
+				url:  app.api(`/trigger/${this.trigger.id}/group/${this.group.id}/item/create`),
+				method: "POST",
+				json: data
+			});
+
+			if (!MODEL_INSTANCES[this.constructor.name])
+				MODEL_INSTANCES[this.constructor.name] = {};
+
+			this.id = response.data.id;
+			MODEL_INSTANCES[this.constructor.name][this.id] = this;
+		}
+
+		this.extraSaveData = {};
+		const instance = TriggerItem.processResponse(response.data);
+		return instance;
+	}
+
+	async delete() {
+		if (this.id) {
+			await myajax({
+				url: app.api(`/trigger/${this.trigger.id}/item/${this.id}/delete`),
+				method: "DELETE"
+			});
+		}
+
+		if (this.group) {
+			const index = this.group.items.indexOf(this);
+
+			if (index >= 0)
+				this.group.items.splice(index, 1);
+
+			triggers.info.renderConditions();
+		} else {
+			await triggers.info.updateConditions();
+		}
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}				response
+	 * @returns	{Promise<TriggerItem>}
+	 */
+	static async processResponse(response) {
+		const instance = super.processResponse(response);
+		instance.trigger = await Trigger.get(response.triggerId);
+		instance.group = await TriggerGroup.get(response.groupId);
+		instance.deviceFeature = await DeviceFeature.get(response.deviceFeatureId);
+		return instance;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}				responses
+	 * @returns	{Promise<TriggerItem[]>}
+	 */
+	static async processResponses(responses) {
+		const instances = [];
+
+		for (const response of responses)
+			instances.push(await this.processResponse(response));
+
+		return instances;
 	}
 }
