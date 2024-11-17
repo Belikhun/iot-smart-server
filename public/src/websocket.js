@@ -6,6 +6,8 @@ const websocket = {
 	/** @type {WebSocket} */
 	socket: null,
 
+	registeredHandlers: {},
+
 	init() {
 
 	},
@@ -96,14 +98,45 @@ const websocket = {
 				}
 
 				feature.setValue(value, UPDATE_SOURCE_SERVER);
-				break;
+				return;
 			}
 
 			case "update:device": {
 				devices.updateDevice(target);
-				break;
+				return;
 			}
 		}
+
+		if (this.registeredHandlers[command]) {
+			for (const handler of this.registeredHandlers[command]) {
+				try {
+					handler({ command, data, target, timestamp })
+				} catch (e) {
+					this.log("WARN", e);
+					continue;
+				}
+			}
+		}
+
+		return;
+	},
+
+	/**
+	 * @typedef {{ command:string, data: any, target: string, timestamp: number }} HandlerData
+	 */
+
+	/**
+	 * Listen for command event and handle it.
+	 * 
+	 * @param {string}							command
+	 * @param {(data: HandlerData) => void}		handler
+	 */
+	on(command, handler) {
+		if (!this.registeredHandlers[command])
+			this.registeredHandlers[command] = [];
+
+		this.registeredHandlers[command].push(handler);
+		return this;
 	}
 }
 

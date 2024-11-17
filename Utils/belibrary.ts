@@ -57,3 +57,23 @@ export function pleft(input: string | number, length: number = 0, right: boolean
 	padd = padd.repeat(Math.max(0, length - input.length));
 	return (right) ? input + padd : padd + input;
 }
+
+export function encodeInt16ArrayToBase64(int16Array: Int16Array): string {
+	const uint8Array = new Uint8Array(int16Array.buffer);
+
+	let binaryString = "";
+	for (let i = 0; i < uint8Array.length; i++)
+		binaryString += String.fromCharCode(uint8Array[i]);
+
+	return btoa(binaryString);
+}
+
+export function decodeBase64ToInt16Array(base64String: string): Int16Array {
+	const binaryString = atob(base64String);
+	const uint8Array = new Uint8Array(binaryString.length);
+
+	for (let i = 0; i < binaryString.length; i++)
+		uint8Array[i] = binaryString.charCodeAt(i);
+
+	return new Int16Array(uint8Array.buffer);
+}

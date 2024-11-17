@@ -929,3 +929,11 @@ icon[data-icon="inputNumeric"]::after {
 icon[data-icon="device"]::after {
 	content: "\e1f0";
 }
+
+icon[data-icon="paperPlaneTop"]::after {
+	content: "\e20a";
+}
+
+icon[data-icon="microphone"]::after {
+	content: "\f130";
+}

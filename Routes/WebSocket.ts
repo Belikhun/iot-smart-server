@@ -8,6 +8,7 @@ import SessionModel from "../Models/SessionModel";
 import type UserModel from "../Models/UserModel";
 import { Op } from "sequelize";
 import { FeatureUpdateSource } from "../Device/Features/FeatureBase";
+import { getOpenAIClient, handleAssistantMessage } from "../OpenAI/Service";
 
 const logDev = scope("ws:device");
 const logDash = scope("ws:dashboard");
@@ -211,18 +212,27 @@ websocketRouter.ws("/dashboard", {
 			logDash.success(`Đã đăng nhập thành công với người dùng @${user.username}`);
 			sessions[ws.id] = session;
 
+			try {
+				// Prepare OpenAI client for this session.
+				getOpenAIClient(session);
+			} catch (e) {
+				logDash.warn(`Không thể khởi tạo phiên OpenAI cho người dùng:`, e);
+			}
+
 			// @ts-ignore
 			dashboards[session.sessionId] = ws;
 			return;
 		}
 
+		if (!sessions[ws.id]) {
+			logDash.info(`Không tìm thấy phiên của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
+			return;
+		}
+
+		const session = sessions[ws.id];
+
 		switch (command) {
 			case "update": {
-				if (!sessions[ws.id]) {
-					logDash.info(`Không tìm thấy phiên của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
-					return;
-				}
-
 				const { value, id, uuid } = data;
 				const feature = getDeviceFeature(uuid);
 
@@ -237,11 +247,6 @@ websocketRouter.ws("/dashboard", {
 			}
 
 			case "reset": {
-				if (!sessions[ws.id]) {
-					logDash.info(`Không tìm thấy phiên của websocket [${ws.id}], sẽ bỏ qua gói tin này.`);
-					return;
-				}
-
 				const device = getDevice(source);
 
 				if (!device) {
@@ -250,6 +255,12 @@ websocketRouter.ws("/dashboard", {
 				}
 
 				device.reset();
+				break;
+			}
+
+			case "assistant:message": {
+				// @ts-expect-error
+				await handleAssistantMessage(ws, session, data);
 				break;
 			}
 		}

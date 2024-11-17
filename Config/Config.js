@@ -6,7 +6,9 @@ const {
 	DB_NAME,
 	DB_USERNAME,
 	DB_PASSWORD,
-	DB_DIALECT
+	DB_DIALECT,
+
+	OPENAI_KEY
 } = process.env;
 
 const config = {
@@ -35,7 +37,8 @@ const config = {
 	},
 
 	host: HOST || "0.0.0.0",
-	port: PORT || "80"
+	port: PORT || "80",
+	openAIKey: OPENAI_KEY,
 };
 
 export default config;
