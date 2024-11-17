@@ -25,7 +25,10 @@ const instructions = [
 	"Personality:",
 	"- Be upbeat and genuine.",
 	"- Try speaking quickly as if excited.",
-	"- If interacting in a non-English language, start by using the standard accent or dialect familiar to the user."
+	"- If interacting in a non-English language, start by using the standard accent or dialect familiar to the user.",
+	"",
+	"Notes:",
+	"- Markdown are supported."
 ].join("\n");
 
 export const getOpenAIClient = async (session: SessionModel): Promise<RealtimeClient> => {
@@ -94,36 +97,52 @@ export const initializeOpenAIClient = async (session: SessionModel): Promise<Rea
 	});
 
 	client.addTool({
-		name: "getDeviceFeatureValue",
+		name: "getDeviceFeatureValues",
 		description: [
-			"Retrieve the current value of a device's feature."
+			"Retrieve the current value of one or many device's feature."
 		].join("\n"),
 		parameters: {
 			"type": "object",
 			"properties": {
-				"uuid": {
-					"type": "string",
-					"description": "Device's feature UUID."
+				"features": {
+					"type": "array",
+					"description": "An array contains list of feature's uuids to get value for.",
+					"items": {
+						"type": "string",
+						"description": "Device feature UUID.",
+					}
 				}
 			},
-			"required": ["uuid"],
+			"required": ["features"],
 			"additionalProperties": false
 		}
-	}, async ({ uuid }: { uuid: string }) => {
-		log.info(`Đang gọi tool getDeviceFeatureValue(${uuid})`);
-		const feature = getDeviceFeature(uuid);
+	}, async ({ features }: { features: string[] }) => {
+		log.info(`Đang gọi tool getDeviceFeatureValues():`, features);
+		const messages = [];
+		const data: { [key: string]: any } = {};
 
-		if (!feature)
-			return `Error: No device feature found with UUID ${feature}`;
+		for (const uuid of features) {
+			const feature = getDeviceFeature(uuid);
 
-		return feature.getValue();
+			if (!feature) {
+				messages.push(`No device feature found with UUID ${feature}`);
+				continue;
+			}
+
+			data[feature.model.uuid] = feature.getValue();
+		}
+
+		return {
+			values: data,
+			errors: messages
+		};
 	});
 
 	client.addTool({
-		name: "setDeviceFeatureValue",
+		name: "setDeviceFeatureValues",
 		description: [
-			"Set a device's feature value.",
-			"The format of feature's value must follow the value specification of the specified device feature.",
+			"Update a list of feature's value.",
+			"The format of the feature's value must follow the value specification of the specified device feature.",
 			"This tool support updating multiple features at a same time.",
 			"",
 			"Note:",
@@ -175,7 +194,7 @@ export const initializeOpenAIClient = async (session: SessionModel): Promise<Rea
 			"additionalProperties": false
 		}
 	}, async ({ features }: { features: any }) => {
-		log.info(`Đang gọi tool setDeviceFeatureValue():`, features);
+		log.info(`Đang gọi tool setDeviceFeatureValues():`, features);
 		const messages = [];
 
 		for (const { uuid, value } of features) {

@@ -76,11 +76,14 @@ const assistant = {
 
 	/** @type {{ [callId: string]: AssistantCallInstance }} */
 	calls: {},
+
+	scrollDownTask: undefined,
 	
 	/** @type {HTMLDivElement} */
 	messageNodes: undefined,
 
 	processing: false,
+	showing: false,
 
 	/** @type {WavStreamPlayer} */
 	player: undefined,
@@ -131,7 +134,8 @@ const assistant = {
 		});
 
 		this.button = makeTree("div", "assistant-chat-button", {
-			icon: { tag: "img", src: app.url("/public/images/bard-mono.svg") }
+			icon: { tag: "img", src: app.url("/public/images/bard-mono.svg") },
+			close: { tag: "icon", icon: "close" }
 		});
 
 		new TriangleBackground(this.button, {
@@ -171,10 +175,12 @@ const assistant = {
 				await this.player.connect();
 			}
 
-			this.showPanel();
+			(this.showing)
+				? this.hidePanel()
+				: this.showPanel();
 		});
 
-		app.root.append(this.button, this.view);
+		app.root.appendChild(this.button);
 		websocket.on("assistant:message", ({ data }) => this.assistantStartMessage(data));
 		websocket.on("assistant:delta", ({ data }) => this.assistantDelta(data));
 		websocket.on("assistant:commit", ({ data }) => this.assistantCommitMessage(data));
@@ -185,11 +191,23 @@ const assistant = {
 	},
 
 	showPanel() {
+		if (this.showing)
+			return;
 
+		app.root.appendChild(this.view);
+		this.button.classList.add("showing");
+		this.showing = true;
+		return this;
 	},
 
 	hidePanel() {
+		if (!this.showing)
+			return;
 
+		app.root.removeChild(this.view);
+		this.button.classList.remove("showing");
+		this.showing = false;
+		return this;
 	},
 
 	sendMessage(message) {
@@ -313,13 +331,23 @@ const assistant = {
 		const message = this.messages[messageId];
 
 		if (delta) {
+			let msgUpdated = false;
+
 			if (delta.transcript) {
 				message.message += delta.transcript;
-				message.view.inner.innerText = message.message;
-				this.scrollChatBottom();
+				msgUpdated = true;
 			} else if (delta.text) {
 				message.message += delta.text;
-				message.view.inner.innerText = message.message;
+				msgUpdated = true;
+			}
+
+			if (msgUpdated) {
+				if (typeof marked === "object") {
+					message.view.inner.innerHTML = marked.parse(message.message);
+				} else {	
+					message.view.inner.innerText = message.message;
+				}
+
 				this.scrollChatBottom();
 			}
 	
@@ -364,9 +392,11 @@ const assistant = {
 		this.scrollChatBottom();
 	},
 
-	async scrollChatBottom() {
-		await nextFrameAsync();
-		this.scroll.toBottom();
+	scrollChatBottom() {
+		clearTimeout(this.scrollDownTask);
+		this.scrollDownTask = setTimeout(() => {
+			this.scroll.toBottom();
+		}, 100);
 	}
 }
 

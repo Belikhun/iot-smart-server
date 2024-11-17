@@ -812,6 +812,23 @@
 		height: 1.5rem;
 		z-index: 1;
 	}
+
+	> icon {
+		display: none;
+		font-size: 1.25rem;
+		font-weight: 900;
+		color: white;
+	}
+
+	&.showing {
+		> img {
+			display: none;
+		}
+
+		> icon {
+			display: block;
+		}
+	}
 }
 
 .assistant-chat-panel {
@@ -822,7 +839,7 @@
 	width: 32rem;
 	height: calc(100vh - 26rem);
 	max-height: 46rem;
-	bottom: 8rem;
+	bottom: 7rem;
 	right: 2rem;
 
 	border: 0.1rem solid var(--border);
@@ -977,6 +994,27 @@
 					font-size: 0.95rem;
 					color: var(--text);
 					overflow: hidden;
+
+					> .inner {
+						> :first-child {
+							margin-top: 0;
+						}
+
+						> :last-child {
+							margin-bottom: 0;
+						}
+
+						pre > code {
+							margin: unset;
+							box-sizing: border-box;
+							color: white;
+							background-color: hsla(0, 0%, 80%, .2);
+						}
+
+						a {
+							color: var(--osc-color-yellow);
+						}
+					}
 				}
 
 				&.user {
