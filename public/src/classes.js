@@ -547,7 +547,7 @@ class DeviceFeature extends Model {
 		return ScreenUtils.renderInstanceDisplay(
 			ScreenUtils.renderSpacedRow(
 				ScreenUtils.renderIcon(this.getIcon(), { color: this.device.color }),
-				ScreenUtils.renderLink(this.name, null, { isExternal: false, color: this.color })
+				ScreenUtils.renderLink(this.name, null, { isExternal: false, color: this.device.color })
 			),
 			[this.device.renderItem()]
 		)
@@ -687,7 +687,10 @@ class DeviceFeature extends Model {
 	 */
 	static processResponse(response, device = null) {
 		const instance = super.processResponse(response);
-		instance.device = device;
+
+		if (device)
+			instance.device = device;
+
 		instance.setValue(instance.getValue(), UPDATE_SOURCE_SERVER);
 		return instance;
 	}

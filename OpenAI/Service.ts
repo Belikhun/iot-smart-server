@@ -54,6 +54,7 @@ export const initializeOpenAIClient = async (session: SessionModel): Promise<Rea
 	clients[session.sessionId] = client;
 
 	client.updateSession({
+		input_audio_transcription: { model: "whisper-1" },
 		instructions,
 		voice: "ballad"
 	});
