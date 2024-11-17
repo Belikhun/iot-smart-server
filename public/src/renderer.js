@@ -264,6 +264,48 @@ class FeatureRenderer {
 
 				break;
 			}
+
+			case "FeatureRGBLed": {
+				const view = document.createElement("div");
+				view.classList.add("color-picker-wrapper");
+
+				let inputHandler = null;
+
+				const wheel = new ReinventedColorWheel({
+					appendTo: view,
+					wheelDiameter: 120,
+					wheelThickness: 12,
+					handleDiameter: 16,
+					wheelReflectsSaturation: true,
+
+					onChange: (color) => {
+						if (inputHandler)
+							inputHandler(color.rgb);
+					}
+				});
+
+				instance = {
+					view,
+
+					onInput: (handler) => {
+						if (typeof handler !== "function")
+							throw new Error(`onInput(): không phải một hàm hợp lệ`);
+
+						inputHandler = handler;
+						return this;
+					},
+
+					set value(value) {
+						wheel.rgb = value;
+					},
+
+					get value() {
+						return wheel.rgb;
+					}
+				};
+
+				break;
+			}
 		
 			default: {
 				const view = document.createElement("div");

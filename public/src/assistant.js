@@ -197,6 +197,7 @@ const assistant = {
 		app.root.appendChild(this.view);
 		this.button.classList.add("showing");
 		this.showing = true;
+		this.scrollChatBottom();
 		return this;
 	},
 

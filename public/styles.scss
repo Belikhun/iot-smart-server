@@ -857,6 +857,13 @@
 		flex-grow: 1;
 
 		> .content {
+			&::after {
+				content: "";
+				display: block;
+				height: 8rem;
+				pointer-events: none;
+			}
+
 			> .welcome-message {
 				padding: 2rem;
 				text-align: center;
@@ -1106,6 +1113,10 @@
 			}
 		}
 	}
+}
+
+.color-picker-wrapper {
+	display: grid;
 }
 
 @keyframes assistant-message-sweep {
