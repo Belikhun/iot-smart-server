@@ -1,4 +1,40 @@
 
+function featureSearch(flag = FEATURE_FLAG_READ | FEATURE_FLAG_WRITE) {
+	return {
+		fetch: async (search) => {
+			const features = Object.values(devices.features)
+				.filter((item) => item.support(flag));
+
+			if (!search)
+				return features.slice(0, 30);
+
+			const tokens = search
+				.toLocaleLowerCase()
+				.split(" ");
+
+			return features.filter((value) => {
+				const target = [value.name, value.kind, value.uuid, value.featureId, value.device.name]
+					.join(" ")
+					.toLocaleLowerCase();
+
+				for (const token of tokens) {
+					if (!target.includes(token))	
+						return false;
+				}
+
+				return true;
+			});
+		},
+
+		process: (item) => {
+			return {
+				label: item.renderItem(),
+				value: item.id
+			}
+		}
+	}
+}
+
 /** @type {{ [uuid: string]: FeatureRenderer }} */
 const featureRenderers = {};
 
@@ -306,6 +342,101 @@ function renderComparatorValue(comparator) {
 			};
 		}
 
+		case "contains": {
+			const input = createInput({
+				type: "text",
+				label: "Các giá trị (ngăn cách bằng \";\")"
+			});
+
+			return {
+				comparator,
+				view: input.group,
+				input: input.input,
+
+				onInput: (handler) => {
+					input.input.addEventListener("input", () => handler(input.input.value));
+				},
+
+				set value(value) {
+					input.input.value = value;
+				},
+
+				get value() {
+					return input.value;
+				},
+
+				set disabled(disabled) {
+					input.disabled = disabled;
+				}
+			};
+		}
+
+		case "inRange": {
+			const inputMin = createInput({
+				type: "number",
+				label: "Cao hơn"
+			});
+
+			const inputMax = createInput({
+				type: "number",
+				label: "Thấp hơn"
+			});
+
+			const view = ScreenUtils.renderFlexRow(
+				inputMin.group,
+				inputMax.group
+			);
+
+			view.classList.remove("gap-05");
+			view.classList.add("gap-10");
+
+			const getValue = () => {
+				return [
+					(inputMin.value.length > 0) ? parseFloat(inputMin.value) : null,
+					(inputMax.value.length > 0) ? parseFloat(inputMax.value) : null
+				].join(";");
+			}
+
+			return {
+				comparator,
+				view,
+				input: inputMin.input,
+
+				onInput: (handler) => {
+					inputMin.input.addEventListener("input", () => {
+						handler(getValue());
+					});
+
+					inputMax.input.addEventListener("input", () => {
+						handler(getValue());
+					});
+				},
+
+				set value(value) {
+					let from = null;
+					let to = null;
+
+					if (value && typeof value === "string") {
+						[from, to] = value
+							.split(";")
+							.map((item) => ((!isFinite(item)) ? null : parseFloat(item)));
+					}
+
+					inputMin.value = from;
+					inputMax.value = to;
+				},
+
+				get value() {
+					return getValue();
+				},
+
+				set disabled(disabled) {
+					inputMin.disabled = disabled;
+					inputMax.disabled = disabled;
+				}
+			};
+		}
+
 		case "isOn":
 		case "isOff":
 		case "valueChanged": {
@@ -372,36 +503,7 @@ function renderActionValue(action) {
 				label: "Tính năng nguồn",
 				color: "accent",
 	
-				fetch: async (search) => {
-					const features = Object.values(devices.features);
-	
-					if (!search)
-						return features.slice(0, 30);
-	
-					const tokens = search
-						.toLocaleLowerCase()
-						.split(" ");
-	
-					return features.filter((value) => {
-						const target = [value.name, value.kind, value.uuid, value.featureId, value.device.name]
-							.join(" ")
-							.toLocaleLowerCase();
-	
-						for (const token of tokens) {
-							if (!target.includes(token))	
-								return false;
-						}
-	
-						return true;
-					});
-				},
-	
-				process: (item) => {
-					return {
-						label: item.renderItem(),
-						value: item.id
-					}
-				},
+				...featureSearch(),
 	
 				onInput: (value, { trusted }) => {
 					this.deviceFeature = value;

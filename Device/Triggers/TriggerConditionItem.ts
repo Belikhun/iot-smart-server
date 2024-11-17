@@ -29,17 +29,34 @@ const Comparators: { [type: string]: (featureValue: any, conditionValue: any) =>
 	},
 
 	contains(v1, v2): boolean {
-		if (typeof v2 !== "object" || !v2.length)
+		const items = v2.split(";")
+			.map((item: string) => item.trim())
+			.filter((item: string) => item.length > 0)
+			.map((item: string) => parseInt(item));
+
+		if (!items.length)
 			return false;
 
-		return v2.includes(v1);
+		return v2.includes(+v1);
 	},
 
 	inRange(v1, v2): boolean {
-		if (typeof v2 !== "object" || !v2.length)
+		let from = null;
+		let to = null;
+
+		if (v2 && typeof v2 === "string") {
+			[from, to] = v2
+				.split(";")
+				.map((item) => (isNaN(parseFloat(item)) ? null : parseFloat(item)));
+		}
+
+		if (typeof from === "number" && from < v1)
 			return false;
 
-		return v2.includes(v1);
+		if (typeof to === "number" && v1 > to)
+			return false;
+
+		return true;
 	},
 
 	isOn(v1, v2): boolean {
@@ -119,7 +136,7 @@ export class TriggerConditionItem implements TriggerCondition {
 
 		const condValue = (cType !== "contains" && cType !== "inRange")
 			? this.feature.processValue(this.model.value)
-			: JSON.parse(this.model.value);
+			: this.model.value;
 
 		const value = Comparators[cType](this.feature.getValue(), condValue);
 

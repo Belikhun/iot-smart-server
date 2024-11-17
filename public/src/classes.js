@@ -1160,36 +1160,7 @@ class TriggerItem extends Model {
 			label: "Tính năng",
 			color: "accent",
 
-			fetch: async (search) => {
-				const features = Object.values(devices.features);
-
-				if (!search)
-					return features.slice(0, 30);
-
-				const tokens = search
-					.toLocaleLowerCase()
-					.split(" ");
-
-				return features.filter((value) => {
-					const target = [value.name, value.kind, value.uuid, value.featureId, value.device.name]
-						.join(" ")
-						.toLocaleLowerCase();
-
-					for (const token of tokens) {
-						if (!target.includes(token))	
-							return false;
-					}
-
-					return true;
-				});
-			},
-
-			process: (item) => {
-				return {
-					label: item.renderItem(),
-					value: item.id
-				}
-			},
+			...featureSearch(),
 
 			onInput: (value, { trusted }) => {
 				this.deviceFeature = value;
@@ -1512,37 +1483,7 @@ class TriggerAction extends Model {
 			label: "Tính năng",
 			color: "accent",
 
-			fetch: async (search) => {
-				const features = Object.values(devices.features)
-					.filter((feature) => feature.support(FEATURE_FLAG_WRITE));
-
-				if (!search)
-					return features.slice(0, 30);
-
-				const tokens = search
-					.toLocaleLowerCase()
-					.split(" ");
-
-				return features.filter((value) => {
-					const target = [value.name, value.kind, value.uuid, value.featureId, value.device.name]
-						.join(" ")
-						.toLocaleLowerCase();
-
-					for (const token of tokens) {
-						if (!target.includes(token))	
-							return false;
-					}
-
-					return true;
-				});
-			},
-
-			process: (item) => {
-				return {
-					label: item.renderItem(),
-					value: item.id
-				}
-			},
+			...featureSearch(FEATURE_FLAG_WRITE),
 
 			onInput: (value, { trusted }) => {
 				this.deviceFeature = value;
