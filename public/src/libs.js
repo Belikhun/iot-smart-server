@@ -2708,8 +2708,13 @@ class ScreenChild {
 	}
 
 	updateScroll(updateStickyPoint = false) {
-		if (!this.stickyPoint || updateStickyPoint)
-			this.stickyPoint = this.container.main.header.offsetTop
+		if (!this.stickyPoint || updateStickyPoint) {
+			const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+			const alerts = this.container.main.alerts.childNodes;
+			const alertHeight = [...alerts].reduce((value, node) => value + node.clientHeight, 0);
+			const heights = alertHeight + this.container.main.breadcrumbs.clientHeight + (remSize * 3);
+			this.stickyPoint = heights;
+		}
 
 		if (this.container.main.scrollTop >= this.stickyPoint) {
 			this.container.main.classList.add("sticky-header");

@@ -4904,7 +4904,7 @@ const popup = {
 
 		this.popup = this.popupNode.popup;
 		this.popup.body.note.group.style.display = "none";
-		document.body.insertBefore(this.popupNode, document.body.childNodes[0]);
+		app.root.insertBefore(this.popupNode, app.root.childNodes[0]);
 
 		if (typeof sounds !== "undefined")
 			sounds.applySound(this.popup.header.top.close, ["soundhover", "soundselect"]);

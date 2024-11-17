@@ -155,6 +155,14 @@
 				gap: 0.5rem;
 
 				margin: 0 1rem;
+
+				--tag-color: var(--map-color);
+				--tag-text: var(--map-text);
+
+				> .screen-tag {
+					--color: var(--tag-color);
+					--text: var(--tag-text);
+				}
 			}
 
 			> .content {

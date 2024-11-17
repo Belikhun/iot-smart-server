@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import APIResponse from "../Classes/APIResponse";
-import { getDevice, getDeviceById, getDevices } from "../Device/Device";
+import { getDevice, getDeviceById, getDeviceFeatureById, getDevices } from "../Device/Device";
 
 export const deviceController = new Elysia({ prefix: "/device" });
 
@@ -29,7 +29,26 @@ deviceController.post("/:id/edit", async ({ params: { id }, request }) => {
 	instance.model.area = area;
 	await instance.model.save();
 
-	return new APIResponse(0, `Danh sách các thiết bị`, 200, await instance.getReturnData());
+	return new APIResponse(0, `Đã cập nhật thông tin!`, 200, await instance.getReturnData());
+});
+
+deviceController.post("/:id/feature/:fid/rename", async ({ params: { id, fid }, request }) => {
+	const instance = getDeviceById(parseInt(id));
+
+	if (!instance)
+		throw new Error(`Thiết bị với mã #${id} không tồn tại!`);
+
+	const feature = getDeviceFeatureById(parseInt(fid));
+
+	if (!feature)
+		throw new Error(`Tính năng với mã #${id} không tồn tại!`);
+
+	const { name } = await request.json();
+
+	feature.model.name = name;
+	await feature.model.save();
+
+	return new APIResponse(0, `Đổi tên thành công`, 200, await feature.getReturnData());
 });
 
 deviceController.get("/:hardwareId/info", async ({ params: { hardwareId }, request }) => {

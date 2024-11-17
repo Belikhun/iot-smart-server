@@ -419,7 +419,7 @@ class Device extends Model {
 			name: this.name,
 			icon: this.icon,
 			color: this.color,
-			tags: this.tags.join(";"),
+			tags: this.tags,
 			area: this.area,
 			...this.extraSaveData
 		};
@@ -512,6 +512,21 @@ class DeviceFeature extends Model {
 
 		/** @type {FeatureRenderer} */
 		this.renderer = null;
+
+		this.form = new ScreenForm({
+			main: {
+				name: app.string("form.group.main"),
+				rows: [
+					{
+						name: {
+							type: "text",
+							label: app.string("table.name"),
+							required: true
+						}
+					}
+				]
+			}
+		}, { simple: true });
 
 		/** @type {Number} */
 		this.created = null;
@@ -610,6 +625,57 @@ class DeviceFeature extends Model {
 			uuid: this.uuid,
 			value: this.getValue()
 		}
+	}
+
+	async rename(newName) {
+		const response = await myajax({
+			url: app.api(`/device/${this.deviceId}/feature/${this.id}/rename`),
+			method: "POST",
+			json: { name: newName }
+		});
+
+		DeviceFeature.processResponse(response.data);
+		devices.renderDevices();
+		return this;
+	}
+
+	startRename() {
+		popup.show({
+			windowTitle: `Tính năng ${this.name}`,
+			title: "Đổi tên",
+			message: "",
+			icon: "pencil",
+			bgColor: "accent",
+			customNode: this.form.container
+		}).then(() => {
+			this.form.show = false;
+			return;
+		}).catch(() => {});
+
+		this.form.defaults = { name: this.name };
+		this.form.reset();
+
+		setTimeout(() => {
+			this.form.show = true;
+		}, 200);
+
+		this.form.onSubmit(async (values) => {
+			try {
+				await this.rename(values.name);
+				app.screen.active.alert("OKAY", `Đã cập nhật tên tính năng thành ${values.name}`);
+			} catch (e) {
+				// 221 is FieldError
+				if (e.data && e.data.code === 221) {
+					this.form.setError(e.data.data.name, e.data.details);
+					return;
+				}
+
+				app.screen.active.handleError(e);
+			}
+
+			this.form.show = false;
+			popup.hide();
+		});
 	}
 
 	/**

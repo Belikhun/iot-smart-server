@@ -64,17 +64,20 @@ class FeatureRenderer {
 	}
 
 	render() {
-		if (this.view)
-			return this.view;
+		if (this.view) {
+			this.view.info.type.icon.dataset.icon = this.model.getIcon();
+			this.view.info.info.qName.innerText = this.model.name;
 
-		const { icon } = (FeatureRenderer.FEATURES[this.model.kind])
-			? FeatureRenderer.FEATURES[this.model.kind]
-			: { icon: "toggleOn" };
+			return this.view;
+		}
+
+		this.menu = new ContextMenu()
+			.add({ id: "rename", text: "Đổi tên", icon: "pencil" });
 
 		this.view = makeTree("span", "device-feature", {
 			info: { tag: "div", class: "info", child: {
 				type: { tag: "span", class: "type", child: {
-					icon: { tag: "icon", icon: icon },
+					icon: { tag: "icon", icon: this.model.getIcon() },
 					typeName: { tag: "span", class: "name", text: this.model.kind }
 				}},
 
@@ -88,6 +91,14 @@ class FeatureRenderer {
 			footer: { tag: "div", class: "footer", child: {
 				uuid: ScreenUtils.renderCopyableText({ display: this.model.uuid })
 			}}
+		});
+
+		this.view.info.addEventListener("click", (e) => this.menu.openByMouseEvent(e));
+		this.view.info.addEventListener("contextmenu", (e) => this.menu.openByMouseEvent(e));
+
+		this.menu.onSelect((action) => {
+			if (action === "rename")
+				this.model.startRename();
 		});
 
 		this.control.onInput((value) => {
