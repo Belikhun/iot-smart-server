@@ -58,6 +58,8 @@ const devices = {
 	/** @type {ScreenForm<Device>} */
 	form: undefined,
 
+	initialFetched: false,
+
 	name: "",
 
 	async init() {
@@ -170,7 +172,14 @@ const devices = {
 
 		this.screen.content = this.view;
 		this.screen.addAction(this.updateButton);
-		await this.update()
+
+		if (!this.initialFetched) {
+			await this.update();
+		} else {
+			this.renderDevices();
+		}
+
+		this.screen.onActivate(() => this.renderDevices());
 	},
 
 	/**
@@ -248,8 +257,11 @@ const devices = {
 		});
 	},
 
-	async update() {
-		this.updateButton.loading = true;
+	async update(render = true) {
+		if (this.updateButton)
+			this.updateButton.loading = true;
+
+		this.initialFetched = true;
 
 		try {
 			const response = await myajax({
@@ -267,12 +279,14 @@ const devices = {
 					this.features[feature.uuid] = feature;
 			}
 
-			this.renderDevices();
+			if (render || app.screen.active.id === this.screen.id)
+				this.renderDevices();
 		} catch (e) {
 			this.screen.handleError(e);
 		}
 
-		this.updateButton.loading = false;
+		if (this.updateButton)
+			this.updateButton.loading = false;
 	},
 
 	async updateDevice(hardwareId) {

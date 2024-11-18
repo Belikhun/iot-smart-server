@@ -43,7 +43,7 @@ const screens = {
 		this.accounts = new ScreenGroup("accounts", "Tài khoản");
     },
 
-	activate() {
+	async activate() {
 		if (!app.initialized)
 			return;
 
@@ -54,6 +54,10 @@ const screens = {
 			return;
 
 		this.log("INFO", `Initializing app...`);
+	
+		if (!devices.initialFetched)
+			await devices.update(false);
+
 		websocket.connect();
 		app.screen.activateByHash(this.locationHash);
 		this.called = true;

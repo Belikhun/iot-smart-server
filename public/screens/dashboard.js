@@ -56,7 +56,9 @@ const dashboard = {
 	/** @type {{ [id: number]: DashboardBlockInstance }} */
 	blocks: {},
 
-	init() {
+	fetched: false,
+
+	async init() {
 		this.createMenu = new ContextMenu();
 		this.createMenu.onSelect((type) => this.createBlock(type));
 
@@ -99,6 +101,9 @@ const dashboard = {
 
 			if (this.gridState)
 				this.grid.load(this.gridState);
+
+			if (!this.fetched)
+				this.fetch();
 		});
 
 		this.screen.onDeactivate(() => {
@@ -110,8 +115,6 @@ const dashboard = {
 
 		// Register renderers.
 		this.registerRenderer(BlockTextRenderer);
-
-		this.fetch();
 	},
 
 	/**
@@ -186,6 +189,9 @@ const dashboard = {
 	},
 
 	async fetch() {
+		if (!devices.initialFetched)
+			await devices.update(false);
+
 		this.screen.loading = true;
 		this.updateButton.loading = true;
 
@@ -212,6 +218,8 @@ const dashboard = {
 				this.blocks[item.id].model = item;
 				this.blocks[item.id].renderer.render();
 			}
+
+			this.fetched = true;
 		} catch (e) {
 			this.screen.handleError(e);
 		}
