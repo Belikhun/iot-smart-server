@@ -13,7 +13,11 @@ const websocket = {
 	},
 
 	connect() {
-		this.socket = new WebSocket(`ws://${location.host}/ws/dashboard`);
+		const protocol = (location.protocol === "https:")
+			? "wss:"
+			: "ws:";
+
+		this.socket = new WebSocket(`${protocol}//${location.host}/ws/dashboard`);
 
 		this.socket.addEventListener("open", (event) => {
 			this.open(event);
@@ -35,7 +39,7 @@ const websocket = {
 	 * @param	{any}		data
 	 * @param	{string}	source
 	 */
-	send(command, data, source = "system") {
+	send(command, data = null, source = "system") {
 		if (!this.connected)
 			return this;
 

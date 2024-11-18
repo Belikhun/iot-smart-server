@@ -77,6 +77,9 @@ const assistant = {
 	/** @type {{ [callId: string]: AssistantCallInstance }} */
 	calls: {},
 
+	/** @type {TreeDOM} */
+	currentUserMessage: undefined,
+
 	scrollDownTask: undefined,
 	
 	/** @type {HTMLDivElement} */
@@ -84,6 +87,9 @@ const assistant = {
 
 	processing: false,
 	showing: false,
+
+	/** @type {VoiceRecorder} */
+	recorder: undefined,
 
 	/** @type {WavStreamPlayer} */
 	player: undefined,
@@ -105,13 +111,13 @@ const assistant = {
 			color: "accent",
 			classes: "voice",
 			onClick: () => {},
-			afterClicked: () => this.sendMessage(this.textbox.value)
+			afterClicked: () => this.startRecord()
 		});
 
 		this.welcome = makeTree("div", "welcome-message", {
 			icon: { tag: "img", src: app.url("/public/images/bard-animated.webp") },
-			titl: { tag: "div", class: "title", text: "Chào mừng tới trợ lý ảo nhà thông minh!" },
-			messages: { tag: "div", class: "message", text: "Trợ lý ảo có thể cập nhật thông tin hiện tại về ngôi nhà tới bạn, lập lịch hoạt động của các thiết bị và hỗ trợ bạn điều khiển các thiết bị một cách dễ dàng!" }
+			titl: { tag: "div", class: "title", html: "Xin chào! Tôi là <strong>Bụt</strong>, trợ lý ảo nhà thông minh của bạn!" },
+			messages: { tag: "div", class: "message", text: "Tôi có thể cập nhật thông tin hiện tại về ngôi nhà tới bạn, lập lịch hoạt động của các thiết bị và hỗ trợ bạn điều khiển các thiết bị một cách dễ dàng!" }
 		});
 
 		this.view = makeTree("div", "assistant-chat-panel", {
@@ -123,7 +129,13 @@ const assistant = {
 
 			chat: { tag: "div", class: "chat", child: {
 				text: { tag: "div", class: "text", child: {
-					textbox: { tag: "textarea", class: "textbox", placeholder: "Bạn muốn làm gì..." }
+					textbox: { tag: "textarea", class: "textbox", placeholder: "Bạn muốn làm gì..." },
+					waveform: { tag: "div", class: "waveform", child: {
+						timer: { tag: "span", class: "timer", text: "00:00" },
+						bars: { tag: "span", class: "bars", child: {
+							scroller: { tag: "div", class: "scroller" }
+						}}
+					}}
 				}},
 
 				actions: { tag: "div", class: "actions", child: {
@@ -171,8 +183,8 @@ const assistant = {
 
 		this.button.addEventListener("click", async () => {
 			if (!this.player) {
-				this.player = new WavStreamPlayer({ sampleRate: 24000 });
-				await this.player.connect();
+				if (!await this.initAudio())
+					return;
 			}
 
 			(this.showing)
@@ -184,10 +196,59 @@ const assistant = {
 		websocket.on("assistant:message", ({ data }) => this.assistantStartMessage(data));
 		websocket.on("assistant:delta", ({ data }) => this.assistantDelta(data));
 		websocket.on("assistant:commit", ({ data }) => this.assistantCommitMessage(data));
+		websocket.on("assistant:user/update", ({ data }) => this.userUpdateMessage(data));
 
 		websocket.on("assistant:start", ({ data }) => this.assistantStart(data));
 		websocket.on("assistant:complete", ({ data }) => this.assistantComplete(data));
 		websocket.on("assistant:call", ({ data }) => this.assistantCall(data));
+	},
+
+	/**
+	 * Manually request permission to use the microphone
+	 * 
+	 * @returns {Promise<true>}
+	 */
+	async requestMicrophone() {
+		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+			alert(`Trình duyệt của bạn không hỗ trợ Media API!`);
+			return false;
+		}
+
+		const permissionStatus = await navigator.permissions.query({
+			name: "microphone",
+		});
+
+		if (permissionStatus.state === "denied") {
+			this.log("WARN", `Không có quyền microphone`, permissionStatus);
+			alert(`Bạn phải cấp quyền Microphone để sử dụng trợ lý ảo!`);
+			return false;
+		} else if (permissionStatus.state === "prompt") {
+			try {
+				const stream = await navigator.mediaDevices.getUserMedia({
+					audio: true,
+				});
+
+				const tracks = stream.getTracks();
+				tracks.forEach((track) => track.stop());
+			} catch (e) {
+				this.log("WARN", `Lỗi khi yêu cầu quyền microphone`, e);
+				alert(`Bạn phải cấp quyền Microphone để sử dụng trợ lý ảo!`);
+				return false;
+			}
+		}
+
+		return true;
+	},
+
+	async initAudio() {
+		if (!await this.requestMicrophone())
+			return false;
+		
+		this.player = new WavStreamPlayer({ sampleRate: 24000 });
+		await this.player.connect();
+
+		this.recorder = new VoiceRecorder();
+		return true;
 	},
 
 	showPanel() {
@@ -211,14 +272,16 @@ const assistant = {
 		return this;
 	},
 
-	sendMessage(message) {
+	sendMessage(message, send = true) {
 		if (this.processing)
 			return;
 
-		this.sendButton.loading = true;
-		this.textbox.disabled = true;
-		this.mode = "text";
-		this.processing = true;
+		if (send) {
+			this.sendButton.loading = true;
+			this.textbox.disabled = true;
+			this.mode = "text";
+			this.processing = true;
+		}
 
 		const node = makeTree("div", ["message", "user"], {
 			author: { tag: "div", class: "author", child: {
@@ -231,7 +294,97 @@ const assistant = {
 
 		this.messageNodes.appendChild(node);
 		this.scrollChatBottom();
-		websocket.send("assistant:message", message);
+		this.currentUserMessage = node;
+
+		if (send) {
+			websocket.send("assistant:message", message);
+		}
+	},
+
+	userUpdateMessage({ message }) {
+		if (!this.currentUserMessage)
+			return;
+
+		if (!message)
+			return;
+
+		this.currentUserMessage.text.innerText = message;
+	},
+
+	dbToP(db, minDb = -30, maxDb = 10) {
+		const adjustedDb = Math.max(0, db - minDb);
+		const maxRange = maxDb - minDb;
+		const percentage = Math.log10(1 + adjustedDb) / Math.log10(1 + maxRange);
+		return Math.min(1, Math.max(0, percentage));
+	},
+
+	async startRecord() {
+		if (this.recorder.isRecording) {
+			this.recorder.stop();
+			return;
+		}
+
+		this.mode = "voice";
+		const start = performance.now();
+		const icon = this.voiceButton.querySelector(":scope > icon");
+		this.view.chat.classList.add("recording");
+		icon.dataset.icon = "stop";
+		this.voiceButton.background.color = "red";
+		this.view.chat.text.waveform.timer.innerText = "00:00";
+
+		const scroller = this.view.chat.text.waveform.bars.scroller;
+		const widthSpace = 0.5;
+		let scrollPos = -0.25;
+		let delta = start;
+
+		emptyNode(scroller);
+		scroller.style.transform = null;
+
+		this.recorder.onChunk((/** @type {Int16Array} */ data) => {
+			this.log("INFO", `Đang gửi đoạn âm thanh tới máy chủ với độ dài ${data.length}`);
+
+			websocket.send("assistant:voice/append", {
+				audio: encodeInt16ArrayToBase64(data)
+			});
+		});
+
+		this.recorder.onLoudness((data) => {
+			// const loudness = this.dbToP(data);
+			const loudness = scaleValue(data, [-40, 0], [0, 1]);
+
+			const now = performance.now();
+			const time = (now - start) / 1000;
+			delta = (now - delta) / 1000;
+			
+			const bar = document.createElement("span");
+			bar.classList.add("bar");
+			scroller.appendChild(bar);
+
+			while (scroller.childElementCount > 42) {
+				scroller.removeChild(scroller.firstChild);
+				scrollPos -= widthSpace;
+			}
+
+			scrollPos += widthSpace;
+			scroller.style.transform = `translateX(${-scrollPos}rem)`;
+			scroller.style.setProperty("--tick-duration", `${delta}s`);
+
+			requestAnimationFrame(() => {
+				bar.style.height = `${loudness * 100}%`;
+			});
+
+			const minutes = pleft(Math.floor(time / 60), 2);
+			const seconds = pleft(Math.floor(time % 60), 2);
+			this.view.chat.text.waveform.timer.innerText = `${minutes}:${seconds}`;
+			delta = now;
+		});
+
+		await this.recorder.start();
+
+		this.log("OKAY", `Ghi âm hoàn thành và đẩy lên máy chủ...`);
+		this.voiceButton.loading = true;
+		this.sendMessage("...", false);
+		websocket.send("assistant:voice/commit");
 	},
 
 	assistantStart({ id }) {
@@ -321,8 +474,6 @@ const assistant = {
 	},
 
 	assistantDelta({ id, messageId, delta }) {
-		console.log(id, messageId, delta);
-
 		if (!this.instances[id])
 			return;
 
@@ -381,12 +532,21 @@ const assistant = {
 		instance.view.classList.remove("processing");
 		instance.view.author.image.src = app.url("/public/images/bard-animated.webp");
 
-		this.sendButton.loading = false;
-		this.textbox.disabled = false;
-		this.textbox.value = "";
+		if (this.mode === "text") {
+			this.sendButton.loading = false;
+			this.textbox.disabled = false;
+		} else {
+			const icon = this.voiceButton.querySelector(":scope > icon");
+			icon.dataset.icon = "microphone";
+			this.voiceButton.background.color = "accent";
+			this.voiceButton.loading = false;
+			this.view.chat.classList.remove("recording");
+		}
+
 		this.processing = false;
 		this.mode = null;
 
+		this.textbox.value = "";
 		this.textbox.dispatchEvent(new Event("input"));
 		this.textbox.focus();
 
@@ -588,5 +748,261 @@ class WavStreamPlayer {
 			this.stream.disconnect();
 			this.stream = null;
 		}
+	}
+}
+
+class VoiceRecorder {
+	constructor({
+		sampleRate = 44100,
+		silenceThreshold = 10,
+		silenceTimeout = 2,
+		voiceFrequencyRange = [85, 300],
+	} = {}) {
+		this.sampleRate = sampleRate;
+		this.silenceThreshold = silenceThreshold;
+		this.silenceTimeout = silenceTimeout;
+		this.voiceFrequencyRange = voiceFrequencyRange;
+
+		this.audioContext = null;
+		this.mediaStream = null;
+		this.analyserNode = null;
+		this.workletNode = null;
+		this.onChunkHandler = null;
+		this.onLoudnessHandler = null;
+		this.recordingResolver = null;
+
+		this.isRecording = false;
+	}
+
+	async start() {
+		if (this.isRecording)
+			throw new Error("Recording is already in progress");
+
+		this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+		this.audioContext = new AudioContext({ sampleRate: this.sampleRate });
+
+		const source = this.audioContext.createMediaStreamSource(this.mediaStream);
+		this.analyserNode = this.audioContext.createAnalyser();
+		this.analyserNode.fftSize = 2048;
+		this.analyserNode.smoothingTimeConstant = 0.3;
+
+		await this.audioContext.audioWorklet.addModule(
+			URL.createObjectURL(new Blob([this._getWorkletProcessorCode()], { type: "application/javascript" }))
+		);
+
+		this.workletNode = new AudioWorkletNode(this.audioContext, "voice-recorder-processor", {
+			processorOptions: {
+				chunkSize: 8192,
+				sampleRate: this.sampleRate,
+				silenceThreshold: this.silenceThreshold,
+				silenceTimeout: this.silenceTimeout,
+				voiceFrequencyRange: this.voiceFrequencyRange,
+				loudnessInterval: 2048
+			},
+		});
+
+		source.connect(this.analyserNode);
+		source.connect(this.workletNode);
+
+		this.workletNode.port.onmessage = (event) => this._handleWorkletMessage(event);
+
+		this.isRecording = true;
+		clog("INFO", "Recording started...");
+
+		await new Promise((resolve) => {
+			clog("DEBG", "Recording resolver set!");
+			this.recordingResolver = resolve;
+		});
+
+		return this;
+	}
+
+	stop() {
+		if (!this.isRecording)
+			return;
+
+		if (this.workletNode) {
+			this.workletNode.port.postMessage({ event: "stop" });
+		}
+
+		if (this.audioContext) {
+			this.audioContext.close();
+			this.audioContext = null;
+		}
+
+		if (this.mediaStream) {
+			this.mediaStream.getTracks().forEach((track) => track.stop());
+			this.mediaStream = null;
+		}
+
+		this.isRecording = false;
+		clog("INFO", "Recording stopped.");
+
+		if (this.recordingResolver)
+			this.recordingResolver();
+	}
+
+	onChunk(handler) {
+		if (typeof handler !== "function") {
+			throw new Error("Handler must be a function");
+		}
+
+		this.onChunkHandler = handler;
+	}
+
+	onLoudness(handler) {
+		if (typeof handler !== "function") {
+			throw new Error("Handler must be a function");
+		}
+
+		this.onLoudnessHandler = handler;
+	}
+
+	_handleWorkletMessage(event) {
+		const { event: messageEvent, data } = event.data;
+
+		switch (messageEvent) {
+			case "chunk": {
+				if (this.onChunkHandler)
+					this.onChunkHandler(data);
+
+				break;
+			}
+			
+			case "loudness": {
+				if (this.onLoudnessHandler)
+					this.onLoudnessHandler(data);
+
+				break;
+			}
+
+			case "silence": {
+				clog("INFO", "Silence detected. Stopping recording...");
+				this.stop();
+			}
+
+			case "stop": {
+				clog("INFO", "Stop command received. Stopping recording...");
+				this.stop();
+			}
+
+			default:
+				break;
+		}
+	}
+
+	_getWorkletProcessorCode() {
+		return `
+		class VoiceRecorderProcessor extends AudioWorkletProcessor {
+			constructor(options) {
+				super();
+				const { chunkSize, sampleRate, silenceThreshold, silenceTimeout, loudnessInterval } = options.processorOptions;
+
+				this.chunkSize = chunkSize;
+				this.sampleRate = sampleRate;
+				this.silenceThreshold = silenceThreshold || 10; // Default threshold in dB
+
+				this.buffer = [];
+				this.powerBuffer = []; // Stores power values for the last second
+				this.silenceCounter = 0;
+				this.noiseFloor = null; // For dynamic noise baseline
+				this.samplesSinceLastLoudnessUpdate = 0;
+				this.loudnessInterval = loudnessInterval; // 1 second interval
+				this.silenceTimeout = silenceTimeout;
+
+				this.port.onmessage = (event) => {
+					if (event.data && event.data.event === "stop")
+						this.handleExternalStop();
+				};
+			}
+
+			calculatePowerInDb(channelData) {
+				const sumSquared = channelData.reduce((sum, value) => sum + value ** 2, 0);
+				const rms = Math.sqrt(sumSquared / channelData.length);
+				const powerDb = 10 * Math.log10(rms || 1e-12); // Avoid log(0)
+				return powerDb;
+			}
+
+			sendChunk() {
+				if (this.buffer.length === 0) return;
+
+				const chunkToSend = this.buffer.slice(0, this.chunkSize);
+				this.buffer = this.buffer.slice(this.chunkSize);
+
+				const int16Array = new Int16Array(chunkToSend.length);
+				for (let i = 0; i < chunkToSend.length; i++) {
+					int16Array[i] = chunkToSend[i] * 0x7fff;
+				}
+
+				this.port.postMessage({ event: 'chunk', data: int16Array });
+			}
+
+			handleExternalStop() {
+				if (this.buffer.length > 0)
+					this.sendChunk(); // Send the last remaining chunk
+
+				this.port.postMessage({ event: 'stop' }); // Signal stop
+				this.isStopped = true; // Set a flag to stop processing
+			}
+
+			process(inputs) {
+				if (this.isStopped)
+					return false;
+			
+				const input = inputs[0];
+				if (input.length === 0) return true;
+
+				const channelData = input[0]; // Mono audio
+				const chunk = Array.from(channelData);
+
+				const powerDb = this.calculatePowerInDb(channelData);
+
+				// Maintain dynamic noise floor
+				if (this.noiseFloor === null) {
+					this.noiseFloor = powerDb; // Initialize noise floor
+				} else {
+					this.noiseFloor = 0.9 * this.noiseFloor + 0.1 * powerDb; // Exponential smoothing
+				}
+
+				// Silence detection logic
+				const isSilent = powerDb < this.noiseFloor + this.silenceThreshold;
+				if (isSilent) {
+					this.silenceCounter++;
+
+					if (this.silenceCounter >= (this.sampleRate / 128) * this.silenceTimeout) {
+						this.sendChunk(); // Send the leftover chunk
+						this.port.postMessage({ event: 'stop' }); // Signal stop
+						return false;
+					}
+				} else {
+					this.silenceCounter = 0;
+				}
+
+				// Buffer audio data for chunk processing
+				this.buffer.push(...chunk);
+
+				if (this.buffer.length >= this.chunkSize) {
+					this.sendChunk();
+				}
+
+				// Loudness calculation for waveform rendering
+				this.samplesSinceLastLoudnessUpdate += channelData.length;
+				this.powerBuffer.push(powerDb);
+
+				if (this.samplesSinceLastLoudnessUpdate >= this.loudnessInterval) {
+					const avgLoudness = this.powerBuffer.reduce((sum, val) => sum + val, 0) / this.powerBuffer.length;
+					this.port.postMessage({ event: 'loudness', data: avgLoudness });
+
+					// Reset for next interval
+					this.samplesSinceLastLoudnessUpdate = 0;
+					this.powerBuffer = [];
+				}
+
+				return true;
+			}
+		}
+
+		registerProcessor('voice-recorder-processor', VoiceRecorderProcessor);
+	  `;
 	}
 }

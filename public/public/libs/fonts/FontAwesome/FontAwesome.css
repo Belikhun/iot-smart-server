@@ -937,3 +937,7 @@ icon[data-icon="paperPlaneTop"]::after {
 icon[data-icon="microphone"]::after {
 	content: "\f130";
 }
+
+icon[data-icon="stop"]::after {
+	content: "\f04d";
+}

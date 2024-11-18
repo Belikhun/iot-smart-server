@@ -28,7 +28,8 @@ const instructions = [
 	"- If interacting in a non-English language, start by using the standard accent or dialect familiar to the user.",
 	"",
 	"Notes:",
-	"- Markdown are supported."
+	"- Markdown are supported.",
+	"- Primary language will be Vietnamese. But when user is using english, response with english."
 ].join("\n");
 
 export const getOpenAIClient = async (session: SessionModel): Promise<RealtimeClient> => {
@@ -234,12 +235,33 @@ export const initializeOpenAIClient = async (session: SessionModel): Promise<Rea
 }
 
 export const handleAssistantMessage = async (ws: WebSocket, session: SessionModel, message: string) => {
-	const client = await initializeOpenAIClient(session);
+	const client = await getOpenAIClient(session);
 
 	if (!client.isConnected())
 		await client.connect();
 
 	log.info(`Chuẩn bị xử lí tin nhắn từ [${ws.id}]: ${message}`);
 	const task = new MessageTask(ws, client);
-	await task.execute(message);
+	await task.execute(message, "text");
+}
+
+export const appendAssistantVoide = async (ws: WebSocket, session: SessionModel, audio: Int16Array) => {
+	const client = await getOpenAIClient(session);
+
+	if (!client.isConnected())
+		await client.connect();
+
+	log.info(`Nhận được đoạn giọng nói từ client, độ dài ${audio.length}`);
+	client.appendInputAudio(audio);
+}
+
+export const handleAssistantVoice = async (ws: WebSocket, session: SessionModel) => {
+	const client = await getOpenAIClient(session);
+
+	if (!client.isConnected())
+		await client.connect();
+
+	log.info(`Chuẩn bị xử lí lệnh giọng nói từ [${ws.id}]`);
+	const task = new MessageTask(ws, client);
+	await task.execute("", "voice");
 }

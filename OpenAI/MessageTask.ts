@@ -27,7 +27,7 @@ export class MessageTask {
 		this.log = scope(`message:task/${this.id}`);
 	}
 
-	public execute(message: string): Promise<boolean> {
+	public execute(message: string, mode: "text" | "voice" = "text"): Promise<boolean> {
 		return new Promise((resolve, rejects) => {
 			let currentId: string | null = null;
 			let doneTimeout: any = null;
@@ -36,14 +36,23 @@ export class MessageTask {
 				const { item, delta } = event;
 				const { id, object, type, role, status } = item;
 
+				if (role === "user") {
+					sendCommand(this.ws, "assistant:user/update", {
+						id: this.id,
+						messageId: id,
+						message: (item.formatted.transcript)
+							? item.formatted.transcript
+							: item.formatted.text
+					});
+
+					return;
+				}
+
 				if (doneTimeout) {
+					console.log(item);
 					clearTimeout(doneTimeout);
 					doneTimeout = null;
 					this.log.debug(`Loại bỏ tín hiệu hoàn thành vừa rồi, vẫn còn tác vụ để chạy!`);
-				}
-
-				if (role === "user") {
-					return;
 				}
 
 				if (type === "function_call") {
@@ -138,12 +147,16 @@ export class MessageTask {
 				id: this.id
 			});
 
-			this.client.sendUserMessageContent([
-				{
-					type: "input_text",
-					text: message
-				}
-			]);
+			if (mode === "text") {
+				this.client.sendUserMessageContent([
+					{
+						type: "input_text",
+						text: message
+					}
+				]);
+			} else {
+				this.client.createResponse();
+			}
 		});
 	}
 }

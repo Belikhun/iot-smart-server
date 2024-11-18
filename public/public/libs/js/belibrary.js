@@ -3896,9 +3896,9 @@ function createSlider({
 
 /**
  * @typedef {{
- * 	changeText(text: string)
+ * 	changeText: (text: string) => void
  * 	loading: boolean
- * 	background?: triBg.prototype
+ * 	background?: TriangleBackground
  * } & HTMLButtonElement} SQButton
  */
 

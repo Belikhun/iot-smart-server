@@ -879,6 +879,13 @@
 				> .title {
 					font-size: 1.5rem;
 					font-weight: 600;
+
+					strong {
+						background: linear-gradient(160deg, #04b241 0%, #09b1f3 50%, #f94569 100%);
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;
+						padding-bottom: 0.5rem;
+					}
 				}
 
 				> .message {
@@ -1072,6 +1079,7 @@
 
 		> .text {
 			position: relative;
+			display: flex;
 			flex-grow: 1;
 
 			> .textbox {
@@ -1080,19 +1088,91 @@
 
 				border: unset;
 				box-shadow: unset;
-				padding: 1rem 1rem;
+				padding: 0.75rem 1rem;
 				box-sizing: border-box;
 				border-radius: 3rem;
 				outline: none;
 
 				font-family: inherit;
 				font-size: 0.85rem;
+				line-height: 1.5rem;
 				resize: none;
 
 				background-color: var(--background-1);
 
 				&:focus {
 					background-color: var(--background-2);
+				}
+			}
+
+			> .waveform {
+				position: absolute;
+				display: none;
+				flex-direction: row;
+				padding: 0.5rem 1rem;
+				gap: 1rem;
+
+				height: 3rem;
+				box-sizing: border-box;
+
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+				background-color: var(--accent);
+				border-radius: 3rem;
+				overflow: hidden;
+
+				> .timer {
+					display: flex;
+					flex-direction: row;
+					gap: 0.5rem;
+
+					margin: auto 0;
+					color: white;
+
+					font-size: 0.85rem;
+					font-weight: 600;
+
+					&::before {
+						content: "";
+						display: inline-block;
+						margin: auto 0;
+						width: 0.5rem;
+						height: 0.5rem;
+						border-radius: 0.5rem;
+						background-color: rgb(255, 110, 110);
+					}
+				}
+
+				> .bars {
+					position: relative;
+					flex-grow: 1;
+					overflow: hidden;
+
+					> .scroller {
+						position: absolute;
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						gap: 0.25rem;
+
+						top: 0;
+						left: 100%;
+						height: 100%;
+
+						transition: transform 0.05s linear;
+
+						> .bar {
+							width: 0.25rem;
+							height: 0%;
+							min-height: 0.125rem;
+							background-color: white;
+							border-radius: 0.5rem;
+
+							transition: height 0.3s cubic-bezier(0.87, 0, 0.13, 1);
+						}
+					}
 				}
 			}
 		}
@@ -1118,6 +1198,18 @@
 				padding: 0.5rem;
 				width: 3rem;
 				height: 3rem;
+			}
+		}
+
+		&.recording {
+			> .text {
+				> .textbox {
+					display: none;
+				}
+
+				> .waveform {
+					display: flex;
+				}
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 import Elysia, { t, type RouteSchema, type SingletonBase } from "elysia";
 import { scope } from "../Utils/Logger";
-import { runtime, time } from "../Utils/belibrary";
+import { decodeBase64ToInt16Array, runtime, time } from "../Utils/belibrary";
 import type { ElysiaWS } from "elysia/ws";
 import type { ServerWebSocket } from "bun";
 import Device, { createDevice, getDevice, getDeviceFeature } from "../Device/Device";
@@ -8,7 +8,7 @@ import SessionModel from "../Models/SessionModel";
 import type UserModel from "../Models/UserModel";
 import { Op } from "sequelize";
 import { FeatureUpdateSource } from "../Device/Features/FeatureBase";
-import { getOpenAIClient, handleAssistantMessage } from "../OpenAI/Service";
+import { appendAssistantVoide, getOpenAIClient, handleAssistantMessage, handleAssistantVoice } from "../OpenAI/Service";
 
 const logDev = scope("ws:device");
 const logDash = scope("ws:dashboard");
@@ -261,6 +261,20 @@ websocketRouter.ws("/dashboard", {
 			case "assistant:message": {
 				// @ts-expect-error
 				await handleAssistantMessage(ws, session, data);
+				break;
+			}
+
+			case "assistant:voice/append": {
+				const audio = decodeBase64ToInt16Array(data.audio);
+
+				// @ts-expect-error
+				await appendAssistantVoide(ws, session, audio);
+				break;
+			}
+
+			case "assistant:voice/commit": {
+				// @ts-expect-error
+				await handleAssistantVoice(ws, session);
 				break;
 			}
 		}
