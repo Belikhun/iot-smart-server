@@ -528,6 +528,8 @@ class DeviceFeature extends Model {
 			}
 		}, { simple: true });
 
+		this.valueUpdateHandlers = [];
+
 		/** @type {Number} */
 		this.created = null;
 
@@ -586,9 +588,21 @@ class DeviceFeature extends Model {
 		return this.renderer.render();
 	}
 
-	setValue(newValue = undefined, source = UPDATE_SOURCE_INTERNAL) {
+	setValue(newValue = undefined, source = UPDATE_SOURCE_INTERNAL, sourceId = null) {
+		if (this.getValue() == newValue)
+			return this.getValue();
+
 		this.value = newValue;
-		clog("INFO", `DeviceFeature(${this.uuid}).setValue(): value=${newValue} source=${source}`);
+		clog("INFO", `DeviceFeature(${this.uuid}).setValue(): value=${newValue} source=${source} sourceId=${sourceId}`);
+
+		for (const handler of this.valueUpdateHandlers) {
+			try {
+				handler(this.value, source, sourceId);
+			} catch (e) {
+				clog("WARN", `DeviceFeature(${this.uuid}).setValue(): lỗi khi xử lý hàm lắng nghe:`, e);
+				continue;
+			}
+		}
 
 		if (source !== UPDATE_SOURCE_SERVER) {
 			clog("DEBG", "Sẽ thực hiện cập nhật máy chủ");
@@ -605,6 +619,32 @@ class DeviceFeature extends Model {
 
 	getValue() {
 		return this.value;
+	}
+
+	/**
+	 * Register a handler on value updated of this feature.
+	 * 
+	 * @param	{(value: any, source: "internal" | "server" | "control", sourceId: ?string) => void}	handler
+	 * @return	{this}
+	 */
+	onValueUpdate(handler) {
+		if (typeof handler !== "function")
+			throw new Error(`DeviceFeature(${this.uuid}).onValueUpdate(): hàm lắng nghe không phải là một hàm hợp lệ!`);
+
+		this.valueUpdateHandlers.push(handler);
+		return this;
+	}
+
+	removeValueUpdate(handler) {
+		if (typeof handler !== "function")
+			throw new Error(`DeviceFeature(${this.uuid}).removeValueUpdate(): không phải là một hàm hợp lệ!`);
+
+		const index = this.valueUpdateHandlers.indexOf(handler);
+
+		if (index >= 0)
+			this.valueUpdateHandlers.splice(index, 1);
+
+		return this;
 	}
 
 	doUpdateControl() {

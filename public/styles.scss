@@ -1286,7 +1286,7 @@
 	}
 
 	> .content {
-		padding: 0.5rem 1rem;
+		padding: 1rem;
 	}
 }
 
@@ -1297,5 +1297,47 @@
 
 	> :last-child {
 		margin-top: 0;
+	}
+}
+
+.block-quick-settings {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: 1rem;
+}
+
+.smart-switch {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+
+	padding: 1rem 1.5rem;
+	border-radius: 2rem;
+	cursor: pointer;
+
+	background-color: var(--background-1);
+	color: var(--text-primary);
+
+	transition: all 0.2s cubic-bezier(0.65, 0, 0.35, 1);
+
+	&:active {
+		background-color: var(--background-2);
+	}
+
+	> .background {
+		background-color: var();
+	}
+
+	> .info {
+		font-size: 0.85rem;
+
+		> .name {
+			font-weight: 600;
+		}
+	}
+
+	&.active {
+		background-color: var(--color);
+		color: var(--text);
 	}
 }

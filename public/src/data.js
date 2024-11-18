@@ -29,6 +29,7 @@ app.strings = {
 	"response.errorReport": "Xem Báo Cáo Lỗi",
 
 	"block.text": "Văn Bản",
+	"block.quickSettings": "Cài Đặt Nhanh",
 
 	"action.view": "Xem",
 	"action.edit": "Chỉnh sửa",

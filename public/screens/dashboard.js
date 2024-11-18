@@ -115,6 +115,7 @@ const dashboard = {
 
 		// Register renderers.
 		this.registerRenderer(BlockTextRenderer);
+		this.registerRenderer(BlockQuickSettingsRenderer);
 	},
 
 	/**
@@ -424,7 +425,7 @@ class DashboardBlockRenderer {
 		});
 	}
 
-	edit() {
+	async edit() {
 		if (!this.form)
 			this.form = new ScreenForm(this.defaultForm);
 
@@ -435,7 +436,7 @@ class DashboardBlockRenderer {
 
 		this.form.defaults = {
 			...this.model,
-			...this.formDefaultValue()
+			...(await this.formDefaultValue())
 		};
 
 		this.form.reset();
@@ -476,7 +477,7 @@ class DashboardBlockRenderer {
 	/**
 	 * Add additional default value for form.
 	 */
-	formDefaultValue() {
+	async formDefaultValue() {
 		return {};
 	}
 
@@ -555,7 +556,7 @@ class BlockTextRenderer extends DashboardBlockRenderer {
 		});
 	}
 
-	formDefaultValue() {
+	async formDefaultValue() {
 		return {
 			content: this.model.data.content
 		};
@@ -575,6 +576,100 @@ class BlockTextRenderer extends DashboardBlockRenderer {
 			: "Không có giá trị";
 
 		return view;
+	}
+}
+
+class BlockQuickSettingsRenderer extends DashboardBlockRenderer {
+	static get ID() {
+		return "quickSettings";
+	}
+
+	static get ICON() {
+		return "sliders";
+	}
+
+	constructor(model) {
+		super(model);
+
+		this.form = new ScreenForm({
+			...this.defaultForm,
+
+			content: {
+				name: "Cài đặt nhanh",
+				rows: [
+					{
+						features: {
+							type: "autocomplete",
+							label: "Các tính năng",
+
+							options: {
+								...featureSearch(FEATURE_FLAG_WRITE),
+								multiple: true
+							}
+						}
+					}
+				]
+			}
+		});
+
+		this.switches = {};
+	}
+
+	async formDefaultValue() {
+		return {
+			features: this.getFeatures()
+		};
+	}
+
+	/**
+	 * Get configured features to display.
+	 * 
+	 * @returns	{DeviceFeature[]}
+	 */
+	getFeatures() {
+		const featureIds = (this.model.data.features)
+			? this.model.data.features
+			: [];
+
+		return featureIds
+			.map((uuid) => devices.getDeviceFeature(uuid))
+			.filter((feature) => !!feature);
+	}
+
+	beforeSave(values) {
+		const features = values.features
+			.map((feature) => feature.uuid);
+
+		this.model.data = {
+			features
+		};
+	}
+
+	renderContent() {
+		if (!this.blockView) {
+			this.blockView = document.createElement("div");
+			this.blockView.classList.add("block-quick-settings");
+		}
+
+		emptyNode(this.blockView);
+		const features = this.getFeatures();
+
+		for (const feature of features) {
+			if (!this.switches[feature.uuid]) {
+				const switchView = renderSmartSwitch(feature);
+				this.switches[feature.uuid] = switchView;
+				switchView.update();
+				this.blockView.appendChild(switchView.view);
+				continue;
+			}
+
+			const switchView = this.switches[feature.uuid];
+			switchView.update();
+			this.blockView.appendChild(switchView.view);
+			continue;
+		}
+
+		return this.blockView;
 	}
 }
 

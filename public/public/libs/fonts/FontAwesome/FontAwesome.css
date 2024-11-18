@@ -949,3 +949,7 @@ icon[data-icon="block"]::after {
 icon[data-icon="textSize"]::after {
 	content: "\f894";
 }
+
+icon[data-icon="sliders"]::after {
+	content: "\f1de";
+}

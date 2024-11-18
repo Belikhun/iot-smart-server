@@ -1,4 +1,93 @@
 
+/**
+ * Render smart switch
+ * 
+ * @param	{DeviceFeature}		feature
+ */
+function renderSmartSwitch(feature) {
+	const id = `smart_switch_${randString(7)}`;
+
+	const view = makeTree("div", ["map-color", "smart-switch"], {
+		background: { tag: "div", class: "background" },
+
+		icon: ScreenUtils.renderIcon(feature.getIcon()),
+		info: { tag: "span", class: "info", child: {
+			fname: { tag: "div", class: "name", text: feature.name },
+			value: { tag: "div", class: "value", text: "---" }
+		}}
+	});
+
+	const kind = {
+		"FeatureOnOffPin": "boolean",
+		"FeatureButton": "boolean",
+		"FeatureKnob": "percentage"
+	}[feature.kind];
+
+	const valueResolver = {
+		"boolean": (value) => (value) ? "Bật" : "Tắt",
+		"percentage": (value) => `${value}%`
+	}[kind];
+
+	let previousValue = null;
+
+	const update = () => {
+		const value = feature.getValue();
+
+		view.info.fname.innerText = feature.name;
+		view.info.value.innerText = valueResolver(value);
+		view.dataset.color = feature.device.color;
+
+		if (kind === "boolean") {
+			view.classList.toggle("active", value);
+		} else if (kind === "percentage") {
+			view.classList.toggle("active", value != 0);
+		}
+	}
+
+	const updateValue = (value, source, sourceId) => {
+		if (sourceId === id)
+			return;
+
+		update();
+	}
+
+	const destroy = () => {
+		feature.removeValueUpdate(updateValue);
+	}
+
+	view.addEventListener("click", () => {
+		const value = feature.getValue();
+		let newValue;
+
+		if (kind === "boolean") {
+			newValue = !value;
+		} else if (kind === "percentage") {
+			if (value != 0) {
+				previousValue = value;
+				newValue = 0;
+			} else {
+				newValue = (previousValue) ? previousValue : 100;
+				previousValue = null;
+			}
+		} else {
+			return;
+		}
+
+		feature.setValue(newValue, UPDATE_SOURCE_INTERNAL, id);
+		update();
+	});
+
+	feature.onValueUpdate(updateValue)
+	view.dataset.color = feature.device.color;
+
+	return {
+		id,
+		view,
+		update,
+		destroy
+	}
+}
+
 function featureSearch(flag = FEATURE_FLAG_READ | FEATURE_FLAG_WRITE) {
 	return {
 		fetch: async (search) => {
