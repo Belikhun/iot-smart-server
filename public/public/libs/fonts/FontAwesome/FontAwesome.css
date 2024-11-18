@@ -953,3 +953,7 @@ icon[data-icon="textSize"]::after {
 icon[data-icon="sliders"]::after {
 	content: "\f1de";
 }
+
+icon[data-icon="sensor"]::after {
+	content: "\e028";
+}

@@ -9,6 +9,9 @@ class GaugeComponent {
 		minValue = 0,
 		maxValue = 100,
 		dangerousValue = null,
+		square = false,
+		labelDistBottom = 0,
+		labelDistEdge = "1.5rem",
 		unit = null
 	} = {}) {
 		this.id = randString(8);
@@ -30,7 +33,7 @@ class GaugeComponent {
 			gauge: this.gauge,
 			value: { tag: "div", class: "value", child: {
 				current: { tag: "div", class: "current", text: "---" },
-				unit: (unit) ? { tag: "div", class: "unit", text: unit } : null
+				unit: { tag: "div", class: "unit", text: unit }
 			}},
 
 			min: { tag: "span", class: "min-value", text: minValue },
@@ -46,18 +49,30 @@ class GaugeComponent {
 		this.maxValue = maxValue;
 		this.dangerousValue = dangerousValue;
 
-		const theta = Math.abs(this.endAngle - this.startAngle);
-		const radius = (this.width + arcWidth) / (2 * Math.sin(theta / 2));
-		this.height = radius * (1 - Math.cos(theta / 2));
+		if (typeof labelDistBottom === "number")
+			labelDistBottom += "px";
 
-		this.centerX = this.width / 2;
-		this.centerY = (this.height / 2) + shift;
-		this.radius = (this.width - arcWidth) / 2;
+		if (typeof labelDistEdge === "number")
+			labelDistEdge += "px";
 
-		// this.height = this.width;
-		// this.centerX = this.width / 2;
-		// this.centerY = this.height / 2;
-		// this.radius = (this.width - arcWidth) / 2;
+		this.container.style.setProperty("--label-dist-bottom", labelDistBottom);
+		this.container.style.setProperty("--label-dist-edge", labelDistEdge);
+		this.container.style.setProperty("--arc-width", `${arcWidth}px`);
+
+		if (square) {
+			this.height = this.width;
+			this.centerX = this.width / 2;
+			this.centerY = this.height / 2;
+			this.radius = (this.width - arcWidth) / 2;
+		} else {
+			const theta = Math.abs(this.endAngle - this.startAngle);
+			const radius = (this.width + arcWidth) / (2 * Math.sin(theta / 2));
+			this.height = radius * (1 - Math.cos(theta / 2));
+	
+			this.centerX = this.width / 2;
+			this.centerY = (this.height / 2) + shift;
+			this.radius = (this.width - arcWidth) / 2;
+		}
 
 		this.gauge.setAttribute("width", this.width);
 		this.gauge.setAttribute("height", this.height);
@@ -73,6 +88,15 @@ class GaugeComponent {
 
 		this.value = 0;
 		this.initialized = true;
+	}
+
+	set unit(/** @type {string} */ unit) {
+		if (unit) {
+			this.container.value.unit.innerText = unit;
+			this.container.value.unit.style.display = null;
+		} else {
+			this.container.value.unit.style.display = "none";
+		}
 	}
 
 	drawBackground() {
@@ -95,8 +119,17 @@ class GaugeComponent {
 	}
 
 	drawDangerousZone() {
-		this.dangerZone = document.createElementNS("http://www.w3.org/2000/svg", "path");
-		this.dangerZone.classList.add("dangerous");
+		if (!this.dangerZone) {
+			this.dangerZone = document.createElementNS("http://www.w3.org/2000/svg", "path");
+			this.dangerZone.classList.add("dangerous");
+		}
+
+		if (!this.dangerousValue) {
+			if (this.gauge.contains(this.dangerZone))
+				this.gauge.removeChild(this.dangerZone);
+
+			return;
+		}
 
 		const startP = scaleValue(this.dangerousValue, [this.minValue, this.maxValue], [0, 1]);
 		const startAngle = (this.startAngle + (startP * (this.endAngle - this.startAngle))) * (Math.PI / 180);

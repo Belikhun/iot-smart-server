@@ -1915,6 +1915,15 @@ class DashboardItem extends Model {
 		return DashboardItem.processResponse(response.data);
 	}
 
+	async delete() {
+		await myajax({
+			url: app.api(`/dashboard/${this.id}/delete`),
+			method: "DELETE"
+		});
+
+		this.id = null;
+	}
+
 	/**
 	 * Process response returned from API.
 	 *

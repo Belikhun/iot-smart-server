@@ -116,6 +116,7 @@ const dashboard = {
 		// Register renderers.
 		this.registerRenderer(BlockTextRenderer);
 		this.registerRenderer(BlockQuickSettingsRenderer);
+		this.registerRenderer(BlockSensorRenderer);
 	},
 
 	/**
@@ -249,6 +250,8 @@ class DashboardBlockRenderer {
 	 * @param	{DashboardItem}		model
 	 */
 	constructor(model) {
+		this.id = `dashboard_block_${this.constructor.ID}_${randString(7)}`;
+
 		this.model = model;
 
 		/** @type {TreeDOM} */
@@ -261,14 +264,14 @@ class DashboardBlockRenderer {
 			.add({ id: "edit", text: "Chỉnh sửa", icon: "pencil" })
 			.add({ id: "delete", text: "Xóa", icon: "trash", color: "red" });
 
-		this.menu.onSelect((action) => {
+		this.menu.onSelect(async (action) => {
 			switch (action) {
 				case "edit":
 					this.edit();
 					break;
 			
-				default:
-					break;
+				case "delete":
+					await this.delete();
 			}
 		});
 
@@ -368,15 +371,19 @@ class DashboardBlockRenderer {
 		this.view.dataset.color = this.model.color;
 		this.view.header.blade.titl.innerText = this.model.name;
 		emptyNode(this.view.content);
-		this.view.content.appendChild(this.renderContent());
+
+		const content = this.renderContent();
+		if (isElement(content)) {
+			this.view.content.appendChild(content);
+		} else {
+			this.view.content.innerHTML = content;
+		}
 
 		return this.view;
 	}
 
 	renderContent() {
-		const view = document.createElement("div");
-		view.innerText = `Chưa hỗ trợ render khối ${this.model.type}`;
-		return view;
+		return `Chưa hỗ trợ render khối ${this.model.type}`;
 	}
 
 	create(onCreated = () => {}) {
@@ -474,6 +481,12 @@ class DashboardBlockRenderer {
 		});
 	}
 
+	async delete() {
+		delete dashboard.blocks[this.model.id];
+		await this.model.delete();
+		this.destroy();
+	}
+
 	/**
 	 * Add additional default value for form.
 	 */
@@ -490,6 +503,10 @@ class DashboardBlockRenderer {
 
 	}
 
+	destroy() {
+		this.grid.removeWidget(this.gridItem);
+	}
+
 	/**
 	 * Register this block into a grid.
 	 * 
@@ -504,6 +521,7 @@ class DashboardBlockRenderer {
 		gridView.appendChild(view);
 		gridView.dataset.itemId = this.model.id;
 
+		this.grid = grid;
 		this.gridItem = grid.makeWidget(gridView, {
 			x: this.model.xPos,
 			y: this.model.yPos,
@@ -588,6 +606,10 @@ class BlockQuickSettingsRenderer extends DashboardBlockRenderer {
 		return "sliders";
 	}
 
+	static get SIZE() {
+		return [3, 3];
+	}
+
 	constructor(model) {
 		super(model);
 
@@ -670,6 +692,131 @@ class BlockQuickSettingsRenderer extends DashboardBlockRenderer {
 		}
 
 		return this.blockView;
+	}
+
+	destroy() {
+		super.destroy();
+		
+		for (const { destroy } of Object.values(this.switches))
+			destroy();
+
+		this.switches = {};
+	}
+}
+
+class BlockSensorRenderer extends DashboardBlockRenderer {
+	static get ID() {
+		return "sensor";
+	}
+
+	static get ICON() {
+		return "sensor";
+	}
+
+	constructor(model) {
+		super(model);
+
+		this.form = new ScreenForm({
+			...this.defaultForm,
+
+			content: {
+				name: "Cảm biến",
+				rows: [
+					{
+						feature: {
+							type: "autocomplete",
+							label: "Cảm biến hiển thị",
+							required: true,
+
+							options: {
+								...featureSearch(FEATURE_FLAG_READ, { includeKinds: ["FeatureSensorValue"] })
+							}
+						}
+					}
+				]
+			}
+		});
+
+		this.switches = {};
+	}
+
+	async formDefaultValue() {
+		return {
+			feature: this.getFeature()
+		};
+	}
+
+	/**
+	 * Get configured feature to display.
+	 * 
+	 * @returns	{?DeviceFeature}
+	 */
+	getFeature() {
+		if (!this.model.data)
+			return null;
+
+		return devices.getDeviceFeature(this.model.data);
+	}
+
+	beforeSave(values) {
+		this.model.data = values.feature.uuid;
+	}
+
+	renderContent() {
+		const feature = this.getFeature();
+
+		if (!feature)
+			return "Yêu cầu chọn một cảm biến để hiển thị dữ liệu";
+
+		if (!this.gauge) {
+			this.gauge = new GaugeComponent({
+				width: 232,
+				arcWidth: 24,
+				shift: 32,
+				labelDistEdge: "2.5rem"
+			});
+
+			this.blockView = makeTree("div", "block-sensor-content", {
+				gauge: this.gauge,
+				label: { tag: "div", class: "label", text: "---" }
+			});
+
+			this.updateValue = (value, source, sourceId) => {
+				if (sourceId === this.id)
+					return;
+
+				this.gauge.value = value;
+			};
+		}
+
+		if (!this.currentFeature || this.currentFeature.uuid !== feature.uuid) {
+			const { max, min, unit, dangerous } = feature.extras;
+
+			this.gauge.minValue = min;
+			this.gauge.maxValue = max;
+			this.gauge.unit = unit;
+			this.blockView.label.innerText = feature.name;
+
+			if (this.gauge.dangerousValue !== dangerous) {
+				this.gauge.dangerousValue = dangerous;
+				this.gauge.drawDangerousZone();
+			}
+
+			if (this.currentFeature)
+				this.currentFeature.removeValueUpdate(this.updateValue);
+
+			feature.onValueUpdate(this.updateValue);
+			this.currentFeature = feature;
+
+			this.gauge.value = feature.getValue();
+		}
+
+		return this.blockView;
+	}
+
+	destroy() {
+		super.destroy();
+		this.currentFeature.removeValueUpdate(this.updateValue);
 	}
 }
 

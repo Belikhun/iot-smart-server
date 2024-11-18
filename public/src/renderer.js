@@ -8,8 +8,6 @@ function renderSmartSwitch(feature) {
 	const id = `smart_switch_${randString(7)}`;
 
 	const view = makeTree("div", ["map-color", "smart-switch"], {
-		background: { tag: "div", class: "background" },
-
 		icon: ScreenUtils.renderIcon(feature.getIcon()),
 		info: { tag: "span", class: "info", child: {
 			fname: { tag: "div", class: "name", text: feature.name },
@@ -88,11 +86,32 @@ function renderSmartSwitch(feature) {
 	}
 }
 
-function featureSearch(flag = FEATURE_FLAG_READ | FEATURE_FLAG_WRITE) {
+/**
+ * Function return common functions to use for autocomplete input.
+ * 
+ * @param	{number}	flag 
+ * @param	{object}	options
+ * @param	{string[]}	options.includeKinds
+ * @param	{string[]}	options.excludeKinds
+ */
+function featureSearch(flag = FEATURE_FLAG_READ | FEATURE_FLAG_WRITE, {
+	includeKinds = [],
+	excludeKinds = []
+} = {}) {
 	return {
 		fetch: async (search) => {
-			const features = Object.values(devices.features)
+			let features = Object.values(devices.features)
 				.filter((item) => item.support(flag));
+
+			if (includeKinds.length > 0) {
+				// Only include these kinds.
+				features = features.filter((item) => includeKinds.includes(item.kind));
+			}
+
+			if (excludeKinds.length > 0) {
+				// Only include these kinds.
+				features = features.filter((item) => (!excludeKinds.includes(item.kind)));
+			}
 
 			if (!search)
 				return features.slice(0, 30);
@@ -144,6 +163,7 @@ class FeatureRenderer {
 			"FeatureKnob": { icon: "joystick" },
 			"FeatureTemperature": { icon: "temperatureQuarter" },
 			"FeatureHumidity": { icon: "dropletPercent" },
+			"FeatureSensorValue": { icon: "sensor" }
 		}
 	}
 

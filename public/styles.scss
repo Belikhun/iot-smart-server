@@ -490,7 +490,7 @@
 	> .min-value,
 	> .max-value {
 		position: absolute;
-		bottom: 0;
+		bottom: var(--label-dist-bottom);
 
 		font-size: 0.65rem;
 		line-height: 1;
@@ -498,11 +498,11 @@
 	}
 
 	> .min-value {
-		left: 1.5rem;
+		left: var(--label-dist-edge);
 	}
 
 	> .max-value {
-		right: 1.5rem;
+		right: var(--label-dist-edge);
 	}
 
 	> .hand {
@@ -521,7 +521,7 @@
 			content: "";
 			position: absolute;
 
-			top: 0.5rem;
+			top: var(--arc-width);
 			left: -6px;
 
 			width: 0;
@@ -1286,6 +1286,7 @@
 	}
 
 	> .content {
+		flex-grow: 1;
 		padding: 1rem;
 	}
 }
@@ -1324,10 +1325,6 @@
 		background-color: var(--background-2);
 	}
 
-	> .background {
-		background-color: var();
-	}
-
 	> .info {
 		font-size: 0.85rem;
 
@@ -1339,5 +1336,21 @@
 	&.active {
 		background-color: var(--color);
 		color: var(--text);
+	}
+}
+
+.block-sensor-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+
+	height: 100%;
+	text-align: center;
+
+	> .label {
+		font-size: 0.85rem;
+		font-weight: 600;
 	}
 }
