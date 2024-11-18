@@ -23,19 +23,550 @@
  */
 
 const dashboard = {
+	/**
+	 * @typedef {{
+	 * 	model: DashboardItem
+	 * 	renderer: DashboardBlockRenderer
+	 * }} DashboardBlockInstance
+	 */
+
 	/** @type {ScreenChild} */
 	screen: undefined,
 
+	/** @type {TreeDOM} */
+	view: undefined,
+
+	/** @type {GridStack} */
+	grid: undefined,
+
+	gridState: null,
+	
+	/** @type {{ [type: string]: function }} */
+	renderers: {},
+	
+	/** @type {SQButton} */
+	updateButton: undefined,
+
+	/** @type {SQButton} */
+	createButton: undefined,
+
+	/** @type {ContextMenu} */
+	createMenu: undefined,
+
+	/** @type {{ [id: number]: DashboardBlockInstance }} */
+	blocks: {},
+
 	init() {
+		this.createMenu = new ContextMenu();
+		this.createMenu.onSelect((type) => this.createBlock(type));
+
+		this.updateButton = createButton("", {
+			icon: "reload",
+			color: "blue",
+			onClick: () => this.fetch()
+		});
+
+		this.createButton = createButton("Thêm khối", {
+			icon: "plus",
+			color: "accent",
+			onClick: (e) => this.createMenu.openByMouseEvent(e)
+		});
+
+		this.view = makeTree("div", "device-dashboard", {
+			grid: { tag: "div", class: "grid" }
+		});
+
 		this.screen = new ScreenChild(
 			screens.system,
 			"dashboard",
 			app.string("system_dashboard"),
 			{
 				title: app.string("system_dashboard_title"),
-				activated: true
+				activated: true,
+				noGrid: true
 			}
 		);
+
+		this.screen.addAction(this.updateButton);
+		this.screen.addAction(this.createButton);
+
+		this.screen.onActivate(() => {
+			if (this.grid)
+				this.grid.destroy(false);
+
+			this.grid = GridStack.init({}, this.view.grid);
+			this.grid.margin("1rem");
+
+			if (this.gridState)
+				this.grid.load(this.gridState);
+		});
+
+		this.screen.onDeactivate(() => {
+			this.gridState = this.grid.save();
+		});
+
+		this.screen.loading = true;
+		this.screen.content = this.view;
+
+		// Register renderers.
+		this.registerRenderer(BlockTextRenderer);
+
+		this.fetch();
+	},
+
+	/**
+	 * Register renderer
+	 * 
+	 * @param	{function}		renderer
+	 */
+	registerRenderer(renderer) {
+		this.renderers[renderer.ID] = renderer;
+		this.createMenu.add({ id: renderer.ID, icon: renderer.ICON, text: app.string(`block.${renderer.ID}`) });
+		return this;
+	},
+
+	/**
+	 * Get renderer
+	 * 
+	 * @param	{DashboardItem}				model
+	 * @returns	{DashboardBlockRenderer}
+	 */
+	getRenderer(model) {
+		if (!this.renderers[model.type])
+			return new DashboardBlockRenderer(model);
+
+		return new this.renderers[model.type](model);
+	},
+
+	findEmptyPosition(width = 2, height = 1) {
+		this.gridState = this.grid.save();
+		const maxCols = this.grid.opts.column || 12;
+
+		for (let y = 0; ; y++) {
+			for (let x = 0; x <= maxCols - width; x++) {
+				const overlaps = this.gridState.some(item => {
+					return (
+						x < item.x + item.w &&
+						x + width > item.x &&
+						y < item.y + item.h &&
+						y + height > item.y
+					);
+				});
+
+				if (!overlaps) {
+					return { x, y };
+				}
+			}
+		}
+	},
+
+	async createBlock(type) {
+		const [width, height] = this.renderers[type].SIZE;
+		const { x, y } = this.findEmptyPosition(width, height);
+		
+		const instance = new DashboardItem();
+		instance.type = type;
+		instance.width = width;
+		instance.height = height;
+		instance.xPos = x;
+		instance.yPos = y;
+
+		/** @type {DashboardBlockRenderer} */
+		const renderer = new this.renderers[type](instance);
+		
+		renderer.create(() => {
+			this.blocks[instance.id] = {
+				model: instance,
+				renderer
+			};
+
+			renderer.register(this.grid);
+			renderer.render();
+		});
+	},
+
+	async fetch() {
+		this.screen.loading = true;
+		this.updateButton.loading = true;
+
+		try {
+			const response = await myajax({
+				url: app.api("/dashboard/list"),
+				method: "GET"
+			});
+
+			const items = DashboardItem.processResponses(response.data);
+
+			for (const item of items) {
+				if (!this.blocks[item.id]) {
+					const renderer = this.getRenderer(item);
+
+					this.blocks[item.id] = {
+						model: item,
+						renderer
+					};
+
+					renderer.register(this.grid);
+				}
+
+				this.blocks[item.id].model = item;
+				this.blocks[item.id].renderer.render();
+			}
+		} catch (e) {
+			this.screen.handleError(e);
+		}
+
+		this.updateButton.loading = false;
+		this.screen.loading = false;
+	}
+}
+
+class DashboardBlockRenderer {
+	static get ID() {
+		return "default";
+	}
+
+	static get ICON() {
+		return "block";
+	}
+
+	static get SIZE() {
+		return [2, 2];
+	}
+
+	/**
+	 * The dashboard block constructor.
+	 * 
+	 * @param	{DashboardItem}		model
+	 */
+	constructor(model) {
+		this.model = model;
+
+		/** @type {TreeDOM} */
+		this.view = null;
+		
+		/** @type {GridItemHTMLElement} */
+		this.gridItem = null;
+
+		this.menu = new ContextMenu()
+			.add({ id: "edit", text: "Chỉnh sửa", icon: "pencil" })
+			.add({ id: "delete", text: "Xóa", icon: "trash", color: "red" });
+
+		this.menu.onSelect((action) => {
+			switch (action) {
+				case "edit":
+					this.edit();
+					break;
+			
+				default:
+					break;
+			}
+		});
+
+		this.defaultForm = {
+			main: {
+				name: app.string("form.group.main"),
+				rows: [
+					{
+						name: {
+							type: "text",
+							label: app.string("table.name"),
+							required: true
+						}
+					}
+				]
+			},
+
+			specification: {
+				name: app.string("form.group.specification"),
+				rows: [
+					{
+						icon: {
+							type: "autocomplete",
+							label: app.string("table.icon"),
+							required: true,
+
+							options: {
+								/** @type {AutocompleteInputFetch} */
+								fetch: async (search) => {
+									if (!search)
+										return app.icons;
+
+									return app.icons.filter((v) => v.includes(search));
+								},
+
+								/** @type {AutocompleteInputProcess} */
+								process: (item) => {
+									return {
+										label: ScreenUtils.renderSpacedRow(
+											ScreenUtils.renderIcon(item),
+											item
+										),
+										value: item
+									};
+								}
+							}
+						},
+
+						color: {
+							type: "autocomplete",
+							label: app.string("table.color"),
+							required: true,
+
+							options: {
+								/** @type {AutocompleteInputFetch} */
+								fetch: async (search) => {
+									if (!search)
+										return app.colors;
+
+									return app.colors.filter((v) => v.includes(search));
+								},
+
+								/** @type {AutocompleteInputProcess} */
+								process: (item) => {
+									return {
+										label: ScreenUtils.renderBadge(app.string(`color.${item}`), item),
+										value: item
+									};
+								}
+							}
+						}
+					}
+				]
+			}
+		};
+
+		/** @type {ScreenForm} */
+		this.form = null;
+	}
+
+	render() {
+		if (!this.view) {
+			this.view = makeTree("div", ["map-color", "dashboard-block", `block-${this.model.type}`], {
+				header: { tag: "div", class: "header", child: {
+					blade: { tag: "span", class: "blade", child: {
+						icon: ScreenUtils.renderIcon(this.model.icon),
+						titl: { tag: "span", class: "title", text: this.model.name }
+					}}
+				}},
+
+				content: { tag: "div", class: "content" }
+			});
+
+			this.view.header.addEventListener("contextmenu", (e) => this.menu.openByMouseEvent(e));
+		}
+
+		this.view.dataset.color = this.model.color;
+		this.view.header.blade.titl.innerText = this.model.name;
+		emptyNode(this.view.content);
+		this.view.content.appendChild(this.renderContent());
+
+		return this.view;
+	}
+
+	renderContent() {
+		const view = document.createElement("div");
+		view.innerText = `Chưa hỗ trợ render khối ${this.model.type}`;
+		return view;
+	}
+
+	create(onCreated = () => {}) {
+		if (!this.form)
+			this.form = new ScreenForm(this.defaultForm);
+
+		const title = app.string("model_creating", { model: `Khối ${app.string(`block.${this.model.type}`)}` });
+
+		dashboard.screen.showPanel({
+			title,
+			content: this.form.form
+		});
+
+		this.form.reset(true);
+		this.form.title = title;
+
+		setTimeout(() => {
+			this.form.show = true;
+		}, 200);
+
+		this.form.onSubmit(async (values) => {
+			this.model.name = values.name;
+			this.model.icon = values.icon;
+			this.model.color = values.color;
+
+			this.beforeSave(values);
+
+			try {
+				await this.model.save();
+				app.screen.active.alert("OKAY", `Đã tạo thành công khối ${this.model.name}`);
+			} catch (e) {
+				// 221 is FieldError
+				if (e.data && e.data.code === 221) {
+					this.form.setError(e.data.data.name, e.data.details);
+					return;
+				}
+
+				app.screen.active.handleError(e);
+			}
+
+			this.form.show = false;
+			dashboard.screen.hidePanel();
+
+			if (this.model.id)
+				onCreated();
+		});
+	}
+
+	edit() {
+		if (!this.form)
+			this.form = new ScreenForm(this.defaultForm);
+
+		dashboard.screen.showPanel({
+			title: app.string("model_editing", { model: "Khối", name: this.model.name }),
+			content: this.form.form
+		});
+
+		this.form.defaults = {
+			...this.model,
+			...this.formDefaultValue()
+		};
+
+		this.form.reset();
+		this.form.title = app.string("model_editing", { model: "Khối", name: this.model.name });
+
+		setTimeout(() => {
+			this.form.show = true;
+		}, 200);
+
+		this.form.onSubmit(async (values) => {
+			this.model.name = values.name;
+			this.model.icon = values.icon;
+			this.model.color = values.color;
+
+			this.beforeSave(values);
+
+			try {
+				await this.model.save();
+				app.screen.active.alert("OKAY", `Đã cập nhật thông tin cho khối ${this.model.name}`);
+
+				if (this.view)
+					this.render();
+			} catch (e) {
+				// 221 is FieldError
+				if (e.data && e.data.code === 221) {
+					this.form.setError(e.data.data.name, e.data.details);
+					return;
+				}
+
+				app.screen.active.handleError(e);
+			}
+
+			this.form.show = false;
+			dashboard.screen.hidePanel();
+		});
+	}
+
+	/**
+	 * Add additional default value for form.
+	 */
+	formDefaultValue() {
+		return {};
+	}
+
+	/**
+	 * Handle before save. Update external model values here.
+	 * 
+	 * @param {{ [key: string]: any }} values 
+	 */
+	beforeSave(values) {
+
+	}
+
+	/**
+	 * Register this block into a grid.
+	 * 
+	 * @param	{GridStack}		grid
+	 * @returns	{this}
+	 */
+	register(grid) {
+		const view = this.render();
+
+		const gridView = document.createElement("div");
+		gridView.classList.add("grid-stack-item-content", "dashboard-block-wrapper");
+		gridView.appendChild(view);
+		gridView.dataset.itemId = this.model.id;
+
+		this.gridItem = grid.makeWidget(gridView, {
+			x: this.model.xPos,
+			y: this.model.yPos,
+			w: this.model.width,
+			h: this.model.height
+		});
+
+		grid.on("change", async (event, items) => {
+			for (const item of items) {
+				if (item.el.dataset.itemId != this.model.id && !gridView.isSameNode(item.el))
+					continue;
+
+				this.model.width = item.w;
+				this.model.height = item.h;
+				this.model.xPos = item.x;
+				this.model.yPos = item.y;
+				await this.model.save();
+				clog("INFO", `Đã cập nhật vị trí và kích cỡ cho khối ${this.model.name}!`);
+			}
+		});
+	}
+}
+
+class BlockTextRenderer extends DashboardBlockRenderer {
+	static get ID() {
+		return "text";
+	}
+
+	static get ICON() {
+		return "textSize";
+	}
+
+	constructor(model) {
+		super(model);
+
+		this.form = new ScreenForm({
+			...this.defaultForm,
+
+			content: {
+				name: "Nội dung",
+				rows: [
+					{
+						content: {
+							type: "textarea",
+							label: "Nội dung hiển thị (Markdown)"
+						}
+					}
+				]
+			}
+		});
+	}
+
+	formDefaultValue() {
+		return {
+			content: this.model.data.content
+		};
+	}
+
+	beforeSave(values) {
+		this.model.data = {
+			content: values.content
+		};
+	}
+
+	renderContent() {
+		const view = document.createElement("div");
+		view.classList.add("block-text-content");
+		view.innerHTML = (this.model.data.content)
+			? marked.parse(this.model.data.content)
+			: "Không có giá trị";
+
+		return view;
 	}
 }
 

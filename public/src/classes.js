@@ -1795,3 +1795,103 @@ class TriggerAction extends Model {
 		return instances;
 	}
 }
+
+class DashboardItem extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {string} */
+		this.name = null;
+
+		/** @type {string} */
+		this.icon = null;
+
+		/** @type {string} */
+		this.color = null;
+
+		/** @type {number} */
+		this.xPos = null;
+
+		/** @type {number} */
+		this.yPos = null;
+
+		/** @type {number} */
+		this.width = null;
+
+		/** @type {number} */
+		this.height = null;
+
+		/** @type {string} */
+		this.type = null;
+
+		/** @type {?object} */
+		this.data = null;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	async save() {
+		const data = {
+			name: this.name,
+			icon: this.icon,
+			color: this.color,
+			xPos: this.xPos,
+			yPos: this.yPos,
+			width: this.width,
+			height: this.height,
+			data: this.data,
+			...this.extraSaveData
+		};
+
+		let response;
+
+		if (this.id) {
+			response = await myajax({
+				url: app.api(`/dashboard/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+		} else {
+			data.type = this.type;
+
+			response = await myajax({
+				url: app.api(`/dashboard/create`),
+				method: "POST",
+				json: data
+			});
+
+			if (!MODEL_INSTANCES[this.constructor.name])
+				MODEL_INSTANCES[this.constructor.name] = {};
+
+			this.id = response.data.id;
+			MODEL_INSTANCES[this.constructor.name][this.id] = this;
+		}
+
+		this.extraSaveData = {};
+		return DashboardItem.processResponse(response.data);
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}			response
+	 * @returns	{DashboardItem}
+	 */
+	static processResponse(response) {
+		return super.processResponse(response);
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}			responses
+	 * @returns	{DashboardItem[]}
+	 */
+	static processResponses(responses) {
+		return super.processResponses(responses);
+	}
+}

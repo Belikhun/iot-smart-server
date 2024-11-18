@@ -941,3 +941,11 @@ icon[data-icon="microphone"]::after {
 icon[data-icon="stop"]::after {
 	content: "\f04d";
 }
+
+icon[data-icon="block"]::after {
+	content: "\e46a";
+}
+
+icon[data-icon="textSize"]::after {
+	content: "\f894";
+}

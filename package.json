@@ -25,6 +25,7 @@
 		"@types/signale": "^1.4.7",
 		"chokidar-cli": "^3.0.0",
 		"elysia": "^1.1.25",
+		"gridstack": "^11.1.0",
 		"moment": "^2.30.1",
 		"mysql2": "^3.11.4",
 		"password-hash-and-salt": "^0.1.4",

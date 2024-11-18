@@ -2298,6 +2298,13 @@ code {
 
 		> .content {
 			padding-bottom: 0;
+
+			&::after {
+				content: "";
+				display: block;
+				height: 12rem;
+				pointer-events: none;
+			}
 		}
 
 		> .actions {

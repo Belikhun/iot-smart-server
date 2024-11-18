@@ -28,6 +28,8 @@ app.strings = {
 	"no_result_sub": "Thử nới lỏng truy vấn tìm kiếm của bạn và thử lại.",
 	"response.errorReport": "Xem Báo Cáo Lỗi",
 
+	"block.text": "Văn Bản",
+
 	"action.view": "Xem",
 	"action.edit": "Chỉnh sửa",
 	"action.delete": "Xóa bỏ",
