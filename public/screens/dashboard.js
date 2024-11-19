@@ -96,11 +96,16 @@ const dashboard = {
 			if (this.grid)
 				this.grid.destroy(false);
 
-			this.grid = GridStack.init({}, this.view.grid);
+			this.grid = GridStack.init({
+				draggable: {
+					handle: ".header"
+				}
+			}, this.view.grid);
+
 			this.grid.margin("1rem");
 
-			if (this.gridState)
-				this.grid.load(this.gridState);
+			// if (this.gridState)
+			// 	this.grid.load(this.gridState);
 
 			if (!this.fetched)
 				this.fetch();
@@ -117,6 +122,7 @@ const dashboard = {
 		this.registerRenderer(BlockTextRenderer);
 		this.registerRenderer(BlockQuickSettingsRenderer);
 		this.registerRenderer(BlockSensorRenderer);
+		this.registerRenderer(BlockKnobRenderer);
 	},
 
 	/**
@@ -365,6 +371,9 @@ class DashboardBlockRenderer {
 				content: { tag: "div", class: "content" }
 			});
 
+			this.view.draggable = false;
+			this.view.header.draggable = true;
+			this.view.content.draggable = false;
 			this.view.header.addEventListener("contextmenu", (e) => this.menu.openByMouseEvent(e));
 		}
 
@@ -809,6 +818,132 @@ class BlockSensorRenderer extends DashboardBlockRenderer {
 			this.currentFeature = feature;
 
 			this.gauge.value = feature.getValue();
+		}
+
+		return this.blockView;
+	}
+
+	destroy() {
+		super.destroy();
+		this.currentFeature.removeValueUpdate(this.updateValue);
+	}
+}
+
+class BlockKnobRenderer extends DashboardBlockRenderer {
+	static get ID() {
+		return "knob";
+	}
+
+	static get ICON() {
+		return "joystick";
+	}
+
+	constructor(model) {
+		super(model);
+
+		this.form = new ScreenForm({
+			...this.defaultForm,
+
+			content: {
+				name: "Núm vặn",
+				rows: [
+					{
+						feature: {
+							type: "autocomplete",
+							label: "Tính năng",
+							required: true,
+
+							options: {
+								...featureSearch(FEATURE_FLAG_READ, { includeKinds: ["FeatureKnob", "FeatureRGBLed"] })
+							}
+						}
+					}
+				]
+			}
+		});
+
+		this.switches = {};
+	}
+
+	async formDefaultValue() {
+		return {
+			feature: this.getFeature()
+		};
+	}
+
+	/**
+	 * Get configured feature to display.
+	 * 
+	 * @returns	{?DeviceFeature}
+	 */
+	getFeature() {
+		if (!this.model.data)
+			return null;
+
+		return devices.getDeviceFeature(this.model.data);
+	}
+
+	beforeSave(values) {
+		this.model.data = values.feature.uuid;
+	}
+
+	renderContent() {
+		const feature = this.getFeature();
+
+		if (!feature)
+			return "Yêu cầu chọn một núm vặn hoặc đèn để điều khiển";
+
+		if (!this.knob) {
+			this.knob = new KnobComponent({
+				startAngle: -225,
+				endAngle: 45,
+				width: 216,
+				arcWidth: 16,
+				knobSpacing: 48,
+				shift: 32,
+				square: true,
+				labelDistEdge: 64
+			});
+
+			this.blockView = makeTree("div", "block-knob-content", {
+				knob: this.knob,
+				label: { tag: "div", class: "label", text: "---" }
+			});
+
+			this.updateValue = (value, source, sourceId) => {
+				if (sourceId === this.id)
+					return;
+
+				this.knob.value = value;
+			};
+
+			this.knob.onInput((value) => {
+				if (!this.currentFeature)
+					return;
+
+				value = Math.round(value * 100);
+
+				if (this.currentFeature.kind === "FeatureRGBLed")
+					value = updateBrightness(this.currentFeature.getValue(), value);
+
+				this.currentFeature.setValue(value, UPDATE_SOURCE_INTERNAL, this.id);
+			});
+		}
+
+		if (!this.currentFeature || this.currentFeature.uuid !== feature.uuid) {
+			this.blockView.label.innerText = feature.name;
+
+			if (this.currentFeature)
+				this.currentFeature.removeValueUpdate(this.updateValue);
+
+			feature.onValueUpdate(this.updateValue);
+			this.currentFeature = feature;
+
+			if (feature.kind === "FeatureRGBLed") {
+				this.knob.value = calcColorBrightness(feature.getValue());
+			} else {
+				this.knob.value = feature.getValue() / 100;
+			}
 		}
 
 		return this.blockView;

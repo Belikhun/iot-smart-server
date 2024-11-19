@@ -203,7 +203,9 @@ class KnobComponent {
 		arcWidth = 8,
 		shift = 22,
 		knobSpacing = 32,
-		dragDistance = 400
+		dragDistance = 400,
+		square = false,
+		lineDistEdge = 30
 	} = {}) {
 		this.id = randString(8);
 		this.initialized = false;
@@ -239,18 +241,27 @@ class KnobComponent {
 		this.currentValue = 0;
 		this.inputHandlers = [];
 
-		const theta = Math.abs(this.endAngle - this.startAngle);
-		const radius = (this.width + arcWidth) / (2 * Math.sin(theta / 2));
-		this.height = radius * (1 - Math.cos(theta / 2));
+		if (typeof lineDistEdge === "number")
+			lineDistEdge += "px";
 
-		this.centerX = this.width / 2;
-		this.centerY = (this.height / 2) + shift;
-		this.radius = (this.width - arcWidth) / 2;
+		this.container.style.setProperty("--line-dist-edge", lineDistEdge);
+		this.container.style.setProperty("--arc-width", `${arcWidth}px`);
 
-		// this.height = this.width;
-		// this.centerX = this.width / 2;
-		// this.centerY = this.height / 2;
-		// this.radius = (this.width - arcWidth) / 2;
+		if (square) {
+			this.height = this.width;
+			this.centerX = this.width / 2;
+			this.centerY = this.height / 2;
+			this.radius = (this.width - arcWidth) / 2;
+			this.container.classList.add("square");
+		} else {
+			const theta = Math.abs(this.endAngle - this.startAngle);
+			const radius = (this.width + arcWidth) / (2 * Math.sin(theta / 2));
+			this.height = radius * (1 - Math.cos(theta / 2));
+	
+			this.centerX = this.width / 2;
+			this.centerY = (this.height / 2) + shift;
+			this.radius = (this.width - arcWidth) / 2;
+		}
 
 		this.gauge.setAttribute("width", this.width);
 		this.gauge.setAttribute("height", this.height);

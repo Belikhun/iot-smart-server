@@ -345,8 +345,8 @@
 	&::after {
 		content: "";
 		position: absolute;
-		left: 30px;
-		right: 30px;
+		left: var(--line-dist-edge);
+		right: var(--line-dist-edge);
 		height: 0;
 		bottom: 0;
 
@@ -411,6 +411,17 @@
 		font-weight: 500;
 
 		transform: translate(-50%, -50%);
+	}
+
+	&.square {
+		&::after {
+			content: unset;
+		}
+
+		> .value {
+			top: 50%;
+			left: 50%;
+		}
 	}
 
 	&:hover {
@@ -1251,6 +1262,11 @@
 	> .header {
 		display: flex;
 		flex-direction: row;
+		cursor: move;
+
+		&:hover {
+			background-color: var(--background-1);
+		}
 
 		> .blade {
 			display: flex;
@@ -1350,6 +1366,22 @@
 	text-align: center;
 
 	> .label {
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+}
+
+.block-knob-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	height: 100%;
+	text-align: center;
+
+	> .label {
+		margin-top: -1.5rem;
 		font-size: 0.85rem;
 		font-weight: 600;
 	}
