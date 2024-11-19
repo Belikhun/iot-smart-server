@@ -957,3 +957,7 @@ icon[data-icon="sliders"]::after {
 icon[data-icon="sensor"]::after {
 	content: "\e028";
 }
+
+icon[data-icon="droplet"]::after {
+	content: "\f043";
+}

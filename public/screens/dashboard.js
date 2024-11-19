@@ -123,6 +123,7 @@ const dashboard = {
 		this.registerRenderer(BlockQuickSettingsRenderer);
 		this.registerRenderer(BlockSensorRenderer);
 		this.registerRenderer(BlockKnobRenderer);
+		this.registerRenderer(BlockColorWheelRenderer);
 	},
 
 	/**
@@ -914,7 +915,11 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 				if (sourceId === this.id)
 					return;
 
-				this.knob.value = value;
+				if (feature.kind === "FeatureRGBLed") {
+					this.knob.value = calcColorBrightness(value) / 100;
+				} else {
+					this.knob.value = value / 100;
+				}
 			};
 
 			this.knob.onInput((value) => {
@@ -940,10 +945,128 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 			this.currentFeature = feature;
 
 			if (feature.kind === "FeatureRGBLed") {
-				this.knob.value = calcColorBrightness(feature.getValue());
+				this.knob.value = calcColorBrightness(feature.getValue()) / 100;
 			} else {
 				this.knob.value = feature.getValue() / 100;
 			}
+		}
+
+		return this.blockView;
+	}
+
+	destroy() {
+		super.destroy();
+		this.currentFeature.removeValueUpdate(this.updateValue);
+	}
+}
+
+class BlockColorWheelRenderer extends DashboardBlockRenderer {
+	static get ID() {
+		return "colorWheel";
+	}
+
+	static get ICON() {
+		return "droplet";
+	}
+
+	constructor(model) {
+		super(model);
+
+		this.form = new ScreenForm({
+			...this.defaultForm,
+
+			content: {
+				name: "Đổi màu",
+				rows: [
+					{
+						feature: {
+							type: "autocomplete",
+							label: "Tính năng",
+							required: true,
+
+							options: {
+								...featureSearch(FEATURE_FLAG_READ, { includeKinds: ["FeatureRGBLed"] })
+							}
+						}
+					}
+				]
+			}
+		});
+
+		this.switches = {};
+	}
+
+	async formDefaultValue() {
+		return {
+			feature: this.getFeature()
+		};
+	}
+
+	/**
+	 * Get configured feature to display.
+	 * 
+	 * @returns	{?DeviceFeature}
+	 */
+	getFeature() {
+		if (!this.model.data)
+			return null;
+
+		return devices.getDeviceFeature(this.model.data);
+	}
+
+	beforeSave(values) {
+		this.model.data = values.feature.uuid;
+	}
+
+	renderContent() {
+		const feature = this.getFeature();
+
+		if (!feature)
+			return "Yêu cầu chọn đèn hỗ trợ màu sắc để điều khiển";
+
+		if (!this.wheel) {
+			this.blockView = makeTree("div", "block-color-wheel-content", {
+				wheel: { tag: "div", class: "wheel" },
+				label: { tag: "div", class: "label", text: "---" }
+			});
+
+			let updating = false;
+
+			this.wheel = new ReinventedColorWheel({
+				appendTo: this.blockView.wheel,
+				wheelDiameter: 176,
+				wheelThickness: 16,
+				handleDiameter: 24,
+				wheelReflectsSaturation: true,
+
+				onChange: (color) => {
+					if (!this.currentFeature || updating)
+						return;
+
+					this.currentFeature.setValue(color.rgb, UPDATE_SOURCE_INTERNAL, this.id);
+				}
+			});
+
+			this.updateValue = (value, source, sourceId) => {
+				if (sourceId === this.id)
+					return;
+
+				updating = true;
+				this.wheel.rgb = value;
+				updating = false;
+			};
+		}
+
+		if (!this.currentFeature || this.currentFeature.uuid !== feature.uuid) {
+			this.blockView.label.innerText = feature.name;
+
+			if (this.currentFeature)
+				this.currentFeature.removeValueUpdate(this.updateValue);
+
+			feature.onValueUpdate(this.updateValue);
+			this.currentFeature = feature;
+
+			this.wheel.rgb = feature.getValue();
 		}
 
 		return this.blockView;
