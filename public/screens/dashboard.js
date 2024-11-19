@@ -97,6 +97,7 @@ const dashboard = {
 				this.grid.destroy(false);
 
 			this.grid = GridStack.init({
+				column: "auto",
 				draggable: {
 					handle: ".header"
 				}
@@ -357,6 +358,8 @@ class DashboardBlockRenderer {
 
 		/** @type {ScreenForm} */
 		this.form = null;
+
+		this.fixedContent = false;
 	}
 
 	render() {
@@ -369,24 +372,45 @@ class DashboardBlockRenderer {
 					}}
 				}},
 
-				content: { tag: "div", class: "content" }
+				content: { tag: "div", class: "content", child: {
+					inner: { tag: "div", class: "inner" }
+				}}
 			});
 
 			this.view.draggable = false;
 			this.view.header.draggable = true;
 			this.view.content.draggable = false;
 			this.view.header.addEventListener("contextmenu", (e) => this.menu.openByMouseEvent(e));
+			this.view.content.classList.toggle("fixed", this.fixedContent);
+
+			if (this.fixedContent) {
+				let contentWidth;
+				let contentHeight;
+	
+				requestAnimationFrame(() => {
+					contentWidth = this.view.content.inner.clientWidth + 32;
+					contentHeight = this.view.content.inner.clientHeight + 32;
+
+					(new ResizeObserver(() => {
+						const containerWidth = this.view.content.clientWidth;
+						const containerHeight = this.view.content.clientHeight;
+						const scale =  Math.min(containerWidth / contentWidth, containerHeight / contentHeight);
+
+						this.view.content.inner.style.transform = `scale(${scale})`;
+					})).observe(this.view.content);
+				});
+			}
 		}
 
 		this.view.dataset.color = this.model.color;
 		this.view.header.blade.titl.innerText = this.model.name;
-		emptyNode(this.view.content);
+		emptyNode(this.view.content.inner);
 
 		const content = this.renderContent();
 		if (isElement(content)) {
-			this.view.content.appendChild(content);
+			this.view.content.inner.appendChild(content);
 		} else {
-			this.view.content.innerHTML = content;
+			this.view.content.inner.innerHTML = content;
 		}
 
 		return this.view;
@@ -747,7 +771,7 @@ class BlockSensorRenderer extends DashboardBlockRenderer {
 			}
 		});
 
-		this.switches = {};
+		this.fixedContent = true;
 	}
 
 	async formDefaultValue() {
@@ -863,7 +887,7 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 			}
 		});
 
-		this.switches = {};
+		this.fixedContent = true;
 	}
 
 	async formDefaultValue() {
@@ -993,7 +1017,7 @@ class BlockColorWheelRenderer extends DashboardBlockRenderer {
 			}
 		});
 
-		this.switches = {};
+		this.fixedContent = true;
 	}
 
 	async formDefaultValue() {
