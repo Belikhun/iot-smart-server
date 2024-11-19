@@ -4,7 +4,7 @@ import { sendCommand, sendDashboardCommand, type WebSocket } from "../Routes/Web
 import { time } from "../Utils/belibrary";
 import { scope, type Logger } from "../Utils/Logger";
 import { isFeatureAvailable, resolveFeature } from "./FeatureFactory";
-import type { FeatureBase } from "./Features/FeatureBase";
+import { FeatureFlag, type FeatureBase } from "./Features/FeatureBase";
 
 export enum DeviceStatus {
 	DISCONNECTED = "disconnected",
@@ -108,8 +108,12 @@ export default class Device {
 
 		const payload = [];
 
-		for (const feature of Object.values(this.features))
+		for (const feature of Object.values(this.features)) {
+			if (feature.flags == FeatureFlag.READ)
+				continue;
+
 			payload.push(feature.getUpdateData())
+		}
 
 		sendCommand(this.websocket, "sync", payload);
 		return this;

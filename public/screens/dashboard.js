@@ -391,11 +391,19 @@ class DashboardBlockRenderer {
 					contentWidth = this.view.content.inner.clientWidth + 32;
 					contentHeight = this.view.content.inner.clientHeight + 32;
 
-					(new ResizeObserver(() => {
+					(new ResizeObserver(async () => {
 						const containerWidth = this.view.content.clientWidth;
 						const containerHeight = this.view.content.clientHeight;
-						const scale =  Math.min(containerWidth / contentWidth, containerHeight / contentHeight);
 
+						if (!contentWidth || !contentHeight || contentWidth <= 32 || contentHeight <= 32) {
+							this.view.content.inner.style.transform = null;
+
+							await nextFrameAsync();
+							contentWidth = this.view.content.inner.clientWidth + 32;
+							contentHeight = this.view.content.inner.clientWidth + 32;
+						}
+
+						const scale =  Math.min(containerWidth / contentWidth, containerHeight / contentHeight);
 						this.view.content.inner.style.transform = `scale(${scale})`;
 					})).observe(this.view.content);
 				});

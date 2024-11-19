@@ -961,3 +961,27 @@ icon[data-icon="sensor"]::after {
 icon[data-icon="droplet"]::after {
 	content: "\f043";
 }
+
+icon[data-icon="siren"]::after {
+	content: "\e02d";
+}
+
+icon[data-icon="volumeXmark"]::after {
+	content: "\f6a9";
+}
+
+icon[data-icon="sensorOn"]::after {
+	content: "\e02b";
+}
+
+icon[data-icon="sensorExclamation"]::after {
+	content: "\e029";
+}
+
+icon[data-icon="bellSchool"]::after {
+	content: "\f5d5";
+}
+
+icon[data-icon="musicNote"]::after {
+	content: "\f8cf";
+}

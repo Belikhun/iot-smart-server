@@ -182,7 +182,7 @@ export const initializeOpenAIClient = async (session: SessionModel): Promise<Rea
 									},
 									{
 										"type": "boolean",
-										"description": "Value specific for \"FeatureButton\" and \"FeatureOnOffPin\" feature kind, where the value is simply the on or off state."
+										"description": "Value specific for \"FeatureButton\" and \"FeatureOnOffToggle\" feature kind, where the value is simply the on or off state."
 									},
 								]
 							}

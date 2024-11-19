@@ -3604,12 +3604,13 @@ function checkServer(host, callback = () => { }) {
  * 	value: string
  * 	choices: {[key: string]: HTMLElement}
  * 	names: {[key: string]: string}
- * 	onChange: (f: (value: string) => void) => void
+ * 	onChange: (f: (value: string, { trusted: boolean }) => void) => void
  * }} SQChoice
  */
 
 /**
  * Create choice input with icons
+ * 
  * @param	{object}				options
  * @param	{"blue" | "pink"}		options.color
  * @param	{ChoiceInputChoices}	options.choices
@@ -3626,7 +3627,7 @@ function createChoiceInput({
 	withGrow = true
 } = {}) {
 	const container = document.createElement("div");
-	container.classList.add("sq-choice");
+	container.classList.add("map-color", "sq-choice");
 
 	if (withGrow)
 		container.classList.add("with-grow");
@@ -3651,7 +3652,7 @@ function createChoiceInput({
 	let activeValue = null;
 	const changeHandlers = []
 
-	const setValue = (value) => {
+	const setValue = (value, trusted = false) => {
 		if (value === activeValue)
 			return;
 
@@ -3664,7 +3665,7 @@ function createChoiceInput({
 		choiceNodes[value].classList.add("active");
 		activeValue = value;
 		activeNode = choiceNodes[value];
-		changeHandlers.forEach(f => f(value));
+		changeHandlers.forEach(f => f(value, { trusted }));
 	}
 
 	const add = ({ key, icon, title }) => {
@@ -3678,7 +3679,7 @@ function createChoiceInput({
 
 		container.appendChild(node);
 		choiceNodes[key] = node;
-		node.addEventListener("click", () => setValue(key));
+		node.addEventListener("click", () => setValue(key, true));
 
 		if (typeof sounds === "object")
 			sounds.applySound(node, ["soundhover", "soundselect"]);
@@ -3686,6 +3687,7 @@ function createChoiceInput({
 
 	/**
 	 * Update input options
+	 * 
 	 * @param	{Object}				options
 	 * @param	{"blue" | "pink"}		options.color
 	 * @param	{ChoiceInputChoices}	options.choices
@@ -3761,6 +3763,7 @@ function createChoiceInput({
 
 /**
  * Create a new slider component
+ * 
  * @param {{
  * 	color: "pink" | "blue"
  * 	value: Number

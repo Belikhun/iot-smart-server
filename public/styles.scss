@@ -1417,3 +1417,21 @@
 		font-weight: 600;
 	}
 }
+
+.sq-choice {
+	--background: var(--background-1);
+
+	> icon {
+		padding: 1rem;
+
+		&:first-child {
+			border-top-left-radius: 1rem;
+			border-bottom-left-radius: 1rem;
+		}
+
+		&:last-child {
+			border-top-right-radius: 1rem;
+			border-bottom-right-radius: 1rem;
+		}
+	}
+}

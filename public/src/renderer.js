@@ -16,7 +16,7 @@ function renderSmartSwitch(feature) {
 	});
 
 	const kind = {
-		"FeatureOnOffPin": "boolean",
+		"FeatureOnOffToggle": "boolean",
 		"FeatureButton": "boolean",
 		"FeatureKnob": "percentage"
 	}[feature.kind];
@@ -158,12 +158,14 @@ class FeatureRenderer {
 	static get FEATURES() {
 		return {
 			"FeatureButton": { icon: "lightSwitch" },
-			"FeatureOnOffPin": { icon: "binary" },
+			"FeatureOnOffToggle": { icon: "binary" },
+			"FeatureOnOffSensor": { icon: "binary" },
 			"FeatureRGBLed": { icon: "lightbulb" },
 			"FeatureKnob": { icon: "joystick" },
 			"FeatureTemperature": { icon: "temperatureQuarter" },
 			"FeatureHumidity": { icon: "dropletPercent" },
-			"FeatureSensorValue": { icon: "sensor" }
+			"FeatureSensorValue": { icon: "sensor" },
+			"FeatureAlarm": { icon: "siren" },
 		}
 	}
 
@@ -230,7 +232,7 @@ class FeatureRenderer {
 
 		switch (this.model.kind) {
 			case "FeatureButton":
-			case "FeatureOnOffPin": {
+			case "FeatureOnOffToggle": {
 				const view = makeTree("div", "feature-button", {
 					handle: { tag: "div", class: "handle" }
 				});
@@ -421,6 +423,71 @@ class FeatureRenderer {
 
 					get value() {
 						return wheel.rgb;
+					}
+				};
+
+				break;
+			}
+
+			case "FeatureAlarm": {
+				let inputHandler = null;
+
+				const input = createChoiceInput({
+					color: "accent",
+					choices: {
+						off: { icon: "volumeXmark" },
+						beep: { icon: "sensorOn" },
+						tune: { icon: "musicNote" },
+						alert: { icon: "sensorExclamation" },
+						alarm: { icon: "bellSchool" }
+					},
+
+					value: "off",
+					withGrow: false
+				});
+
+				const getValue = () => {
+					const value = input.value;
+					const payload = {
+						action: value,
+						data: null
+					};
+
+					if (value === "beep")
+						payload.data = [0.2, 1000];
+
+					return payload;
+				}
+
+				input.onChange((value, { trusted }) => {
+					if (!trusted || !inputHandler)
+						return;
+
+					inputHandler(getValue());
+				});
+
+				instance = {
+					view: input.container,
+
+					onInput: (handler) => {
+						if (typeof handler !== "function")
+							throw new Error(`onInput(): không phải một hàm hợp lệ`);
+
+						inputHandler = handler;
+						return this;
+					},
+
+					set value(value) {
+						if (value === "off" || !value) {
+							input.value = "off";
+							return;
+						}
+
+						input.value = value.action;
+					},
+
+					get value() {
+						return getValue();
 					}
 				};
 
