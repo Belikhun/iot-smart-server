@@ -209,6 +209,11 @@ const app = {
 						sub: { tag: "div", class: "sub", html: "Sử dụng tài khoản <strong>quản trị</strong> để đăng nhập" }
 					}},
 
+					note: createNote({
+						level: "info",
+						message: `Tài khoản quản trị demo: <strong>admin</strong> / <strong>admin</strong>`
+					}),
+
 					content: { tag: "div", class: "content", child: {
 						username: this.usernameInput,
 						password: this.passwordInput
