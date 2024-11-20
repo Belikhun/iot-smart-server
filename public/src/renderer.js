@@ -166,6 +166,7 @@ class FeatureRenderer {
 			"FeatureHumidity": { icon: "dropletPercent" },
 			"FeatureSensorValue": { icon: "sensor" },
 			"FeatureAlarm": { icon: "siren" },
+			"FeatureFanMotor": { icon: "fan" }
 		}
 	}
 
@@ -274,8 +275,11 @@ class FeatureRenderer {
 				break;
 			}
 
-			case "FeatureKnob": {
-				const knob = new KnobComponent();
+			case "FeatureKnob":
+			case "FeatureFanMotor": {
+				const knob = (this.model.kind === "FeatureFanMotor")
+					? new KnobComponent({ defaultAngle: -90 })
+					: new KnobComponent();
 
 				let inputHandler = null;
 				let currentValue = 0;

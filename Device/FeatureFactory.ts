@@ -3,6 +3,7 @@ import type Device from "./Device";
 import { FeatureAlarm } from "./Features/FeatureAlarm";
 import type { FeatureBase } from "./Features/FeatureBase";
 import { FeatureButton } from "./Features/FeatureButton";
+import { FeatureFanMotor } from "./Features/FeatureFanMotor";
 import { FeatureHumidity } from "./Features/FeatureHumidity";
 import { FeatureKnob } from "./Features/FeatureKnob";
 import { FeatureOnOffSensor } from "./Features/FeatureOnOffSensor";
@@ -20,7 +21,8 @@ const RegisteredFeatures = {
 	"FeatureTemperature": FeatureTemperature,
 	"FeatureHumidity": FeatureHumidity,
 	"FeatureSensorValue": FeatureSensorValue,
-	"FeatureAlarm": FeatureAlarm
+	"FeatureAlarm": FeatureAlarm,
+	"FeatureFanMotor": FeatureFanMotor
 }
 
 export function resolveFeature(model: DeviceFeatureModel, device: Device): FeatureBase {

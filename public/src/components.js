@@ -200,6 +200,7 @@ class KnobComponent {
 		width = 160,
 		startAngle = -205,
 		endAngle = 25,
+		defaultAngle = undefined,
 		arcWidth = 8,
 		shift = 22,
 		knobSpacing = 32,
@@ -240,6 +241,15 @@ class KnobComponent {
 		this.endAngle = endAngle;
 		this.currentValue = 0;
 		this.inputHandlers = [];
+		this.valueClamp = [0, 1];
+
+		if (typeof defaultAngle !== "number")
+			defaultAngle = this.startAngle;
+
+		this.defaultAngle = defaultAngle;
+
+		if (this.defaultAngle > this.startAngle)
+			this.valueClamp = [-1, 1];
 
 		if (typeof lineDistEdge === "number")
 			lineDistEdge += "px";
@@ -282,7 +292,8 @@ class KnobComponent {
 
 		const handleMouseMove = (/** @type {MouseEvent} */ e) => {
 			const distance = mouseDownPoint[1] - e.clientY;
-			const newValue = round(Math.max(0, Math.min(1, mouseDownValue + (distance / dragDistance))), 2);
+			const value = mouseDownValue + (distance / dragDistance);
+			const newValue = round(Math.max(this.valueClamp[0], Math.min(this.valueClamp[1], value)), 2);
 			this.setValue(newValue, "user");
 		};
 
@@ -332,7 +343,7 @@ class KnobComponent {
 	 * @param	{"user" | "internal"}	source
 	 */
 	setValue(value, source = "internal") {
-		value = Math.min(1, Math.max(0, value));
+		value = clamp(value, this.valueClamp[0], this.valueClamp[1]);
 
 		if (value === this.currentValue && this.initialized)
 			return this;
@@ -340,23 +351,50 @@ class KnobComponent {
 		this.currentValue = value;
 		this.valueNode.innerText = `${Math.floor(value * 100)}%`;
 
-		const startAngle = this.startAngle * (Math.PI / 180);
-		const startX = this.centerX + this.radius * Math.cos(startAngle);
-		const startY = this.centerY + this.radius * Math.sin(startAngle);
+		// const angle = scaleValue(value, [-1, 1], [this.startAngle, this.endAngle]);
+		let angle = (value >= 0)
+			? this.defaultAngle + (value * (this.endAngle - this.defaultAngle))
+			: this.startAngle + ((1 - Math.abs(value)) * (this.defaultAngle - this.startAngle));
 
-		const angle = this.startAngle + (value * (this.endAngle - this.startAngle));
-		const endAngle = angle * (Math.PI / 180);
-		const endX = this.centerX + this.radius * Math.cos(endAngle);
-		const endY = this.centerY + this.radius * Math.sin(endAngle);
+		angle = clamp(angle, this.startAngle, this.endAngle);
+		console.log(angle, this.defaultAngle);
 
-		const largeArcFlag = (endAngle - startAngle <= Math.PI) ? "0" : "1";
+		if (angle >= this.defaultAngle) {
+			const startAngle = this.defaultAngle * (Math.PI / 180);
+			const startX = this.centerX + this.radius * Math.cos(startAngle);
+			const startY = this.centerY + this.radius * Math.sin(startAngle);
+	
+			const endAngle = angle * (Math.PI / 180);
+			const endX = this.centerX + this.radius * Math.cos(endAngle);
+			const endY = this.centerY + this.radius * Math.sin(endAngle);
+	
+			const largeArcFlag = (endAngle - startAngle <= Math.PI) ? "0" : "1";
+	
+			const pathData = [
+				`M ${startX} ${startY}`,
+				`A ${this.radius} ${this.radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`
+			].join(" ");
+	
+			this.svgValue.setAttribute("d", pathData);
+		} else {
+			const startAngle = angle * (Math.PI / 180);
+			const startX = this.centerX + this.radius * Math.cos(startAngle);
+			const startY = this.centerY + this.radius * Math.sin(startAngle);
 
-		const pathData = [
-			`M ${startX} ${startY}`,
-			`A ${this.radius} ${this.radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`
-		].join(" ");
+			const endAngle = this.defaultAngle * (Math.PI / 180);
+			const endX = this.centerX + this.radius * Math.cos(endAngle);
+			const endY = this.centerY + this.radius * Math.sin(endAngle);
 
-		this.svgValue.setAttribute("d", pathData);
+			const largeArcFlag = (endAngle - startAngle <= Math.PI) ? "0" : "1";
+	
+			const pathData = [
+				`M ${startX} ${startY}`,
+				`A ${this.radius} ${this.radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`
+			].join(" ");
+	
+			this.svgValue.setAttribute("d", pathData);
+		}
+
 		this.thumb.style.setProperty("--rotation", `${angle + 90}deg`);
 
 		if (source === "user") {

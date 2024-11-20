@@ -985,3 +985,7 @@ icon[data-icon="bellSchool"]::after {
 icon[data-icon="musicNote"]::after {
 	content: "\f8cf";
 }
+
+icon[data-icon="fan"]::after {
+	content: "\f863";
+}
