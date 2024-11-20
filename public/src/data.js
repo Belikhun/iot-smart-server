@@ -30,6 +30,9 @@ app.strings = {
 
 	"block.text": "Văn Bản",
 	"block.quickSettings": "Cài Đặt Nhanh",
+	"block.sensor": "Cảm Biến",
+	"block.knob": "Núm Xoay",
+	"block.colorWheel": "Đặt Màu Đèn",
 
 	"action.view": "Xem",
 	"action.edit": "Chỉnh sửa",
@@ -355,5 +358,21 @@ app.icons = [
 	"sliderSimple",
 	"arrowLeftFromArc",
 	"rightLeft",
-	"inputNumeric"
-];
+	"inputNumeric",
+	"device",
+	"paperPlaneTop",
+	"microphone",
+	"stop",
+	"block",
+	"textSize",
+	"sliders",
+	"sensor",
+	"droplet",
+	"siren",
+	"volumeXmark",
+	"sensorOn",
+	"sensorExclamation",
+	"bellSchool",
+	"musicNote",
+	"fan"
+].reverse();

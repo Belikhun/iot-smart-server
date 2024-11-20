@@ -887,7 +887,7 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 							required: true,
 
 							options: {
-								...featureSearch(FEATURE_FLAG_READ, { includeKinds: ["FeatureKnob", "FeatureRGBLed"] })
+								...featureSearch(FEATURE_FLAG_READ | FEATURE_FLAG_WRITE, { includeKinds: ["FeatureKnob", "FeatureRGBLed", "FeatureFanMotor"] })
 							}
 						}
 					}
@@ -927,7 +927,7 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 			return "Yêu cầu chọn một núm vặn hoặc đèn để điều khiển";
 
 		if (!this.knob) {
-			this.knob = new KnobComponent({
+			const options = {
 				startAngle: -225,
 				endAngle: 45,
 				width: 216,
@@ -936,7 +936,12 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 				shift: 32,
 				square: true,
 				labelDistEdge: 64
-			});
+			};
+
+			if (feature.kind === "FeatureFanMotor")
+				options.defaultAngle = -90;
+
+			this.knob = new KnobComponent(options);
 
 			this.blockView = makeTree("div", "block-knob-content", {
 				knob: this.knob,
