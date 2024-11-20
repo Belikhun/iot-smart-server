@@ -48,8 +48,7 @@ export class MessageTask {
 					return;
 				}
 
-				if (doneTimeout) {
-					console.log(item);
+				if (doneTimeout && status !== "completed") {
 					clearTimeout(doneTimeout);
 					doneTimeout = null;
 					this.log.debug(`Loại bỏ tín hiệu hoàn thành vừa rồi, vẫn còn tác vụ để chạy!`);

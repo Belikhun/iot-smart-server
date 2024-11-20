@@ -989,3 +989,7 @@ icon[data-icon="musicNote"]::after {
 icon[data-icon="fan"]::after {
 	content: "\f863";
 }
+
+icon[data-icon="powerOff"]::after {
+	content: "\f011";
+}

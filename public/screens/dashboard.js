@@ -890,6 +890,17 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 								...featureSearch(FEATURE_FLAG_READ | FEATURE_FLAG_WRITE, { includeKinds: ["FeatureKnob", "FeatureRGBLed", "FeatureFanMotor"] })
 							}
 						}
+					},
+					{
+						switch: {
+							type: "autocomplete",
+							label: "Công tắc bật tắt",
+							required: false,
+
+							options: {
+								...featureSearch(FEATURE_FLAG_READ | FEATURE_FLAG_WRITE, { includeKinds: ["FeatureOnOffToggle", "FeatureButton"] })
+							}
+						}
 					}
 				]
 			}
@@ -900,7 +911,8 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 
 	async formDefaultValue() {
 		return {
-			feature: this.getFeature()
+			feature: this.getFeature(),
+			switch: this.getSwitch()
 		};
 	}
 
@@ -910,18 +922,34 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 	 * @returns	{?DeviceFeature}
 	 */
 	getFeature() {
-		if (!this.model.data)
+		if (!this.model.data || !this.model.data.feature)
 			return null;
 
-		return devices.getDeviceFeature(this.model.data);
+		return devices.getDeviceFeature(this.model.data.feature);
+	}
+
+	/**
+	 * Get configured on off switch to display.
+	 * 
+	 * @returns	{?DeviceFeature}
+	 */
+	getSwitch() {
+		if (!this.model.data || !this.model.data.switch)
+			return null;
+
+		return devices.getDeviceFeature(this.model.data.switch);
 	}
 
 	beforeSave(values) {
-		this.model.data = values.feature.uuid;
+		this.model.data = {
+			feature: values.feature.uuid,
+			switch: (values.switch) ? values.switch.uuid : null
+		};
 	}
 
 	renderContent() {
 		const feature = this.getFeature();
+		const button = this.getSwitch();
 
 		if (!feature)
 			return "Yêu cầu chọn một núm vặn hoặc đèn để điều khiển";
@@ -972,6 +1000,31 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 			});
 		}
 
+		if (button) {
+			if (!this.switchView) {
+				this.switchView = ScreenUtils.renderIcon("powerOff");
+				this.switchView.classList.add("switch-toggler");
+
+				this.switchView.addEventListener("click", () => {
+					if (!this.currentSwitch)
+						return;
+
+					const newValue = !this.currentSwitch.getValue();
+					this.switchView.classList.toggle("active", newValue);
+					this.currentSwitch.setValue(newValue, UPDATE_SOURCE_INTERNAL, this.id);
+				});
+			}
+			
+			this.blockView.appendChild(this.switchView);
+
+			this.updateSwitch = (value, source, sourceId) => {
+				if (sourceId === this.id)
+					return;
+
+				this.switchView.classList.toggle("active", value);
+			};
+		}
+
 		if (!this.currentFeature || this.currentFeature.uuid !== feature.uuid) {
 			this.blockView.label.innerText = feature.name;
 
@@ -986,6 +1039,15 @@ class BlockKnobRenderer extends DashboardBlockRenderer {
 			} else {
 				this.knob.value = feature.getValue() / 100;
 			}
+		}
+
+		if (button && (!this.currentSwitch || this.currentSwitch.uuid !== button.uuid)) {
+			if (this.currentSwitch)
+				this.currentSwitch.removeValueUpdate(this.updateSwitch);
+
+			button.onValueUpdate(this.updateSwitch);
+			this.currentSwitch = button;
+			this.switchView.classList.toggle("active", button.getValue());
 		}
 
 		return this.blockView;
@@ -1025,6 +1087,17 @@ class BlockColorWheelRenderer extends DashboardBlockRenderer {
 								...featureSearch(FEATURE_FLAG_READ, { includeKinds: ["FeatureRGBLed"] })
 							}
 						}
+					},
+					{
+						switch: {
+							type: "autocomplete",
+							label: "Công tắc bật tắt",
+							required: false,
+
+							options: {
+								...featureSearch(FEATURE_FLAG_READ | FEATURE_FLAG_WRITE, { includeKinds: ["FeatureOnOffToggle", "FeatureButton"] })
+							}
+						}
 					}
 				]
 			}
@@ -1035,7 +1108,8 @@ class BlockColorWheelRenderer extends DashboardBlockRenderer {
 
 	async formDefaultValue() {
 		return {
-			feature: this.getFeature()
+			feature: this.getFeature(),
+			switch: this.getSwitch()
 		};
 	}
 
@@ -1045,18 +1119,34 @@ class BlockColorWheelRenderer extends DashboardBlockRenderer {
 	 * @returns	{?DeviceFeature}
 	 */
 	getFeature() {
-		if (!this.model.data)
+		if (!this.model.data || !this.model.data.feature)
 			return null;
 
-		return devices.getDeviceFeature(this.model.data);
+		return devices.getDeviceFeature(this.model.data.feature);
+	}
+
+	/**
+	 * Get configured on off switch to display.
+	 * 
+	 * @returns	{?DeviceFeature}
+	 */
+	getSwitch() {
+		if (!this.model.data || !this.model.data.switch)
+			return null;
+
+		return devices.getDeviceFeature(this.model.data.switch);
 	}
 
 	beforeSave(values) {
-		this.model.data = values.feature.uuid;
+		this.model.data = {
+			feature: values.feature.uuid,
+			switch: (values.switch) ? values.switch.uuid : null
+		};
 	}
 
 	renderContent() {
 		const feature = this.getFeature();
+		const button = this.getSwitch();
 
 		if (!feature)
 			return "Yêu cầu chọn đèn hỗ trợ màu sắc để điều khiển";
@@ -1094,6 +1184,31 @@ class BlockColorWheelRenderer extends DashboardBlockRenderer {
 			};
 		}
 
+		if (button) {
+			if (!this.switchView) {
+				this.switchView = ScreenUtils.renderIcon("powerOff");
+				this.switchView.classList.add("switch-toggler");
+
+				this.switchView.addEventListener("click", () => {
+					if (!this.currentSwitch)
+						return;
+
+					const newValue = !this.currentSwitch.getValue();
+					this.switchView.classList.toggle("active", newValue);
+					this.currentSwitch.setValue(newValue, UPDATE_SOURCE_INTERNAL, this.id);
+				});
+			}
+			
+			this.blockView.appendChild(this.switchView);
+
+			this.updateSwitch = (value, source, sourceId) => {
+				if (sourceId === this.id)
+					return;
+
+				this.switchView.classList.toggle("active", value);
+			};
+		}
+
 		if (!this.currentFeature || this.currentFeature.uuid !== feature.uuid) {
 			this.blockView.label.innerText = feature.name;
 
@@ -1104,6 +1219,15 @@ class BlockColorWheelRenderer extends DashboardBlockRenderer {
 			this.currentFeature = feature;
 
 			this.wheel.rgb = feature.getValue();
+		}
+
+		if (button && (!this.currentSwitch || this.currentSwitch.uuid !== button.uuid)) {
+			if (this.currentSwitch)
+				this.currentSwitch.removeValueUpdate(this.updateSwitch);
+
+			button.onValueUpdate(this.updateSwitch);
+			this.currentSwitch = button;
+			this.switchView.classList.toggle("active", button.getValue());
 		}
 
 		return this.blockView;

@@ -149,7 +149,7 @@ export const initializeOpenAIClient = async (session: SessionModel): Promise<Rea
 			"",
 			"Note:",
 			"- \"FeatureKnob\"'s value is in the range of 0 to 100",
-			"- Features with flags=3 indicate it can be read and written, whilst flags=1 indicate it can only be read. Only update value for feature which are updateable."
+			"- Feature's flags is a bitmask, where the first bit indicate the feature is readable, and the second bit indicate the feature is writable."
 		].join("\n"),
 		parameters: {
 			"type": "object",

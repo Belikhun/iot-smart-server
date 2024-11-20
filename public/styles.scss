@@ -1392,6 +1392,7 @@
 }
 
 .block-knob-content {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -1405,20 +1406,56 @@
 		font-size: 0.85rem;
 		font-weight: 600;
 	}
+
+	> .switch-toggler {
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 2rem;
+		height: 2rem;
+		font-size: 0.85rem;
+		background-color: var(--background-2);
+		border-radius: 2rem;
+		cursor: pointer;
+
+		&.active {
+			background-color: var(--color);
+			color: var(--text);
+		}
+	}
 }
 
 .block-color-wheel-content {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 
+	padding: 0 1.5rem;
 	height: 100%;
 	text-align: center;
 
 	> .label {
 		font-size: 0.85rem;
 		font-weight: 600;
+	}
+
+	> .switch-toggler {
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 2rem;
+		height: 2rem;
+		font-size: 0.85rem;
+		background-color: var(--background-2);
+		border-radius: 2rem;
+		cursor: pointer;
+
+		&.active {
+			background-color: var(--color);
+			color: var(--text);
+		}
 	}
 }
 
