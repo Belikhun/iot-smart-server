@@ -87,12 +87,26 @@ export default class Device {
 		return this;
 	}
 
-	public reset() {
+	public isBareMetal() {
+		return this.model.type === "bareMetal";
+	}
+
+	public isWSAvailable() {
 		if (!this.connected || !this.websocket)
+			return false;
+
+		if (!this.isBareMetal())
+			return false;
+
+		return true;
+	}
+
+	public reset() {
+		if (!this.isWSAvailable())
 			return this;
 
 		this.log.warn(`Đang khởi động lại thiết bị...`);
-		sendCommand(this.websocket, "reset");
+		sendCommand(this.websocket as WebSocket, "reset");
 		this.setWS(null);
 		return this;
 	}
@@ -103,7 +117,7 @@ export default class Device {
 	 * @returns	{this}
 	 */
 	public sync(): this {
-		if (!this.connected || !this.websocket)
+		if (!this.isWSAvailable())
 			return this;
 
 		const payload = [];
@@ -115,7 +129,7 @@ export default class Device {
 			payload.push(feature.getUpdateData())
 		}
 
-		sendCommand(this.websocket, "sync", payload);
+		sendCommand(this.websocket as WebSocket, "sync", payload);
 		return this;
 	}
 
@@ -264,12 +278,29 @@ export const getDeviceFeatureById = (id: number): FeatureBase | null => {
 	return null;
 }
 
-export const createDevice = async ({ hardwareId, name, token }: { hardwareId: string, name: string, token: string }) => {
-	log.info(`Đang lưu thiết bị ${name} [${hardwareId}] vào cơ sở dữ liệu...`);
+export const createDevice = async ({
+	hardwareId,
+	name,
+	token,
+	color = "accent",
+	type = "bareMetal",
+	externalId = null
+}: {
+	hardwareId: string,
+	name: string,
+	token: string,
+	color?: string,
+	type?: "bareMetal" | string,
+	externalId?: string | null
+}) => {
+	log.info(`Đang lưu thiết bị ${name} [${hardwareId}] (${type}) vào cơ sở dữ liệu...`);
 	const model = await DeviceModel.create({
 		hardwareId,
 		name,
-		token
+		token,
+		type,
+		color,
+		externalId
 	});
 
 	log.info(`Đang đăng kí thiết bị vào hệ thống... (id=${model.id})`);
@@ -296,6 +327,9 @@ setInterval(async () => {
 // Send update to devices at 20TPS.
 setInterval(async () => {
 	for (const feature of Object.values(deviceFeatures)) {
+		if (!feature.device.isWSAvailable())
+			continue;
+
 		if (!feature.shouldPushValue)
 			continue;
 

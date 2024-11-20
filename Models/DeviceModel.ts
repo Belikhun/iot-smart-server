@@ -4,8 +4,10 @@ import moment from "moment";
 
 interface DeviceAttributes {
 	id?: number;
+	externalId: string | null;
 	hardwareId: string;
 	name: string;
+	type: "bareMetal" | string;
 	icon?: string;
 	color?: string;
 	tags?: string;
@@ -17,8 +19,10 @@ interface DeviceAttributes {
 
 class DeviceModel extends Model<DeviceAttributes> implements DeviceAttributes {
 	declare id?: number;
+	declare externalId: string | null;
 	declare hardwareId: string;
 	declare name: string;
+	declare type: "bareMetal" | string;
 	declare icon?: string;
 	declare color?: string;
 	declare tags?: string;
@@ -34,6 +38,11 @@ DeviceModel.init({
 		autoIncrement: true,
 		primaryKey: true
 	},
+	externalId: {
+		type: DataTypes.STRING,
+		allowNull: true,
+		unique: true
+	},
 	hardwareId: {
 		type: DataTypes.STRING,
 		allowNull: false,
@@ -42,6 +51,11 @@ DeviceModel.init({
 	name: {
 		type: DataTypes.STRING,
 		allowNull: false
+	},
+	type: {
+		type: DataTypes.STRING,
+		allowNull: false,
+		defaultValue: "bareMetal"
 	},
 	icon: {
 		type: DataTypes.STRING,

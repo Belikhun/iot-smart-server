@@ -366,10 +366,16 @@ class Device extends Model {
 		super(id);
 
 		/** @type {string} */
+		this.externalId = null;
+
+		/** @type {string} */
 		this.hardwareId = null;
 
 		/** @type {string} */
 		this.name = null;
+
+		/** @type {"bareMetal" | string} */
+		this.type = null;
 
 		/** @type {string} */
 		this.icon = null;

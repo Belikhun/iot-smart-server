@@ -356,12 +356,21 @@ const devices = {
 			onClick: () => menu.openAtElement(actionButton)
 		});
 
+		let viewType = { tag: "span", class: "type", child: {
+			icon: { tag: "icon", icon: device.icon },
+			typeName: { tag: "span", class: "name", text: device.hardwareId }
+		}};
+
+		if (device.type === "tuya") {
+			viewType = { tag: "span", class: "type", child: {
+				icon: { tag: "img", src: app.url("/public/images/tuya-mono.svg") },
+				typeName: { tag: "span", class: "name", text: `Tuya (${device.hardwareId})` }
+			}};
+		}
+
 		const view = makeTree("div", ["map-color", "device-info"], {
 			info: { tag: "div", class: "info", child: {
-				type: { tag: "span", class: "type", child: {
-					icon: { tag: "icon", icon: device.icon },
-					typeName: { tag: "span", class: "name", text: device.hardwareId }
-				}},
+				type: viewType,
 
 				info: { tag: "span", class: "info", child: {
 					qName: { tag: "span", class: "name", text: device.name },

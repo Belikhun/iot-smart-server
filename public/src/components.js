@@ -357,7 +357,6 @@ class KnobComponent {
 			: this.startAngle + ((1 - Math.abs(value)) * (this.defaultAngle - this.startAngle));
 
 		angle = clamp(angle, this.startAngle, this.endAngle);
-		console.log(angle, this.defaultAngle);
 
 		if (angle >= this.defaultAngle) {
 			const startAngle = this.defaultAngle * (Math.PI / 180);

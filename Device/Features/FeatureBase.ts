@@ -16,7 +16,7 @@ export enum FeatureFlag {
 	WRITE = 2
 }
 
-type FeatureValueUpdateHandler = (value: any) => void | Promise<void>;
+type FeatureValueUpdateHandler = (value: any, source: FeatureUpdateSource) => void | Promise<void>;
 
 export class FeatureBase {
 
@@ -32,7 +32,7 @@ export class FeatureBase {
 	protected log: Logger;
 	public relatedTriggerItems: { [id: number]: TriggerConditionItem } = {};
 
-	protected updateHandler: FeatureValueUpdateHandler | null = null;
+	protected updateHandlers: FeatureValueUpdateHandler[] = [];
 
 	public constructor(model: DeviceFeatureModel, device: Device) {
 		this.kind = this.constructor.name;
@@ -68,8 +68,13 @@ export class FeatureBase {
 		this.updated = true;
 		this.log.info(`value=`, this.currentValue, ` src=${source}`);
 
-		if (this.updateHandler)
-			this.updateHandler(this.currentValue);
+		for (const handler of this.updateHandlers) {
+			try {
+				handler(this.getValue(), source);
+			} catch (e) {
+				this.log.warn(`Lỗi khi xử lý hàm xử lý giá trị mới:`, e);
+			}
+		}
 
 		if (source !== FeatureUpdateSource.DASHBOARD || sourceWS) {
 			this.log.debug("Sẽ thực hiện cập nhật bảng điều khiển");
@@ -107,7 +112,7 @@ export class FeatureBase {
 	}
 
 	public onUpdate(handler: FeatureValueUpdateHandler) {
-		this.updateHandler = handler;
+		this.updateHandlers.push(handler);
 		return this;
 	}
 

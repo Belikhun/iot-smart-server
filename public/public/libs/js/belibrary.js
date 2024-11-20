@@ -1796,7 +1796,8 @@ function oscColor(color) {
 		darkYellow:		"#444304",
 		darkRed:		"#440505",
 		lightBlue:		"#daf3ff",
-		navyBlue:		"#333D79"
+		navyBlue:		"#333D79",
+		tuya:		"#ff4800"
 	}
 
 	return (clist[color]) ? clist[color] : clist.dark;

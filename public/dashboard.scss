@@ -231,6 +231,12 @@ code {
 		--text: white;
 	}
 
+	&[color="tuya"],
+	&[data-color="tuya"] {
+		--color: #ff4800;
+		--text: white;
+	}
+
 	&[color="whitesmoke"],
 	&[data-color="whitesmoke"] {
 		--color: var(--osc-color-whitesmoke);

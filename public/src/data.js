@@ -114,6 +114,7 @@ app.strings = {
 	"ifs": "Nếu",
 
 	"color.accent": "Màu chủ đạo",
+	"color.tuya": "Màu chủ đạo (Tuya)",
 	"color.whitesmoke": "Trắng tuyết",
 	"color.pink": "Hồng",
 	"color.green": "Xanh lá",
@@ -135,6 +136,7 @@ app.strings = {
 
 app.colors = [
 	"accent",
+	"tuya",
 	"whitesmoke",
 	"pink",
 	"green",
