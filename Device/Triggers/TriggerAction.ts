@@ -7,7 +7,8 @@ import type { Trigger } from "../TriggerService";
 enum ActionType {
 	SET_VALUE = "setValue",
 	SET_FROM_FEATURE = "setFromFeature",
-	TOGGLE_VALUE = "toggleValue"
+	TOGGLE_VALUE = "toggleValue",
+	ALARM_VALUE = "alarmValue"
 }
 
 export class TriggerAction {
@@ -71,6 +72,19 @@ export class TriggerAction {
 
 			case ActionType.TOGGLE_VALUE: {
 				this.feature.setValue(!this.feature.getValue());
+				break;
+			}
+
+			case ActionType.ALARM_VALUE: {
+				const payload: { action: string, data: any } = {
+					action: this.model.newValue,
+					data: null
+				};
+
+				if (this.model.newValue === "beep")
+					payload.data = [0.2, 1000];
+
+				this.feature.setValue(payload);
 				break;
 			}
 		}

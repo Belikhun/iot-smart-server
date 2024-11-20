@@ -1435,3 +1435,21 @@
 		}
 	}
 }
+
+.feature-onoff-sensor {
+	display: flex;
+	flex-direction: row;
+	gap: 0.5rem;
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: var(--osc-color-red);
+
+	&.active {
+		color: var(--osc-color-green);
+	}
+
+	> icon {
+		font-size: 1.5rem;
+		font-weight: 700;
+	}
+}

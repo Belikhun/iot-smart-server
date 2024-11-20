@@ -64,6 +64,9 @@ app.strings = {
 	"table.tags": "Các thẻ",
 	"table.area": "Vùng",
 
+	"status.active": "Đang kích hoạt",
+	"status.off": "Không kích hoạt",
+
 	"model_user": "Người dùng",
 	"status_never": "Chưa truy cập",
 	"user_password_optional": "Mật khẩu (nhập để đổi)",
@@ -100,6 +103,7 @@ app.strings = {
 	"action.setValue": "Đặt giá trị",
 	"action.setFromFeature": "Lấy giá trị từ",
 	"action.toggleValue": "Lật trạng thái (bật/tắt)",
+	"action.alarmValue": "Đặt tiếng kêu",
 
 	"model_info": "Thông tin chi tiết của :model: :name:",
 	"conditions": "Các điều kiện",

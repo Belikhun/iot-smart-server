@@ -1596,8 +1596,9 @@ class TriggerAction extends Model {
 
 			onInput: (value, { trusted }) => {
 				this.deviceFeature = value;
-
+				
 				if (this.view && trusted) {
+					this.actionInput.value = null;
 					this.render();
 					this.doSave();
 				}
@@ -1609,38 +1610,7 @@ class TriggerAction extends Model {
 			label: "Hành động",
 			color: "accent",
 
-			fetch: async (search) => {
-				const actions = Object.keys(ActionTypes);
-
-				if (!search)
-					return actions;
-
-				const tokens = search
-					.toLocaleLowerCase()
-					.split(" ");
-
-				return actions.filter((value) => {
-					value = value.toLocaleLowerCase();
-
-					for (const token of tokens) {
-						if (!value.includes(token))	
-							return false;
-					}
-
-					return true;
-				});
-			},
-
-			process: (item) => {
-				return {
-					label: ScreenUtils.renderSpacedRow(
-						ScreenUtils.renderIcon(ActionTypes[item].icon),
-						app.string(`action.${item}`)
-					),
-
-					value: item
-				}
-			},
+			...featureActionSearch(() => this.deviceFeature),
 
 			onInput: (value, { trusted }) => {
 				this.action = value;
@@ -1699,9 +1669,10 @@ class TriggerAction extends Model {
 		this.featureInput.value = this.deviceFeature;
 		this.actionInput.value = this.action;
 
-		if (!this.currentAction || this.currentAction.action !== this.action) {
+		if (!this.currentAction || !this.currentAction.action || this.currentAction.action !== this.action) {
 			emptyNode(this.view.editor.value);
 			this.currentAction = renderActionValue(this.action);
+			this.currentAction.action = this.action;
 
 			if (this.currentAction.view) {
 				this.view.editor.value.style.display = null;

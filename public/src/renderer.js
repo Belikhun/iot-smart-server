@@ -493,6 +493,34 @@ class FeatureRenderer {
 
 				break;
 			}
+			
+			case "FeatureOnOffSensor": {
+				const view = makeTree("div", "feature-onoff-sensor", {
+					icon: { tag: "icon", icon: "circleXMark" },
+					value: { tag: "div", class: "value", text: "---" }
+				});
+
+				let currentValue = false;
+
+				instance = {
+					view,
+
+					onInput: (handler) => {},
+
+					set value(value) {
+						view.classList.toggle("active", value);
+						view.icon.dataset.icon = (value) ? "circleCheck" : "circleXMark";
+						view.value.innerText = (value) ? app.string("status.active") : app.string("status.off");
+						currentValue = value;
+					},
+
+					get value () {
+						return currentValue;
+					}
+				};
+
+				break;
+			}
 		
 			default: {
 				const view = document.createElement("div");
@@ -688,8 +716,73 @@ function renderComparatorValue(comparator) {
 const ActionTypes = {
 	setValue: { icon: "equals" },
 	setFromFeature: { icon: "rightLeft" },
-	toggleValue: { icon: "lightSwitch" }
+	toggleValue: { icon: "lightSwitch" },
+	alarmValue: { icon: "siren", hidden: true }
 };
+
+function featureActionSearch(/** @type {() => DeviceFeature} */ getFeature) {
+	return {
+		fetch: async (search) => {
+			let actions = Object.entries(ActionTypes)
+				.filter(([key, value]) => !value.hidden)
+				.map(([key, value]) => key);
+
+			let includeKinds = [];
+			let excludeKinds = [];
+
+			const feature = (getFeature)
+				? getFeature()
+				: null;
+
+			if (feature) {
+				switch (feature.kind) {
+					case "FeatureAlarm":
+						actions = ["alarmValue"];
+						break;
+				}
+			}
+
+			if (includeKinds.length > 0) {
+				// Only include these kinds.
+				actions = actions.filter((item) => (includeKinds.includes(item)));
+			}
+
+			if (excludeKinds.length > 0) {
+				// Only include these kinds.
+				actions = actions.filter((item) => (!excludeKinds.includes(item)));
+			}
+
+			if (!search)
+				return actions;
+
+			const tokens = search
+				.toLocaleLowerCase()
+				.split(" ");
+
+			return actions.filter((value) => {
+				value = value.toLocaleLowerCase();
+
+				for (const token of tokens) {
+					if (!value.includes(token))	
+						return false;
+				}
+
+				return true;
+			});
+		},
+
+		process: (item) => {
+			return {
+				label: ScreenUtils.renderSpacedRow(
+					ScreenUtils.renderIcon(ActionTypes[item].icon),
+					app.string(`action.${item}`)
+				),
+
+				value: item
+			}
+		}
+	}
+}
 
 function renderActionValue(action) {
 	if (!action)
@@ -771,6 +864,49 @@ function renderActionValue(action) {
 
 				set disabled(disabled) {
 					input.disabled = disabled;
+				}
+			};
+		}
+
+		case "alarmValue": {
+			const input = createChoiceInput({
+				color: "accent",
+				choices: {
+					off: { icon: "volumeXmark" },
+					beep: { icon: "sensorOn" },
+					tune: { icon: "musicNote" },
+					alert: { icon: "sensorExclamation" },
+					alarm: { icon: "bellSchool" }
+				},
+
+				value: "off",
+				withGrow: false
+			});
+
+			return {
+				action,
+				view: input.container,
+				input: null,
+
+				onInput: (handler) => {
+					input.onChange((value, { trusted }) => {
+						if (!trusted)
+							return;
+
+						handler(value);
+					});
+				},
+
+				set value(value) {
+					input.value = value;
+				},
+
+				get value() {
+					return input.value;
+				},
+
+				set disabled(disabled) {
+					// Not supported
 				}
 			};
 		}
