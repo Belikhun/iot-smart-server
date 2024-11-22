@@ -11,6 +11,8 @@ class TuyaAPI {
 	private token: string | null = null;
 	private tokenExpireTime: number = 0;
 
+	public deltaT: number = 0;
+
 	constructor(baseUrl: string, clientId: string, secretKey: string) {
 		this.baseUrl = baseUrl;
 		this.clientId = clientId;
@@ -143,6 +145,7 @@ class TuyaAPI {
 			if (!success)
 				throw new Error(`Lỗi khi gửi yêu cầu tới Tuya IoT Core: [${code}] ${msg}`);
 
+			this.deltaT = Date.now() - response.data.t;
 			return response.data.result;
 		} catch (error) {
 			log.error(`Lỗi khi gửi yêu cầu lên Tuya IoT (${path}):`, error);

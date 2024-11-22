@@ -101,7 +101,6 @@ export class TriggerConditionItem implements TriggerCondition {
 
 		this.feature = feature;
 		this.feature.relatedTriggerItems[this.model.id as number] = this;
-
 		TriggerItems[this.model.id as number] = this;
 	}
 
@@ -110,12 +109,17 @@ export class TriggerConditionItem implements TriggerCondition {
 			return this;
 
 		delete this.feature.relatedTriggerItems[this.model.id as number];
+		delete TriggerItems[this.model.id as number];
 		const feature = getDeviceFeatureById(this.model.deviceFeatureId);
 
 		if (!feature)
 			throw new Error(`Không tìm thấy tính năng với mã ${this.model.deviceFeatureId}`);
 
 		this.feature = feature;
+		this.feature.relatedTriggerItems[this.model.id as number] = this;
+		TriggerItems[this.model.id as number] = this;
+		this.log.info(`Đã đăng kí với tính năng ${this.feature.model.uuid}`);
+
 		return this;
 	}
 

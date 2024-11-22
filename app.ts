@@ -9,5 +9,11 @@ initializeDB();
 initializeHttpServer();
 await initializeDevices();
 await initializeTriggers();
-await initializeTuya();
+
+try {
+	await initializeTuya();
+} catch (e) {
+
+}
+
 startWatchdog();

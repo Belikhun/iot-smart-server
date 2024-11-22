@@ -219,7 +219,7 @@ const pushDeviceValues = async (device: Device) => {
 		if (feature.model.featureId === "colour_data")
 			properties.work_mode = "colour";
 
-		tuyaValueTimes[feature.model.uuid] = Date.now();
+		tuyaValueTimes[feature.model.uuid] = Date.now() - client.deltaT;
 	}
 
 	log.outgoing(`[${device.model.hardwareId}] Giá trị mới: `, properties);
