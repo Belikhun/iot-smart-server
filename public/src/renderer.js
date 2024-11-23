@@ -396,6 +396,7 @@ class FeatureRenderer {
 				view.classList.add("color-picker-wrapper");
 
 				let inputHandler = null;
+				let updating = false;
 
 				const wheel = new ReinventedColorWheel({
 					appendTo: view,
@@ -405,8 +406,10 @@ class FeatureRenderer {
 					wheelReflectsSaturation: true,
 
 					onChange: (color) => {
-						if (inputHandler)
-							inputHandler(color.rgb);
+						if (!inputHandler || updating)
+							return;
+
+						inputHandler(color.rgb);
 					}
 				});
 
@@ -422,7 +425,9 @@ class FeatureRenderer {
 					},
 
 					set value(value) {
+						updating = true;
 						wheel.rgb = value;
+						updating = false;
 					},
 
 					get value() {

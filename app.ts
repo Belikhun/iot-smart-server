@@ -11,7 +11,7 @@ await initializeDevices();
 await initializeTriggers();
 
 try {
-	await initializeTuya();
+	// await initializeTuya();
 } catch (e) {
 
 }
