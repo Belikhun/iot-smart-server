@@ -1,7 +1,8 @@
-import TriggerActionModel from "../../Models/TriggerActionModel";
+import TriggerActionModel, { type TriggerActionKind } from "../../Models/TriggerActionModel";
 import { scope, type Logger } from "../../Utils/Logger";
 import { getDeviceFeature, getDeviceFeatureById } from "../Device";
 import type { FeatureBase } from "../Features/FeatureBase";
+import { getSceneById, Scene } from "../SceneService";
 import type { Trigger } from "../TriggerService";
 
 enum ActionType {
@@ -15,7 +16,7 @@ export class TriggerAction {
 
 	public trigger: Trigger;
 	public model: TriggerActionModel;
-	protected feature: FeatureBase;
+	protected target: FeatureBase | Scene;
 	protected action: ActionType;
 
 	protected log: Logger;
@@ -25,36 +26,50 @@ export class TriggerAction {
 		this.model = model;
 		this.log = scope(`trigger:group:#${this.model.id}`);
 
-		const feature = getDeviceFeatureById(this.model.deviceFeatureId);
-
-		if (!feature)
-			throw new Error(`Không tìm thấy tính năng với mã ${this.model.deviceFeatureId}`);
-
-		this.feature = feature;
+		this.target = this.getTarget();
 		this.action = this.model.action as ActionType;
+	}
+
+	public getTarget(): FeatureBase | Scene {
+		switch (this.model.targetKind) {
+			case "deviceFeature": {
+				const feature = getDeviceFeatureById(this.model.targetId);
+
+				if (!feature)
+					throw new Error(`Không tìm thấy tính năng với mã ${this.model.targetId}`);
+
+				return feature;
+			}
+
+			case "scene": {
+				const scene = getSceneById(this.model.targetId);
+
+				if (!scene)
+					throw new Error(`Không tìm thấy cảnh với mã ${this.model.targetId}`);
+
+				return scene;
+			}
+		}
+
+		throw new Error(`Loại đối tượng không hợp lệ: ${this.model.targetKind}`);
 	}
 
 	public load() {
 		this.action = this.model.action as ActionType;
-
-		if (this.feature.model.id == this.model.deviceFeatureId)
-			return this;
-
-		const feature = getDeviceFeatureById(this.model.deviceFeatureId);
-
-		if (!feature)
-			throw new Error(`Không tìm thấy tính năng với mã ${this.model.deviceFeatureId}`);
-
-		this.feature = feature;
+		this.target = this.getTarget();
 		return this;
 	}
 
 	public execute() {
-		this.log.info(`Đang chạy hành động #${this.model.id} -> ${this.feature.model.uuid}`);
+		if (this.target instanceof Scene) {
+			return;
+		}
+
+		this.log.info(`Đang chạy hành động #${this.model.id} -> ${this.target.model.uuid}`);
 
 		switch (this.action) {
 			case ActionType.SET_VALUE: {
-				this.feature.setValue(this.model.newValue);
+				this.target.setValue(this.model.newValue);
 				break;
 			}
 
@@ -66,12 +81,12 @@ export class TriggerAction {
 					return;
 				}
 
-				this.feature.setValue(source.getValue());
+				this.target.setValue(source.getValue());
 				break;
 			}
 
 			case ActionType.TOGGLE_VALUE: {
-				this.feature.setValue(!this.feature.getValue());
+				this.target.setValue(!this.target.getValue());
 				break;
 			}
 
@@ -84,7 +99,7 @@ export class TriggerAction {
 				if (this.model.newValue === "beep")
 					payload.data = [0.2, 1000];
 
-				this.feature.setValue(payload);
+				this.target.setValue(payload);
 				break;
 			}
 		}
@@ -110,18 +125,21 @@ export class TriggerAction {
 
 	public static async create({
 		trigger,
-		deviceFeature,
+		targetId,
+		targetKind,
 		action,
 		newValue
 	}: {
 		trigger: Trigger,
-		deviceFeature: FeatureBase,
+		targetId: number,
+		targetKind: TriggerActionKind,
 		action: ActionType,
 		newValue: any
 	}) {
 		const model = await TriggerActionModel.create({
 			triggerId: trigger.model.id as number,
-			deviceFeatureId: deviceFeature.model.id as number,
+			targetId,
+			targetKind,
 			action,
 			newValue
 		});

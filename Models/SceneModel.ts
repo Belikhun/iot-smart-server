@@ -2,55 +2,51 @@ import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
 import moment from "moment";
 
-export type TriggerActionKind = "deviceFeature" | "scene";
-
-interface TriggerActionAttributes {
+interface SceneAttributes {
 	id?: number;
-	triggerId: number;
-	targetId: number;
-	targetKind: TriggerActionKind;
-	action?: string;
-	newValue?: any;
+	name: string;
+	icon: string;
+	color: string;
+	lastTrigger?: number;
 	created?: number;
 	updated?: number;
 }
 
-class TriggerActionModel extends Model<TriggerActionAttributes> implements TriggerActionAttributes {
+class SceneModel extends Model<SceneAttributes> implements SceneAttributes {
 	declare id?: number;
-	declare triggerId: number;
-	declare targetId: number;
-	declare targetKind: TriggerActionKind;
-	declare action?: string;
-	declare newValue?: any;
+	declare name: string;
+	declare icon: string;
+	declare color: string;
+	declare lastTrigger?: number;
 	declare created?: number;
 	declare updated?: number;
+
+	public async getReturnData() {
+		const data: any = { ...this.dataValues };
+		return data;
+	}
 }
 
-TriggerActionModel.init({
+SceneModel.init({
 	id: {
 		type: DataTypes.INTEGER,
 		autoIncrement: true,
 		primaryKey: true
 	},
-	triggerId: {
-		type: DataTypes.NUMBER,
+	name: {
+		type: DataTypes.STRING(64),
 		allowNull: false
 	},
-	targetId: {
-		type: DataTypes.NUMBER,
+	icon: {
+		type: DataTypes.STRING(22),
 		allowNull: false
 	},
-	targetKind: {
-		type: DataTypes.NUMBER,
+	color: {
+		type: DataTypes.STRING(22),
 		allowNull: false
 	},
-	action: {
-		type: DataTypes.STRING,
-		allowNull: true,
-		defaultValue: "setValue"
-	},
-	newValue: {
-		type: DataTypes.STRING,
+	lastTrigger: {
+		type: DataTypes.INTEGER,
 		allowNull: true
 	},
 	created: {
@@ -65,7 +61,7 @@ TriggerActionModel.init({
 	}
 }, {
 	sequelize: database,
-	tableName: "trigger_actions",
+	tableName: "scenes",
 	createdAt: "created",
 	updatedAt: "updated",
 	timestamps: true,
@@ -73,11 +69,10 @@ TriggerActionModel.init({
 		beforeCreate(instance) {
 			instance.created = instance.updated = moment().unix();
 		},
-
 		beforeUpdate(instance) {
 			instance.updated = moment().unix();
 		}
 	}
 });
 
-export default TriggerActionModel;
+export default SceneModel;

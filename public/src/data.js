@@ -66,6 +66,7 @@ app.strings = {
 	"table.status": "Trạng thái",
 	"table.tags": "Các thẻ",
 	"table.area": "Vùng",
+	"table.scene": "Cảnh",
 
 	"status.active": "Đang kích hoạt",
 	"status.off": "Không kích hoạt",

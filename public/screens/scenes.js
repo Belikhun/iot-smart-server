@@ -1,13 +1,13 @@
 
-const triggers = {
+const scenes = {
 	/** @type {ScreenChild} */
 	screen: undefined,
 
 	init() {
 		this.screen = new ScreenChild(
 			screens.automation,
-			"triggers",
-			"Luật kích hoạt",
+			"scenes",
+			"Cảnh",
 			{ noGrid: true }
 		);
 	},
@@ -16,7 +16,7 @@ const triggers = {
 		/** @type {ScreenPanel} */
 		panel: undefined,
 
-		/** @type {ScreenTable<Trigger>} */
+		/** @type {ScreenTable<Scene>} */
 		table: undefined,
 
 		/** @type {SQButton} */
@@ -41,7 +41,7 @@ const triggers = {
 		name: "",
 
 		init() {
-			this.name = app.string("table.trigger");
+			this.name = app.string("table.scene");
 
 			this.reloadButton = createButton("", { icon: "reload", color: "blue" });
 			this.actions = createButton(app.string("button.actions"), {
@@ -98,8 +98,8 @@ const triggers = {
 				this.actionMenu.openAtElement(this.actions);
 			});
 
-			this.panel = new ScreenPanel(triggers.screen, {
-				title: "Các luật kích hoạt",
+			this.panel = new ScreenPanel(scenes.screen, {
+				title: "Các cảnh",
 				size: "full"
 			});
 
@@ -107,8 +107,7 @@ const triggers = {
 				header: {
 					id: { display: app.string("table.id") },
 					name: { display: app.string("table.name") },
-					lastTrigger: { display: app.string("table.lastTrigger") },
-					active: { display: app.string("table.active") }
+					lastTrigger: { display: app.string("table.lastTrigger") }
 				},
 
 				builtInSort: false,
@@ -126,7 +125,7 @@ const triggers = {
 			this.table
 				.setSort("id", { ascending: false, update: false })
 				.setProcessor((name, value, instance) => this.processor(name, value, instance))
-				.onActive((item) => triggers.info.view(item.item));
+				.onActive((item) => scenes.info.view(item.item));
 
 			this.table.setRowProcessor((item, row) => {
 				const instance = item.item;
@@ -140,7 +139,7 @@ const triggers = {
 				menu.onSelect(async (id) => {
 					switch (id) {
 						case "view": {
-							triggers.info.view(instance);
+							scenes.info.view(instance);
 							break;
 						}
 
@@ -250,13 +249,6 @@ const triggers = {
 									}
 								}
 							}
-						},
-						{
-							active: {
-								type: "checkbox",
-								label: "Được kích hoạt",
-								default: true
-							}
 						}
 					]
 				}
@@ -267,24 +259,24 @@ const triggers = {
 				this.listPaging.setPage(1, true, true);
 			});
 
-			triggers.screen.onSideToggle((showing) => {
+			scenes.screen.onSideToggle((showing) => {
 				if (!showing)
 					this.form.show = false;
 			});
 
 			this.table.onSort(() => this.fetch());
 			this.listPaging.onChange(() => this.fetch());
-			triggers.screen.onActivate(() => this.fetch());
+			scenes.screen.onActivate(() => this.fetch());
 			this.reloadButton.addEventListener("click", () => this.fetch());
 		},
 
 		/**
-		 * Create a new trigger.
+		 * Create a new scene.
 		 */
 		create() {
-			const instance = new Trigger();
+			const instance = new Scene();
 
-			triggers.screen.showSide({
+			scenes.screen.showSide({
 				title: app.string("model_creating", { model: this.name }),
 				content: this.form.form
 			});
@@ -312,19 +304,19 @@ const triggers = {
 					throw e;
 				}
 
-				triggers.screen.alert("OKAY", app.string("model_created", { model: this.name, id: instance.id }));
-				triggers.screen.hideSide();
+				scenes.screen.alert("OKAY", app.string("model_created", { model: this.name, id: instance.id }));
+				scenes.screen.hideSide();
 				this.fetch();
 			});
 		},
 
 		/**
-		 * Start editing trigger.
+		 * Start editing scene.
 		 *
-		 * @param   {Trigger}     instance
+		 * @param   {Scene}     instance
 		 */
 		edit(instance) {
-			triggers.screen.showSide({
+			scenes.screen.showSide({
 				title: app.string("model_editing", { model: this.name, name: instance.name }),
 				content: this.form.form
 			});
@@ -353,7 +345,7 @@ const triggers = {
 					throw e;
 				}
 
-				triggers.screen.alert("OKAY", app.string("model_edited", { model: this.name, name: instance.name }));
+				scenes.screen.alert("OKAY", app.string("model_edited", { model: this.name, name: instance.name }));
 
 				// Set new default and reload table.
 				this.form.defaults = instance;
@@ -362,13 +354,13 @@ const triggers = {
 		},
 
 		/**
-		 * Delete the selected trigger
+		 * Delete the selected scene
 		 *
-		 * @param   {Trigger}	instance
+		 * @param   {Scene}	instance
 		 */
 		async delete(instance) {
 			try {
-				let deleted = await ModelFactory.delete("trigger", instance, {
+				let deleted = await ModelFactory.delete("scene", instance, {
 					name: this.name,
 					prompt: `${instance.id}.${instance.shortname}`
 				});
@@ -377,28 +369,28 @@ const triggers = {
 					this.fetch();
 			} catch (e) {
 				this.log("ERRR", "delete()", e);
-				triggers.screen.handleError(e);
+				scenes.screen.handleError(e);
 			}
 		},
 
 		/**
-		 * Start deleting Trigger operation
+		 * Start deleting Scene operation
 		 *
-		 * @param	{Trigger[]}		instances
+		 * @param	{Scene[]}		instances
 		 */
 		async bulkDelete(instances) {
 			try {
 				let deleted = await ModelFactory.bulkDelete(instances, {
-					model: "trigger",
+					model: "scene",
 					name: this.name,
-					prompt: `trigger.${instances.length}`
+					prompt: `scene.${instances.length}`
 				});
 
 				if (deleted)
 					this.fetch();
 			} catch (e) {
 				this.log("ERRR", "bulkDelete()", e);
-				triggers.screen.handleError(e);
+				scenes.screen.handleError(e);
 			}
 		},
 
@@ -421,12 +413,12 @@ const triggers = {
 
 			try {
 				const response = await myajax({
-					url: app.api("/trigger/list"),
+					url: app.api("/scene/list"),
 					method: "GET",
 					query
 				});
 
-				const data = Trigger.processResponses(response.data);
+				const data = Scene.processResponses(response.data);
 
 				if (data.length === 0) {
 					if (this.search) {
@@ -455,19 +447,19 @@ const triggers = {
 		},
 
 		/**
-		 * View information of the provided Trigger instance
+		 * View information of the provided Scene instance
 		 *
-		 * @param	{Trigger}	instance
+		 * @param	{Scene}	instance
 		 */
 		async open(instance) {
 			if (typeof instance !== "object")
-				instance = await Trigger.get(instance);
+				instance = await Scene.get(instance);
 
 			this.panel.search = `id=${instance.id}`;
-			triggers.info.view(instance);
+			scenes.info.view(instance);
 
-			if (!triggers.screen.activated)
-				triggers.screen.activate();
+			if (!scenes.screen.activated)
+				scenes.screen.activate();
 		},
 
 		/**
@@ -475,7 +467,7 @@ const triggers = {
 		 *
 		 * @param	{string}		name
 		 * @param	{any}			value
-		 * @param	{Trigger}		instance
+		 * @param	{Scene}		instance
 		 */
 		processor(name, value, instance) {
 			const node = document.createElement("div");
@@ -485,7 +477,7 @@ const triggers = {
 					return ScreenUtils.renderSpacedRow(
 						ScreenUtils.renderIcon(instance.icon, { color: instance.color }),
 						ScreenUtils.renderLink(value, () => {
-							triggers.info.view(instance);
+							scenes.info.view(instance);
 						}, { isExternal: false, color: instance.color })
 					);
 				}
@@ -495,9 +487,6 @@ const triggers = {
 						? relativeTime(value)
 						: "Chưa được chạy";
 				}
-
-				case "active":
-					return ScreenUtils.renderBoolean(value);
 
 				case "created":
 				case "updated":
@@ -519,35 +508,11 @@ const triggers = {
 		/** @type {SQButton} */
 		
 		reload: undefined,
-		/** @type {Trigger} */
+		/** @type {Scene} */
 		instance: null,
 
 		/** @type {ScreenInfoGrid} */
 		grid: undefined,
-
-		/** @type {TreeDOM} */
-		conditionView: undefined,
-
-		/** @type {TriggerGroup} */
-		conditionGroup: undefined,
-
-		/** @type {ContextMenu} */
-		conditionCreateMenu: undefined,
-
-		/** @type {TreeDOM} */
-		conditionEmpty: undefined,
-
-		/** @type {SQButton} */
-		conditionReload: undefined,
-
-		/** @type {SQButton} */
-		conditionCreate: undefined,
-
-		/** @type {SQButton} */
-		conditionEmptyCreate: undefined,
-
-		/** @type {SQButton} */
-		conditionExecute: undefined,
 
 		/** @type {TreeDOM} */
 		actionView: undefined,
@@ -564,70 +529,12 @@ const triggers = {
 		/** @type {SQButton} */
 		actionEmptyCreate: undefined,
 		
-		/** @type {TriggerAction[]} */
+		/** @type {SceneAction[]} */
 		actions: [],
 
 		init() {
 			this.container = document.createElement("div");
 			this.container.classList.add("screen-info");
-
-			this.conditionReload = createButton("", {
-				icon: "reload",
-				color: "blue",
-				onClick: () => this.updateConditions()
-			});
-
-			this.conditionCreate = createButton("Thêm", {
-				icon: "plus",
-				color: "accent",
-				onClick: () => this.instance.group.createMenu.openAtElement(this.conditionCreate)
-			});
-
-			this.conditionEmptyCreate = createButton("Thêm điều kiện mới", {
-				icon: "plus",
-				color: "accent",
-				onClick: () => this.instance.group.createMenu.openAtElement(this.conditionEmptyCreate)
-			});
-
-			this.conditionExecute = createButton("Chạy", {
-				icon: "play",
-				color: "green",
-				onClick: () => this.testConditions()
-			});
-
-			this.conditionEmpty = makeTree("div", "empty-message", {
-				message: { tag: "div", class: "message", text: "Nhóm điều kiện này hiện đang trống" },
-				content: { tag: "div", class: "content", text: "Bạn có thể thêm một điều kiện mới hoặc một nhóm điều kiện mới vào đây." },
-				actions: { tag: "div", class: "actions", child: {
-					create: this.conditionEmptyCreate
-				}}
-			});
-
-			this.conditionView = makeTree("div", "list-editor-block", {
-				header: { tag: "div", class: "header", child: {
-					titl: { tag: "span", class: "title", child: {
-						content: { tag: "div", class: "content", text: "Nếu" },
-						condition: { tag: "div", class: "condition", text: "---" }
-					}},
-
-					status: { tag: "div", class: "status" },
-
-					actions: { tag: "span", class: "actions", child: {
-						exec: this.conditionExecute,
-
-						g1: ScreenUtils.buttonGroup(
-							this.conditionCreate,
-							this.conditionReload
-						)
-					}}
-				}},
-
-				editor: { tag: "div", class: "editor", child: {
-					empty: this.conditionEmpty
-				}}
-			});
-
-			this.conditionView.header.status.style.display = "none";
 
 			this.actionReload = createButton("", {
 				icon: "reload",
@@ -728,18 +635,8 @@ const triggers = {
 							],
 
 							copyable: true
-						},
-						{
-							label: app.string("table.active"),
-							value: () => ScreenUtils.renderBoolean(this.instance.active)
 						}
 					]
-				},
-
-				conditions: {
-					label: app.string("conditions"),
-					node: this.conditionView,
-					headerLine: false
 				},
 
 				actions: {
@@ -756,13 +653,13 @@ const triggers = {
 		},
 
 		/**
-		 * View trigger info
+		 * View scene info
 		 *
-		 * @param	{Trigger}	instance
+		 * @param	{Scene}	instance
 		 */
 		async view(instance) {
-			triggers.screen.showSide({
-				title: app.string("model_info", { model: app.string("table.trigger"), name: instance.name }),
+			scenes.screen.showSide({
+				title: app.string("model_info", { model: app.string("table.scene"), name: instance.name }),
 				content: this.container,
 				actions: [this.reload]
 			});
@@ -771,68 +668,8 @@ const triggers = {
 
 			await Promise.all([
 				this.grid.update(),
-				this.updateConditions(),
 				this.updateActions()
 			]);
-		},
-
-		async updateConditions() {
-			this.conditionReload.loading = true;
-
-			try {
-				const response = await myajax({
-					url: app.api(`/trigger/${this.instance.id}/condition`),
-					method: "GET"
-				});
-
-				const group = await TriggerGroup.processResponse(response.data);
-				const condNode = this.conditionView.header.titl.condition;
-
-				if (!this.conditionGroup) {
-					condNode.addEventListener("click", (e) => group.operatorMenu.openByMouseEvent(e));
-					condNode.addEventListener("contextmenu", (e) => group.operatorMenu.openByMouseEvent(e));
-
-					group.onSaved(() => {
-						condNode.innerText = app.string(`operator.${group.operator}`);
-					});
-				}
-
-				condNode.innerText = app.string(`operator.${group.operator}`);
-				this.conditionGroup = group;
-				this.instance.group = group;
-				this.renderConditions();
-			} catch (e) {
-				triggers.screen.handleError(e);
-			}
-			
-			this.conditionReload.loading = false;
-		},
-
-		renderConditions() {
-			emptyNode(this.conditionView.editor);
-			this.conditionView.header.status.style.display = "none";
-
-			if (this.conditionGroup.items.length === 0) {
-				this.conditionView.editor.appendChild(this.conditionEmpty);
-				return;
-			}
-
-			for (const item of this.conditionGroup.items) {
-				this.conditionView.editor.appendChild(item.render());
-			}
-		},
-
-		async testConditions() {
-			try {
-				const response = await myajax({
-					url: app.api(`/trigger/${this.instance.id}/test`),
-					method: "GET"
-				});
-
-				this.conditionGroup.displayTestResult(response.data, this.conditionView.header.status);
-			} catch (e) {
-				triggers.screen.handleError(e, "WARN");
-			}
 		},
 
 		async updateActions() {
@@ -840,14 +677,14 @@ const triggers = {
 
 			try {
 				const response = await myajax({
-					url: app.api(`/trigger/${this.instance.id}/action`),
+					url: app.api(`/scene/${this.instance.id}/action/list`),
 					method: "GET"
 				});
 
-				this.actions = await TriggerAction.processResponses(response.data);
+				this.actions = await SceneAction.processResponses(response.data);
 				this.renderActions();
 			} catch (e) {
-				triggers.screen.handleError(e);
+				scenes.screen.handleError(e);
 			}
 			
 			this.actionReload.loading = false;
@@ -867,8 +704,8 @@ const triggers = {
 		},
 
 		async createAction() {
-			const instance = new TriggerAction(null);
-			instance.trigger = this.instance;
+			const instance = new SceneAction(null);
+			instance.scene = this.instance;
 			instance.action = "setValue";
 
 			this.actions.push(instance);
@@ -879,4 +716,4 @@ const triggers = {
 }
 
 // Regiser this screen to initialize when application load.
-screens.triggers = triggers;
+screens.scenes = scenes;

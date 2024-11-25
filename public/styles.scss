@@ -555,8 +555,7 @@
 	}
 }
 
-.trigger-conditions,
-.trigger-actions {
+.list-editor-block {
 	display: flex;
 	flex-direction: column;
 
@@ -659,8 +658,8 @@
 	}
 }
 
-.trigger-group,
-.trigger-item {
+.list-editor-group,
+.list-editor-item {
 	display: flex;
 	flex-direction: column;
 
@@ -792,7 +791,7 @@
 	}
 }
 
-.trigger-item {
+.list-editor-item {
 	> .editor {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);

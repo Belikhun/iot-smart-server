@@ -1021,7 +1021,7 @@ class TriggerGroup extends Model {
 				}}
 			});
 	
-			this.view = makeTree("div", "trigger-group", {
+			this.view = makeTree("div", "list-editor-group", {
 				header: { tag: "div", class: "header", child: {
 					titl: { tag: "span", class: "title", child: {
 						icon: { tag: "icon", icon: "ampersand" },
@@ -1348,7 +1348,7 @@ class TriggerItem extends Model {
 
 	render() {
 		if (!this.view) {
-			this.view = makeTree("div", "trigger-item", {
+			this.view = makeTree("div", "list-editor-item", {
 				header: { tag: "div", class: "header", child: {
 					titl: { tag: "span", class: "title", child: {
 						icon: { tag: "icon", icon: "device" },
@@ -1573,9 +1573,12 @@ class TriggerAction extends Model {
 
 		/** @type {Trigger} */
 		this.trigger = null;
-
-		/** @type {DeviceFeature} */
-		this.deviceFeature = null;
+		
+		/** @type {number} */
+		this.targetId = null;
+		
+		/** @type {"deviceFeature" | "scene"} */
+		this.targetKind = null;
 
 		/** @type {"setValue" | "setFromFeature" | "toggleValue"} */
 		this.action = null;
@@ -1592,42 +1595,8 @@ class TriggerAction extends Model {
 			onClick: () => this.delete()
 		});
 
-		/** @type {AutocompleteInputInstance<DeviceFeature>} */
-		this.featureInput = createAutocompleteInput({
-			id: `trigger_item_select_feature_${randString(7)}`,
-			label: "Tính năng",
-			color: "accent",
-
-			...featureSearch(FEATURE_FLAG_WRITE),
-
-			onInput: (value, { trusted }) => {
-				this.deviceFeature = value;
-				
-				if (this.view && trusted) {
-					this.actionInput.value = null;
-					this.render();
-					this.doSave();
-				}
-			}
-		});
-
-		this.actionInput = createAutocompleteInput({
-			id: `trigger_item_select_action_${randString(7)}`,
-			label: "Hành động",
-			color: "accent",
-
-			...featureActionSearch(() => this.deviceFeature),
-
-			onInput: (value, { trusted }) => {
-				this.action = value;
-
-				if (this.view && trusted) {
-					this.render();
-					this.doSave();
-				}
-			}
-		});
-
+		/** @type {DeviceFeature | Scene} */
+		this.target = null;
 		this.saveTimeout = null;
 		this.currentAction = null;
 		this.valueRequired = true;
@@ -1639,9 +1608,21 @@ class TriggerAction extends Model {
 		this.updated = null;
 	}
 
+	async getTarget() {
+		switch (this.targetKind) {
+			case "deviceFeature":
+				return await DeviceFeature.get(this.targetId);
+
+			case "scene":
+				return await Scene.get(this.targetId);
+		}
+
+		throw new Error(`Loại đối tượng không hợp lệ: ${this.targetKind}`);
+	}
+
 	render() {
 		if (!this.view) {
-			this.view = makeTree("div", "trigger-item", {
+			this.view = makeTree("div", "list-editor-item", {
 				header: { tag: "div", class: "header", child: {
 					titl: { tag: "span", class: "title", child: {
 						icon: { tag: "icon", icon: "device" },
@@ -1651,62 +1632,114 @@ class TriggerAction extends Model {
 					actions: { tag: "span", class: "actions", child: {
 						create: this.deleteButton
 					}}
-				}},
+				}}
+			});
 
-				editor: { tag: "div", class: "editor", child: {
+			if (this.targetKind === "deviceFeature") {
+				/** @type {AutocompleteInputInstance<DeviceFeature>} */
+				this.featureInput = createAutocompleteInput({
+					id: `trigger_item_select_feature_${randString(7)}`,
+					label: "Tính năng",
+					color: "accent",
+
+					...featureSearch(FEATURE_FLAG_WRITE),
+
+					onInput: (value, { trusted }) => {
+						this.target = value;
+						this.targetId = value.id;
+						
+						if (this.view && trusted) {
+							this.actionInput.value = null;
+							this.render();
+							this.doSave();
+						}
+					}
+				});
+
+				this.actionInput = createAutocompleteInput({
+					id: `trigger_item_select_action_${randString(7)}`,
+					label: "Hành động",
+					color: "accent",
+
+					...featureActionSearch(() => this.target),
+
+					onInput: (value, { trusted }) => {
+						this.action = value;
+
+						if (this.view && trusted) {
+							this.render();
+							this.doSave();
+						}
+					}
+				});
+
+				this.editor = makeTree("div", "editor", {
 					feature: this.featureInput,
 					action: this.actionInput,
 					value: { tag: "span", class: "value-wrapper" }
-				}}
-			});
+				});
+
+				this.view.appendChild(this.editor);
+			} else {
+
+			}
 		}
 
-		if (this.deviceFeature) {
-			this.view.header.titl.icon.dataset.icon = this.deviceFeature.getIcon();
-			this.view.header.titl.content.innerText = this.deviceFeature.name;
+		if (this.targetKind === "deviceFeature") {
+			if (this.target) {
+				this.view.header.titl.icon.dataset.icon = this.target.getIcon();
+				this.view.header.titl.content.innerText = this.target.name;
+			} else {
+				this.view.header.titl.icon.dataset.icon = "toggleOn";
+				this.view.header.titl.content.innerText = "Chọn tính năng";
+			}
+	
+			if (!this.id)
+				this.view.header.titl.content.innerText += " [CHƯA LƯU]";
+	
+			this.featureInput.value = this.target;
+			this.actionInput.value = this.action;
+	
+			if (!this.currentAction || !this.currentAction.action || this.currentAction.action !== this.action) {
+				emptyNode(this.editor.value);
+				this.currentAction = renderActionValue(this.action);
+				this.currentAction.action = this.action;
+	
+				if (this.currentAction.view) {
+					this.editor.value.style.display = null;
+					this.editor.value.appendChild(this.currentAction.view);
+					this.currentAction.value = this.newValue;
+					this.valueRequired = true;
+					
+					this.currentAction.onInput((value) => {
+						if (typeof value === "string" && value.length === 0)
+							return;
+	
+						this.newValue = value;
+						this.doSave();
+					});
+				} else {
+					this.editor.value.style.display = "none";
+					this.newValue = null;
+					this.valueRequired = false;
+				}
+			}
 		} else {
 			this.view.header.titl.icon.dataset.icon = "toggleOn";
-			this.view.header.titl.content.innerText = "Chọn tính năng";
-		}
-
-		if (!this.id)
-			this.view.header.titl.content.innerText += " [CHƯA LƯU]";
-
-		this.featureInput.value = this.deviceFeature;
-		this.actionInput.value = this.action;
-
-		if (!this.currentAction || !this.currentAction.action || this.currentAction.action !== this.action) {
-			emptyNode(this.view.editor.value);
-			this.currentAction = renderActionValue(this.action);
-			this.currentAction.action = this.action;
-
-			if (this.currentAction.view) {
-				this.view.editor.value.style.display = null;
-				this.view.editor.value.appendChild(this.currentAction.view);
-				this.currentAction.value = this.newValue;
-				this.valueRequired = true;
-				
-				this.currentAction.onInput((value) => {
-					if (typeof value === "string" && value.length === 0)
-						return;
-
-					this.newValue = value;
-					this.doSave();
-				});
-			} else {
-				this.view.editor.value.style.display = "none";
-				this.newValue = null;
-				this.valueRequired = false;
-			}
+			this.view.header.titl.content.innerText = "Chọn cảnh";
 		}
 
 		return this.view;
 	}
 
 	doSave() {
+		if (this.targetKind === "scene") {
+			return;
+		}
+
 		clearTimeout(this.saveTimeout);
 
-		if (!this.deviceFeature || !this.action)
+		if (!this.target || !this.action)
 			return;
 
 		if (this.valueRequired && !this.newValue)
@@ -1740,7 +1773,8 @@ class TriggerAction extends Model {
 
 	async save() {
 		const data = {
-			deviceFeature: this.deviceFeature.id,
+			targetId: this.targetId,
+			targetKind: this.targetKind,
 			action: this.action,
 			newValue: this.newValue,
 			...this.extraSaveData
@@ -1793,7 +1827,7 @@ class TriggerAction extends Model {
 	static async processResponse(response) {
 		const instance = super.processResponse(response);
 		instance.trigger = await Trigger.get(response.triggerId);
-		instance.deviceFeature = await DeviceFeature.get(response.deviceFeatureId);
+		instance.target = await instance.getTarget();
 		return instance;
 	}
 
@@ -1919,5 +1953,351 @@ class DashboardItem extends Model {
 	 */
 	static processResponses(responses) {
 		return super.processResponses(responses);
+	}
+}
+
+class Scene extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {string} */
+		this.name = null;
+
+		/** @type {string} */
+		this.icon = null;
+
+		/** @type {string} */
+		this.color = null;
+
+		/** @type {?number} */
+		this.lastTrigger = null;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	renderItem() {
+		return ScreenUtils.renderSpacedRow(
+			ScreenUtils.renderIcon(this.icon, { color: this.color }),
+			ScreenUtils.renderLink(this.name, null, { isExternal: false, color: this.color })
+		)
+	}
+
+	/**
+	 * Get instance by ID, will return cached version
+	 * if available.
+	 *
+	 * @param		{Number}				id
+	 * @returns		{Promise<Scene>}
+	 */
+	static async get(id) {
+		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+			return MODEL_INSTANCES[this.name][id];
+
+		throw new Error("Not Implemented");
+	}
+
+	async save() {
+		const data = {
+			name: this.name,
+			icon: this.icon,
+			color: this.color
+		};
+
+		if (this.id) {
+			const response = await myajax({
+				url: app.api(`/scene/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+
+			return Scene.processResponse(response.data);
+		} else {
+			const response = await myajax({
+				url: app.api(`/scene/create`),
+				method: "POST",
+				json: data
+			});
+
+			return Scene.processResponse(response.data);
+		}
+	}
+
+	async delete() {
+		await myajax({
+			url: app.api(`/scene/${this.id}/delete`),
+			method: "DELETE"
+		});
+
+		this.id = null;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param {object} response
+	 * @returns {Scene}
+	 */
+	static processResponse(response) {
+		return super.processResponse(response);
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param {object[]} responses
+	 * @returns {Scene[]}
+	 */
+	static processResponses(responses) {
+		return super.processResponses(responses);
+	}
+}
+
+class SceneAction extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {Scene} */
+		this.scene = null;
+
+		/** @type {DeviceFeature} */
+		this.deviceFeature = null;
+
+		/** @type {"setValue" | "setFromFeature" | "toggleValue"} */
+		this.action = null;
+
+		/** @type {any} */
+		this.newValue = null;
+
+		/** @type {TreeDOM} */
+		this.view = null;
+
+		this.deleteButton = createButton("", {
+			icon: "trash",
+			color: "red",
+			onClick: () => this.delete()
+		});
+
+		/** @type {AutocompleteInputInstance<DeviceFeature>} */
+		this.featureInput = createAutocompleteInput({
+			id: `trigger_item_select_feature_${randString(7)}`,
+			label: "Tính năng",
+			color: "accent",
+
+			...featureSearch(FEATURE_FLAG_WRITE),
+
+			onInput: (value, { trusted }) => {
+				this.deviceFeature = value;
+				
+				if (this.view && trusted) {
+					this.actionInput.value = null;
+					this.render();
+					this.doSave();
+				}
+			}
+		});
+
+		this.actionInput = createAutocompleteInput({
+			id: `trigger_item_select_action_${randString(7)}`,
+			label: "Hành động",
+			color: "accent",
+
+			...featureActionSearch(() => this.deviceFeature),
+
+			onInput: (value, { trusted }) => {
+				this.action = value;
+
+				if (this.view && trusted) {
+					this.render();
+					this.doSave();
+				}
+			}
+		});
+
+		this.saveTimeout = null;
+		this.currentAction = null;
+		this.valueRequired = true;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	render() {
+		if (!this.view) {
+			this.view = makeTree("div", "list-editor-item", {
+				header: { tag: "div", class: "header", child: {
+					titl: { tag: "span", class: "title", child: {
+						icon: { tag: "icon", icon: "device" },
+						content: { tag: "div", class: "content", text: "Thiết bị" }
+					}},
+
+					actions: { tag: "span", class: "actions", child: {
+						create: this.deleteButton
+					}}
+				}},
+
+				editor: { tag: "div", class: "editor", child: {
+					feature: this.featureInput,
+					action: this.actionInput,
+					value: { tag: "span", class: "value-wrapper" }
+				}}
+			});
+		}
+
+		if (this.deviceFeature) {
+			this.view.header.titl.icon.dataset.icon = this.deviceFeature.getIcon();
+			this.view.header.titl.content.innerText = this.deviceFeature.name;
+		} else {
+			this.view.header.titl.icon.dataset.icon = "toggleOn";
+			this.view.header.titl.content.innerText = "Chọn tính năng";
+		}
+
+		if (!this.id)
+			this.view.header.titl.content.innerText += " [CHƯA LƯU]";
+
+		this.featureInput.value = this.deviceFeature;
+		this.actionInput.value = this.action;
+
+		if (!this.currentAction || !this.currentAction.action || this.currentAction.action !== this.action) {
+			emptyNode(this.view.editor.value);
+			this.currentAction = renderActionValue(this.action);
+			this.currentAction.action = this.action;
+
+			if (this.currentAction.view) {
+				this.view.editor.value.style.display = null;
+				this.view.editor.value.appendChild(this.currentAction.view);
+				this.currentAction.value = this.newValue;
+				this.valueRequired = true;
+				
+				this.currentAction.onInput((value) => {
+					if (typeof value === "string" && value.length === 0)
+						return;
+
+					this.newValue = value;
+					this.doSave();
+				});
+			} else {
+				this.view.editor.value.style.display = "none";
+				this.newValue = null;
+				this.valueRequired = false;
+			}
+		}
+
+		return this.view;
+	}
+
+	doSave() {
+		clearTimeout(this.saveTimeout);
+
+		if (!this.deviceFeature || !this.action)
+			return;
+
+		if (this.valueRequired && !this.newValue)
+			return;
+
+		this.saveTimeout = setTimeout(async () => {
+			this.featureInput.disabled = true;
+			this.actionInput.disabled = true;
+
+			if (this.currentAction)
+				this.currentAction.disabled = true;
+
+			try {
+				await this.save();
+	
+				if (this.view)
+					this.render();
+			} catch (e) {
+				app.screen.active.handleError(e);
+			}
+
+			this.featureInput.disabled = false;
+			this.actionInput.disabled = false;
+
+			if (this.currentAction && this.currentAction.input)
+				this.currentAction.disabled = false;
+
+			this.saveTimeout = null;
+		}, 500);
+	}
+
+	async save() {
+		const data = {
+			deviceFeature: this.deviceFeature.id,
+			action: this.action,
+			newValue: this.newValue,
+			...this.extraSaveData
+		};
+
+		let response;
+
+		if (this.id) {
+			response = await myajax({
+				url: app.api(`/scene/${this.scene.id}/action/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+		} else {
+			response = await myajax({
+				url:  app.api(`/scene/${this.scene.id}/action/create`),
+				method: "POST",
+				json: data
+			});
+
+			if (!MODEL_INSTANCES[this.constructor.name])
+				MODEL_INSTANCES[this.constructor.name] = {};
+
+			this.id = response.data.id;
+			MODEL_INSTANCES[this.constructor.name][this.id] = this;
+		}
+
+		this.extraSaveData = {};
+		const instance = SceneAction.processResponse(response.data);
+		return instance;
+	}
+
+	async delete() {
+		if (this.id) {
+			await myajax({
+				url: app.api(`/scene/${this.scene.id}/action/${this.id}/delete`),
+				method: "DELETE"
+			});
+		}
+
+		await scenes.info.updateActions();
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}				response
+	 * @returns	{Promise<SceneAction>}
+	 */
+	static async processResponse(response) {
+		const instance = super.processResponse(response);
+		instance.scene = await Scene.get(response.sceneId);
+		instance.deviceFeature = await DeviceFeature.get(response.deviceFeatureId);
+		return instance;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}				responses
+	 * @returns	{Promise<SceneAction[]>}
+	 */
+	static async processResponses(responses) {
+		const instances = [];
+
+		for (const response of responses)
+			instances.push(await this.processResponse(response));
+
+		return instances;
 	}
 }

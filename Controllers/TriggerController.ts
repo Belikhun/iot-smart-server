@@ -188,9 +188,10 @@ triggerController.post("/:id/action/:aid/edit", async ({ params: { id, aid }, re
 	if (!instance)
 		throw new Error(`Không tìm thấy hành động với mã #${aid}`);
 
-	const { deviceFeature, action, newValue } = await request.json();
+	const { targetId, targetKind, action, newValue } = await request.json();
 
-	instance.model.deviceFeatureId = deviceFeature;
+	instance.model.targetId = targetId;
+	instance.model.targetKind = targetKind;
 	instance.model.action = action;
 	instance.model.newValue = newValue;
 	await instance.model.save();
@@ -217,15 +218,12 @@ triggerController.post("/:id/action/create", async ({ params: { id }, request })
 	if (!trigger)
 		throw new Error(`Không tìm thấy luật kích hoạt với mã #${id}`);
 
-	const { deviceFeature, action, newValue } = await request.json();
-
-	const feature = getDeviceFeatureById(deviceFeature);
-	if (!feature)
-		throw new Error(`Không tìm thấy tính năng với mã #${deviceFeature}`);
+	const { targetId, targetKind, action, newValue } = await request.json();
 
 	const instance = await TriggerAction.create({
 		trigger,
-		deviceFeature: feature,
+		targetId,
+		targetKind,
 		action,
 		newValue
 	});

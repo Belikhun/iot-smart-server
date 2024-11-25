@@ -2,55 +2,51 @@ import { DataTypes, Model } from "sequelize";
 import { database } from "../Config/Database";
 import moment from "moment";
 
-export type TriggerActionKind = "deviceFeature" | "scene";
-
-interface TriggerActionAttributes {
+interface SceneActionAttributes {
 	id?: number;
-	triggerId: number;
-	targetId: number;
-	targetKind: TriggerActionKind;
+	sceneId: number;
+	deviceFeatureId: number;
 	action?: string;
-	newValue?: any;
+	newValue?: string;
 	created?: number;
 	updated?: number;
 }
 
-class TriggerActionModel extends Model<TriggerActionAttributes> implements TriggerActionAttributes {
+class SceneActionModel extends Model<SceneActionAttributes> implements SceneActionAttributes {
 	declare id?: number;
-	declare triggerId: number;
-	declare targetId: number;
-	declare targetKind: TriggerActionKind;
-	declare action?: string;
-	declare newValue?: any;
+	declare sceneId: number;
+	declare deviceFeatureId: number;
+	declare action: string;
+	declare newValue?: string;
 	declare created?: number;
 	declare updated?: number;
+
+	public async getReturnData() {
+		const data: any = { ...this.dataValues };
+		return data;
+	}
 }
 
-TriggerActionModel.init({
+SceneActionModel.init({
 	id: {
 		type: DataTypes.INTEGER,
 		autoIncrement: true,
 		primaryKey: true
 	},
-	triggerId: {
-		type: DataTypes.NUMBER,
+	sceneId: {
+		type: DataTypes.INTEGER,
 		allowNull: false
 	},
-	targetId: {
-		type: DataTypes.NUMBER,
-		allowNull: false
-	},
-	targetKind: {
-		type: DataTypes.NUMBER,
-		allowNull: false
+	deviceFeatureId: {
+		type: DataTypes.INTEGER,
+		allowNull: true
 	},
 	action: {
-		type: DataTypes.STRING,
-		allowNull: true,
-		defaultValue: "setValue"
+		type: DataTypes.TEXT,
+		allowNull: false
 	},
 	newValue: {
-		type: DataTypes.STRING,
+		type: DataTypes.TEXT,
 		allowNull: true
 	},
 	created: {
@@ -65,7 +61,7 @@ TriggerActionModel.init({
 	}
 }, {
 	sequelize: database,
-	tableName: "trigger_actions",
+	tableName: "scene_actions",
 	createdAt: "created",
 	updatedAt: "updated",
 	timestamps: true,
@@ -73,11 +69,10 @@ TriggerActionModel.init({
 		beforeCreate(instance) {
 			instance.created = instance.updated = moment().unix();
 		},
-
 		beforeUpdate(instance) {
 			instance.updated = moment().unix();
 		}
 	}
 });
 
-export default TriggerActionModel;
+export default SceneActionModel;
