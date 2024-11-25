@@ -38,6 +38,7 @@ app.strings = {
 	"action.edit": "Chỉnh sửa",
 	"action.delete": "Xóa bỏ",
 	"action.unpair": "Bỏ ghép nối",
+	"action.execute": "Chạy",
 
 	"button.actions": "Hành động",
 	"button.create": "Tạo mới",

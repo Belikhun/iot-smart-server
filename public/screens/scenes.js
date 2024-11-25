@@ -132,6 +132,7 @@ const scenes = {
 
 				const menu = new ContextMenu();
 				menu.add({ id: "view", text: app.string("action.view") })
+					.add({ id: "execute", text: app.string("action.execute"), icon: "play" })
 					.separator()
 					.add({ id: "edit", text: app.string("action.edit"), icon: "pencil" })
 					.add({ id: "delete", text: app.string("action.delete"), icon: "trash", color: "red" });
@@ -140,6 +141,11 @@ const scenes = {
 					switch (id) {
 						case "view": {
 							scenes.info.view(instance);
+							break;
+						}
+
+						case "execute": {
+							await instance.execute();
 							break;
 						}
 
@@ -528,6 +534,9 @@ const scenes = {
 
 		/** @type {SQButton} */
 		actionEmptyCreate: undefined,
+
+		/** @type {SQButton} */
+		actionExecute: undefined,
 		
 		/** @type {SceneAction[]} */
 		actions: [],
@@ -554,6 +563,12 @@ const scenes = {
 				onClick: () => this.createAction()
 			});
 
+			this.actionExecute = createButton("Chạy", {
+				icon: "play",
+				color: "green",
+				onClick: () => this.instance.execute()
+			});
+
 			this.actionEmpty = makeTree("div", "empty-message", {
 				message: { tag: "div", class: "message", text: "Hiện chưa có hành động nào" },
 				content: { tag: "div", class: "content", text: "Các hành động sẽ được thực thi khi các điều kiện được thỏa mãn." },
@@ -569,6 +584,8 @@ const scenes = {
 					}},
 
 					actions: { tag: "span", class: "actions", child: {
+						execute: this.actionExecute,
+
 						g1: ScreenUtils.buttonGroup(
 							this.actionCreate,
 							this.actionReload
@@ -677,7 +694,7 @@ const scenes = {
 
 			try {
 				const response = await myajax({
-					url: app.api(`/scene/${this.instance.id}/action/list`),
+					url: app.api(`/scene/${this.instance.id}/action`),
 					method: "GET"
 				});
 

@@ -2000,6 +2000,15 @@ class Scene extends Model {
 		throw new Error("Not Implemented");
 	}
 
+	async execute() {
+		await myajax({
+			url: app.api(`/scene/${this.id}/execute`),
+			method: "POST"
+		});
+
+		return this;
+	}
+
 	async save() {
 		const data = {
 			name: this.name,
@@ -2126,6 +2135,25 @@ class SceneAction extends Model {
 
 		/** @type {number} */
 		this.updated = null;
+	}
+
+	/**
+	 * Get instance by ID, will return cached version
+	 * if available.
+	 *
+	 * @param		{Number}				id
+	 * @returns		{Promise<SceneAction>}
+	 */
+	static async get(id) {
+		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+			return MODEL_INSTANCES[this.name][id];
+
+		const response = await myajax({
+			url: app.api(`/scene/action/${id}/info`),
+			method: "GET"
+		});
+
+		return SceneAction.processResponse(response);
 	}
 
 	render() {

@@ -1,16 +1,10 @@
 import TriggerActionModel, { type TriggerActionKind } from "../../Models/TriggerActionModel";
 import { scope, type Logger } from "../../Utils/Logger";
-import { getDeviceFeature, getDeviceFeatureById } from "../Device";
+import { setFeatureValueByAction, type ActionType } from "../ActionFactory";
+import { getDeviceFeatureById } from "../Device";
 import type { FeatureBase } from "../Features/FeatureBase";
-import { getSceneById, Scene } from "../SceneService";
+import { getScene, Scene } from "../SceneService";
 import type { Trigger } from "../TriggerService";
-
-enum ActionType {
-	SET_VALUE = "setValue",
-	SET_FROM_FEATURE = "setFromFeature",
-	TOGGLE_VALUE = "toggleValue",
-	ALARM_VALUE = "alarmValue"
-}
 
 export class TriggerAction {
 
@@ -24,7 +18,7 @@ export class TriggerAction {
 	public constructor(model: TriggerActionModel, trigger: Trigger) {
 		this.trigger = trigger;
 		this.model = model;
-		this.log = scope(`trigger:group:#${this.model.id}`);
+		this.log = scope(`trigger:action:#${this.model.id}`);
 
 		this.target = this.getTarget();
 		this.action = this.model.action as ActionType;
@@ -42,7 +36,7 @@ export class TriggerAction {
 			}
 
 			case "scene": {
-				const scene = getSceneById(this.model.targetId);
+				const scene = getScene(this.model.targetId);
 
 				if (!scene)
 					throw new Error(`Không tìm thấy cảnh với mã ${this.model.targetId}`);
@@ -66,44 +60,7 @@ export class TriggerAction {
 		}
 
 		this.log.info(`Đang chạy hành động #${this.model.id} -> ${this.target.model.uuid}`);
-
-		switch (this.action) {
-			case ActionType.SET_VALUE: {
-				this.target.setValue(this.model.newValue);
-				break;
-			}
-
-			case ActionType.SET_FROM_FEATURE: {
-				const source = getDeviceFeature(this.model.newValue);
-
-				if (!source) {
-					this.log.warn(`Không tìm thấy tính năng với mã #${this.model.newValue}`);
-					return;
-				}
-
-				this.target.setValue(source.getValue());
-				break;
-			}
-
-			case ActionType.TOGGLE_VALUE: {
-				this.target.setValue(!this.target.getValue());
-				break;
-			}
-
-			case ActionType.ALARM_VALUE: {
-				const payload: { action: string, data: any } = {
-					action: this.model.newValue,
-					data: null
-				};
-
-				if (this.model.newValue === "beep")
-					payload.data = [0.2, 1000];
-
-				this.target.setValue(payload);
-				break;
-			}
-		}
-
+		setFeatureValueByAction(this.target, this.action, this.model.newValue);
 		return this;
 	}
 
