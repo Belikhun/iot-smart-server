@@ -279,14 +279,6 @@ class KnobComponent {
 		this.container.style.setProperty("--center-x", `${this.centerX}px`);
 		this.container.style.setProperty("--center-y", `${this.centerY}px`);
 
-		this.container.addEventListener("wheel", (e) => {
-			e.preventDefault();
-			e.stopImmediatePropagation();
-			e.stopPropagation();
-
-			this.setValue(this.value - (e.deltaY / 10000), "user");
-		});
-
 		let mouseDownPoint = null;
 		let mouseDownValue = null;
 
