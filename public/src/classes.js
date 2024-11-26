@@ -569,7 +569,7 @@ class DeviceFeature extends Model {
 	 * @returns		{Promise<DeviceFeature>}
 	 */
 	static async get(id) {
-		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+		if (MODEL_INSTANCES[this.name] && typeof MODEL_INSTANCES[this.name][id] === "object")
 			return MODEL_INSTANCES[this.name][id];
 
 		throw new Error("Not Implemented");
@@ -795,7 +795,7 @@ class Trigger extends Model {
 	 * @returns		{Promise<Trigger>}
 	 */
 	static async get(id) {
-		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+		if (MODEL_INSTANCES[this.name] && typeof MODEL_INSTANCES[this.name][id] === "object")
 			return MODEL_INSTANCES[this.name][id];
 
 		throw new Error("Not Implemented");
@@ -1188,7 +1188,7 @@ class TriggerGroup extends Model {
 	 * @returns		{Promise<TriggerGroup>}
 	 */
 	static async get(id) {
-		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+		if (MODEL_INSTANCES[this.name] && typeof MODEL_INSTANCES[this.name][id] === "object")
 			return MODEL_INSTANCES[this.name][id];
 
 		throw new Error("Not Implemented");
@@ -1646,8 +1646,8 @@ class TriggerAction extends Model {
 
 					onInput: (value, { trusted }) => {
 						this.target = value;
-						this.targetId = value.id;
-						
+						this.targetId = (value) ? value.id : null;
+
 						if (this.view && trusted) {
 							this.actionInput.value = null;
 							this.render();
@@ -1681,7 +1681,46 @@ class TriggerAction extends Model {
 
 				this.view.appendChild(this.editor);
 			} else {
+				/** @type {AutocompleteInputInstance<Scene>} */
+				this.sceneInput = createAutocompleteInput({
+					id: `trigger_item_select_scene_${randString(7)}`,
+					label: "Cảnh",
+					color: "accent",
 
+					fetch: async (search) => {
+						const response = await myajax({
+							url: app.api(`/scene/list`),
+							method: "GET",
+							query: { search }
+						});
+
+						return Scene.processResponses(response.data);
+					},
+			
+					process: (item) => {
+						return {
+							label: item.renderItem(),
+							value: item.id
+						}
+					},
+
+					onInput: (value, { trusted }) => {
+						this.target = value;
+						this.targetId = (value) ? value.id : null;
+
+						if (this.view && trusted) {
+							this.render();
+							this.doSave();
+						}
+					}
+				});
+
+				this.editor = makeTree("div", ["editor", "grid-full"], {
+					scene: this.sceneInput,
+					value: { tag: "span", class: "value-wrapper" }
+				});
+
+				this.view.appendChild(this.editor);
 			}
 		}
 
@@ -1725,21 +1764,51 @@ class TriggerAction extends Model {
 				}
 			}
 		} else {
-			this.view.header.titl.icon.dataset.icon = "toggleOn";
-			this.view.header.titl.content.innerText = "Chọn cảnh";
+			if (this.target) {
+				this.view.header.titl.icon.dataset.icon = this.target.icon;
+				this.view.header.titl.content.innerText = this.target.name;
+			} else {
+				this.view.header.titl.icon.dataset.icon = "toggleOn";
+				this.view.header.titl.content.innerText = "Chọn cảnh";
+			}
+
+			if (!this.id)
+				this.view.header.titl.content.innerText += " [CHƯA LƯU]";
+
+			this.sceneInput.value = this.target;
+			this.valueRequired = false;
 		}
 
 		return this.view;
 	}
 
 	doSave() {
+		clearTimeout(this.saveTimeout);
+
 		if (this.targetKind === "scene") {
+			if (!this.targetId || !this.targetKind)
+				return;
+
+			this.saveTimeout = setTimeout(async () => {
+				this.sceneInput.disabled = true;
+
+				try {
+					await this.save();
+		
+					if (this.view)
+						this.render();
+				} catch (e) {
+					app.screen.active.handleError(e);
+				}
+
+				this.sceneInput.disabled = false;
+				this.saveTimeout = null;
+			}, 500);
+
 			return;
 		}
 
-		clearTimeout(this.saveTimeout);
-
-		if (!this.target || !this.action)
+		if (!this.targetId || !this.targetKind || !this.action)
 			return;
 
 		if (this.valueRequired && !this.newValue)
@@ -1994,10 +2063,15 @@ class Scene extends Model {
 	 * @returns		{Promise<Scene>}
 	 */
 	static async get(id) {
-		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+		if (MODEL_INSTANCES[this.name] && typeof MODEL_INSTANCES[this.name][id] === "object")
 			return MODEL_INSTANCES[this.name][id];
 
-		throw new Error("Not Implemented");
+		const response = await myajax({
+			url: app.api(`/scene/${id}/info`),
+			method: "GET"
+		});
+
+		return Scene.processResponse(response.data);
 	}
 
 	async execute() {
@@ -2145,7 +2219,7 @@ class SceneAction extends Model {
 	 * @returns		{Promise<SceneAction>}
 	 */
 	static async get(id) {
-		if (typeof MODEL_INSTANCES[this.name][id] === "object")
+		if (MODEL_INSTANCES[this.name] && typeof MODEL_INSTANCES[this.name][id] === "object")
 			return MODEL_INSTANCES[this.name][id];
 
 		const response = await myajax({

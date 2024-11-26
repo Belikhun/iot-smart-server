@@ -77,3 +77,17 @@ export function decodeBase64ToInt16Array(base64String: string): Int16Array {
 
 	return new Int16Array(uint8Array.buffer);
 }
+
+export function satisfySearch(content: string[], search: string) {
+	const tokens = search.toLocaleLowerCase().split(" ");
+	const target = content
+		.map((i) => i.toLocaleLowerCase())
+		.join(" ");
+
+	for (const token of tokens) {
+		if (!target.includes(token))
+			return false;
+	}
+
+	return true;
+}

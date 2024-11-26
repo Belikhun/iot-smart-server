@@ -561,6 +561,9 @@ const triggers = {
 		/** @type {SQButton} */
 		actionCreate: undefined,
 
+		/** @type {ContextMenu} */
+		actionCreateMenu: undefined,
+
 		/** @type {SQButton} */
 		actionEmptyCreate: undefined,
 		
@@ -635,16 +638,33 @@ const triggers = {
 				onClick: () => this.updateActions()
 			});
 
+			this.actionCreateMenu = new ContextMenu();
+			this.actionCreateMenu
+				.add({ id: "deviceFeature", text: "Thiết bị", icon: "lightSwitch" })
+				.add({ id: "scene", text: "Cảnh", icon: "box" });
+
+			this.actionCreateMenu.onSelect((action) => {
+				switch (action) {
+					case "deviceFeature":
+						this.createFeatureAction();
+						break;
+					
+					case "scene":
+						this.createSceneAction();
+						break;
+				}
+			});
+
 			this.actionCreate = createButton("Thêm", {
 				icon: "plus",
 				color: "accent",
-				onClick: () => this.createAction()
+				onClick: () => this.actionCreateMenu.openAtElement(this.actionCreate)
 			});
 
 			this.actionEmptyCreate = createButton("Thêm hành động mới", {
 				icon: "plus",
 				color: "accent",
-				onClick: () => this.createAction()
+				onClick: () => this.actionCreateMenu.openAtElement(this.actionEmptyCreate)
 			});
 
 			this.actionEmpty = makeTree("div", "empty-message", {
@@ -866,10 +886,22 @@ const triggers = {
 			}
 		},
 
-		async createAction() {
+		async createFeatureAction() {
 			const instance = new TriggerAction(null);
 			instance.trigger = this.instance;
+			instance.targetKind = "deviceFeature";
 			instance.action = "setValue";
+
+			this.actions.push(instance);
+			this.renderActions();
+			return instance;
+		},
+
+		async createSceneAction() {
+			const instance = new TriggerAction(null);
+			instance.trigger = this.instance;
+			instance.targetKind = "scene";
+			instance.action = "execute";
 
 			this.actions.push(instance);
 			this.renderActions();

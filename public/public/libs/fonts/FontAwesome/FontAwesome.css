@@ -993,3 +993,7 @@ icon[data-icon="fan"]::after {
 icon[data-icon="powerOff"]::after {
 	content: "\f011";
 }
+
+icon[data-icon="box"]::after {
+	content: "\f466";
+}

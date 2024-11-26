@@ -31,6 +31,8 @@ export class Scene {
 	}
 
 	public execute() {
+		this.log.info(`Đang thực thi cảnh...`);
+
 		for (const action of Object.values(this.actions))
 			action.execute();
 

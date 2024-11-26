@@ -799,6 +799,11 @@
 
 		margin: 1rem;
 
+		&.grid-full {
+			display: flex;
+			flex-direction: column;
+		}
+
 		> .value-wrapper {
 			grid-column: 1 / 3;
 		}

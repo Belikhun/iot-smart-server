@@ -56,7 +56,8 @@ export class TriggerAction {
 
 	public execute() {
 		if (this.target instanceof Scene) {
-			return;
+			this.target.execute();
+			return this;
 		}
 
 		this.log.info(`Đang chạy hành động #${this.model.id} -> ${this.target.model.uuid}`);

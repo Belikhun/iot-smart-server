@@ -4,15 +4,22 @@ import SceneActionModel from "../Models/SceneActionModel";
 import APIResponse from "../Classes/APIResponse";
 import { getScene, getScenes, registerScene } from "../Device/SceneService";
 import { getSceneAction, SceneAction } from "../Device/Scenes/SceneAction";
+import { satisfySearch } from "../Utils/belibrary";
 
 export const sceneController = new Elysia({ prefix: "/scene" });
 
-sceneController.get("/list", async ({ request }) => {
+sceneController.get("/list", async ({ request, query: { search } }) => {
 	const scenes = getScenes();
 	const instances = [];
 
-	for (const scene of Object.values(scenes))
+	for (const scene of Object.values(scenes)) {
+		if (search) {
+			if (!satisfySearch([scene.model.name], search))
+				continue;
+		}
+
 		instances.push(await scene.getReturnData());
+	}
 
 	return new APIResponse(0, `Danh sách các cảnh`, 200, instances);
 });
@@ -28,6 +35,15 @@ sceneController.post("/create", async ({ request }) => {
 
 	const scene = await registerScene(instance);
 	return new APIResponse(0, `Đã tạo cảnh`, 200, await scene.getReturnData());
+});
+
+sceneController.get("/:id/info", async ({ params: { id }, request }) => {
+	const scene = getScene(parseInt(id));
+
+	if (!scene)
+		throw new Error(`Không tìm thấy cảnh với mã #${id}`);
+
+	return new APIResponse(0, `Đã cập nhật cảnh`, 200, await scene.getReturnData());
 });
 
 sceneController.post("/:id/edit", async ({ params: { id }, request }) => {
