@@ -2403,3 +2403,466 @@ class SceneAction extends Model {
 		return instances;
 	}
 }
+
+class Schedule extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {string} */
+		this.name = null;
+
+		/** @type {string} */
+		this.icon = null;
+
+		/** @type {string} */
+		this.color = null;
+
+		/** @type {string} */
+		this.cronExpression = null;
+
+		/** @type {number} */
+		this.executeAmount = null;
+
+		/** @type {number} */
+		this.ran = null;
+
+		/** @type {boolean} */
+		this.active = null;
+
+		/** @type {ScheduleGroup} */
+		this.group = null;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	/**
+	 * Get instance by ID, will return cached version
+	 * if available.
+	 *
+	 * @param		{Number}				id
+	 * @returns		{Promise<Schedule>}
+	 */
+	static async get(id) {
+		if (MODEL_INSTANCES[this.name] && typeof MODEL_INSTANCES[this.name][id] === "object")
+			return MODEL_INSTANCES[this.name][id];
+
+		throw new Error("Not Implemented");
+	}
+
+	async save() {
+		const data = {
+			name: this.name,
+			icon: this.icon,
+			color: this.color,
+			cronExpression: this.cronExpression,
+			executeAmount: this.executeAmount,
+			active: this.active,
+			...this.extraSaveData
+		};
+
+		if (this.id) {
+			const response = await myajax({
+				url: app.api(`/schedule/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+
+			this.extraSaveData = {};
+			return Schedule.processResponse(response.data);
+		} else {
+			if (this.parent)
+				data.parent = this.parent.id;
+
+			const response = await myajax({
+				url: app.api(`/schedule/create`),
+				method: "POST",
+				json: data
+			});
+
+			this.extraSaveData = {};
+			return Schedule.processResponse(response.data);
+		}
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}		response
+	 * @returns	{Schedule}
+	 */
+	static processResponse(response) {
+		return super.processResponse(response);
+	}
+
+	static processField(name, value, response, instance) {
+		// switch (name) {
+		// 	case "features":
+		// 		return ScheduleFeature.processResponses(value, instance);
+		// }
+
+		return super.processField(name, value);
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}		responses
+	 * @returns	{Schedule[]}
+	 */
+	static processResponses(responses) {
+		return super.processResponses(responses);
+	}
+}
+
+class ScheduleAction extends Model {
+	constructor(id) {
+		super(id);
+
+		/** @type {Schedule} */
+		this.schedule = null;
+		
+		/** @type {number} */
+		this.targetId = null;
+		
+		/** @type {"deviceFeature" | "scene"} */
+		this.targetKind = null;
+
+		/** @type {"setValue" | "setFromFeature" | "toggleValue"} */
+		this.action = null;
+
+		/** @type {any} */
+		this.newValue = null;
+
+		/** @type {TreeDOM} */
+		this.view = null;
+
+		this.deleteButton = createButton("", {
+			icon: "trash",
+			color: "red",
+			onClick: () => this.delete()
+		});
+
+		/** @type {DeviceFeature | Scene} */
+		this.target = null;
+		this.saveTimeout = null;
+		this.currentAction = null;
+		this.valueRequired = true;
+
+		/** @type {number} */
+		this.created = null;
+
+		/** @type {number} */
+		this.updated = null;
+	}
+
+	async getTarget() {
+		switch (this.targetKind) {
+			case "deviceFeature":
+				return await DeviceFeature.get(this.targetId);
+
+			case "scene":
+				return await Scene.get(this.targetId);
+		}
+
+		throw new Error(`Loại đối tượng không hợp lệ: ${this.targetKind}`);
+	}
+
+	render() {
+		if (!this.view) {
+			this.view = makeTree("div", "list-editor-item", {
+				header: { tag: "div", class: "header", child: {
+					titl: { tag: "span", class: "title", child: {
+						icon: { tag: "icon", icon: "device" },
+						content: { tag: "div", class: "content", text: "Thiết bị" }
+					}},
+
+					actions: { tag: "span", class: "actions", child: {
+						create: this.deleteButton
+					}}
+				}}
+			});
+
+			if (this.targetKind === "deviceFeature") {
+				/** @type {AutocompleteInputInstance<DeviceFeature>} */
+				this.featureInput = createAutocompleteInput({
+					id: `schedule_item_select_feature_${randString(7)}`,
+					label: "Tính năng",
+					color: "accent",
+
+					...featureSearch(FEATURE_FLAG_WRITE),
+
+					onInput: (value, { trusted }) => {
+						this.target = value;
+						this.targetId = (value) ? value.id : null;
+
+						if (this.view && trusted) {
+							this.actionInput.value = null;
+							this.render();
+							this.doSave();
+						}
+					}
+				});
+
+				this.actionInput = createAutocompleteInput({
+					id: `schedule_item_select_action_${randString(7)}`,
+					label: "Hành động",
+					color: "accent",
+
+					...featureActionSearch(() => this.target),
+
+					onInput: (value, { trusted }) => {
+						this.action = value;
+
+						if (this.view && trusted) {
+							this.render();
+							this.doSave();
+						}
+					}
+				});
+
+				this.editor = makeTree("div", "editor", {
+					feature: this.featureInput,
+					action: this.actionInput,
+					value: { tag: "span", class: "value-wrapper" }
+				});
+
+				this.view.appendChild(this.editor);
+			} else {
+				/** @type {AutocompleteInputInstance<Scene>} */
+				this.sceneInput = createAutocompleteInput({
+					id: `schedule_item_select_scene_${randString(7)}`,
+					label: "Cảnh",
+					color: "accent",
+
+					fetch: async (search) => {
+						const response = await myajax({
+							url: app.api(`/scene/list`),
+							method: "GET",
+							query: { search }
+						});
+
+						return Scene.processResponses(response.data);
+					},
+			
+					process: (item) => {
+						return {
+							label: item.renderItem(),
+							value: item.id
+						}
+					},
+
+					onInput: (value, { trusted }) => {
+						this.target = value;
+						this.targetId = (value) ? value.id : null;
+
+						if (this.view && trusted) {
+							this.render();
+							this.doSave();
+						}
+					}
+				});
+
+				this.editor = makeTree("div", ["editor", "grid-full"], {
+					scene: this.sceneInput,
+					value: { tag: "span", class: "value-wrapper" }
+				});
+
+				this.view.appendChild(this.editor);
+			}
+		}
+
+		if (this.targetKind === "deviceFeature") {
+			if (this.target) {
+				this.view.header.titl.icon.dataset.icon = this.target.getIcon();
+				this.view.header.titl.content.innerText = this.target.name;
+			} else {
+				this.view.header.titl.icon.dataset.icon = "toggleOn";
+				this.view.header.titl.content.innerText = "Chọn tính năng";
+			}
+	
+			if (!this.id)
+				this.view.header.titl.content.innerText += " [CHƯA LƯU]";
+	
+			this.featureInput.value = this.target;
+			this.actionInput.value = this.action;
+	
+			if (!this.currentAction || !this.currentAction.action || this.currentAction.action !== this.action) {
+				emptyNode(this.editor.value);
+				this.currentAction = renderActionValue(this.action);
+				this.currentAction.action = this.action;
+	
+				if (this.currentAction.view) {
+					this.editor.value.style.display = null;
+					this.editor.value.appendChild(this.currentAction.view);
+					this.currentAction.value = this.newValue;
+					this.valueRequired = true;
+					
+					this.currentAction.onInput((value) => {
+						if (typeof value === "string" && value.length === 0)
+							return;
+	
+						this.newValue = value;
+						this.doSave();
+					});
+				} else {
+					this.editor.value.style.display = "none";
+					this.newValue = null;
+					this.valueRequired = false;
+				}
+			}
+		} else {
+			if (this.target) {
+				this.view.header.titl.icon.dataset.icon = this.target.icon;
+				this.view.header.titl.content.innerText = this.target.name;
+			} else {
+				this.view.header.titl.icon.dataset.icon = "toggleOn";
+				this.view.header.titl.content.innerText = "Chọn cảnh";
+			}
+
+			if (!this.id)
+				this.view.header.titl.content.innerText += " [CHƯA LƯU]";
+
+			this.sceneInput.value = this.target;
+			this.valueRequired = false;
+		}
+
+		return this.view;
+	}
+
+	doSave() {
+		clearTimeout(this.saveTimeout);
+
+		if (this.targetKind === "scene") {
+			if (!this.targetId || !this.targetKind)
+				return;
+
+			this.saveTimeout = setTimeout(async () => {
+				this.sceneInput.disabled = true;
+
+				try {
+					await this.save();
+		
+					if (this.view)
+						this.render();
+				} catch (e) {
+					app.screen.active.handleError(e);
+				}
+
+				this.sceneInput.disabled = false;
+				this.saveTimeout = null;
+			}, 500);
+
+			return;
+		}
+
+		if (!this.targetId || !this.targetKind || !this.action)
+			return;
+
+		if (this.valueRequired && !this.newValue)
+			return;
+
+		this.saveTimeout = setTimeout(async () => {
+			this.featureInput.disabled = true;
+			this.actionInput.disabled = true;
+
+			if (this.currentAction)
+				this.currentAction.disabled = true;
+
+			try {
+				await this.save();
+	
+				if (this.view)
+					this.render();
+			} catch (e) {
+				app.screen.active.handleError(e);
+			}
+
+			this.featureInput.disabled = false;
+			this.actionInput.disabled = false;
+
+			if (this.currentAction && this.currentAction.input)
+				this.currentAction.disabled = false;
+
+			this.saveTimeout = null;
+		}, 500);
+	}
+
+	async save() {
+		const data = {
+			targetId: this.targetId,
+			targetKind: this.targetKind,
+			action: this.action,
+			newValue: this.newValue,
+			...this.extraSaveData
+		};
+
+		let response;
+
+		if (this.id) {
+			response = await myajax({
+				url: app.api(`/schedule/${this.schedule.id}/action/${this.id}/edit`),
+				method: "POST",
+				json: data
+			});
+		} else {
+			response = await myajax({
+				url:  app.api(`/schedule/${this.schedule.id}/action/create`),
+				method: "POST",
+				json: data
+			});
+
+			if (!MODEL_INSTANCES[this.constructor.name])
+				MODEL_INSTANCES[this.constructor.name] = {};
+
+			this.id = response.data.id;
+			MODEL_INSTANCES[this.constructor.name][this.id] = this;
+		}
+
+		this.extraSaveData = {};
+		const instance = ScheduleAction.processResponse(response.data);
+		return instance;
+	}
+
+	async delete() {
+		if (this.id) {
+			await myajax({
+				url: app.api(`/schedule/${this.schedule.id}/action/${this.id}/delete`),
+				method: "DELETE"
+			});
+		}
+
+		await schedules.info.updateActions();
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object}				response
+	 * @returns	{Promise<ScheduleAction>}
+	 */
+	static async processResponse(response) {
+		const instance = super.processResponse(response);
+		instance.schedule = await Schedule.get(response.scheduleId);
+		instance.target = await instance.getTarget();
+		return instance;
+	}
+
+	/**
+	 * Process response returned from API.
+	 *
+	 * @param	{object[]}				responses
+	 * @returns	{Promise<ScheduleAction[]>}
+	 */
+	static async processResponses(responses) {
+		const instances = [];
+
+		for (const response of responses)
+			instances.push(await this.processResponse(response));
+
+		return instances;
+	}
+}

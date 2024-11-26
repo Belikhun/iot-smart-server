@@ -5,6 +5,7 @@ import { deviceController } from "../Controllers/DeviceController";
 import { triggerController } from "../Controllers/TriggerController";
 import { dashboardController } from "../Controllers/DashboardController";
 import { sceneController } from "../Controllers/SceneController";
+import { scheduleController } from "../Controllers/ScheduleController";
 
 export const apiRouter = new Elysia({ prefix: "/api" })
 	.use(authController)
@@ -12,4 +13,5 @@ export const apiRouter = new Elysia({ prefix: "/api" })
 	.use(deviceController)
 	.use(triggerController)
 	.use(dashboardController)
-	.use(sceneController);
+	.use(sceneController)
+	.use(scheduleController);

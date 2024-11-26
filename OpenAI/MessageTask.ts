@@ -2,8 +2,7 @@ import type { RealtimeClient } from "@openai/realtime-api-beta";
 import { sendCommand, type WebSocket } from "../Routes/WebSocket";
 import type { ChatClientEvent } from "./Service";
 import { scope, type Logger } from "../Utils/Logger";
-import { encodeInt16ArrayToBase64, pleft, randomString } from "../Utils/belibrary";
-import { rejects } from "assert";
+import { encodeInt16ArrayToBase64, randomString } from "../Utils/belibrary";
 
 export class MessageTask {
 

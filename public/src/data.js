@@ -68,6 +68,9 @@ app.strings = {
 	"table.tags": "Các thẻ",
 	"table.area": "Vùng",
 	"table.scene": "Cảnh",
+	"table.schedule": "Lịch điều khiển",
+	"table.executeAmount": "Số lần chạy",
+	"table.ran": "Đã chạy",
 
 	"status.active": "Đang kích hoạt",
 	"status.off": "Không kích hoạt",
