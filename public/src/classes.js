@@ -2075,12 +2075,12 @@ class Scene extends Model {
 	}
 
 	async execute() {
-		await myajax({
+		const response = await myajax({
 			url: app.api(`/scene/${this.id}/execute`),
 			method: "POST"
 		});
 
-		return this;
+		return Scene.processResponse(response.data);
 	}
 
 	async save() {

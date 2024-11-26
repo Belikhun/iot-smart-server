@@ -102,6 +102,7 @@ const dashboard = {
 		this.registerRenderer(BlockSensorRenderer);
 		this.registerRenderer(BlockKnobRenderer);
 		this.registerRenderer(BlockColorWheelRenderer);
+		this.registerRenderer(BlockScenesRenderer);
 	},
 
 	/**
@@ -1213,6 +1214,138 @@ class BlockColorWheelRenderer extends DashboardBlockRenderer {
 	destroy() {
 		super.destroy();
 		this.currentFeature.removeValueUpdate(this.updateValue);
+	}
+}
+
+class BlockScenesRenderer extends DashboardBlockRenderer {
+	static get ID() {
+		return "scenes";
+	}
+
+	static get ICON() {
+		return "box";
+	}
+
+	static get SIZE() {
+		return [3, 1];
+	}
+
+	constructor(model) {
+		super(model);
+
+		this.form = new ScreenForm({
+			...this.defaultForm,
+
+			content: {
+				name: "Các cảnh",
+				rows: [
+					{
+						scenes: {
+							type: "autocomplete",
+							label: "Các cảnh",
+
+							options: {
+								fetch: async (search) => {
+									const response = await myajax({
+										url: app.api(`/scene/list`),
+										method: "GET",
+										query: { search }
+									});
+			
+									return Scene.processResponses(response.data);
+								},
+
+								process: (item) => {
+									return {
+										label: item.renderItem(),
+										value: item.id
+									}
+								},
+
+								multiple: true
+							}
+						}
+					}
+				]
+			}
+		});
+
+		this.switches = {};
+	}
+
+	async formDefaultValue() {
+		return {
+			scenes: await this.getScenes()
+		};
+	}
+
+	/**
+	 * Get configured scenes to display.
+	 * 
+	 * @returns	{Promise<Scene[]>}
+	 */
+	async getScenes() {
+		const sceneIds = (this.model.data.scenes)
+			? this.model.data.scenes
+			: [];
+
+		const scenes = [];
+
+		for (const sceneId of sceneIds)
+			scenes.push(await Scene.get(sceneId));
+
+		return scenes;
+	}
+
+	beforeSave(values) {
+		const scenes = values.scenes
+			.map((scene) => scene.id);
+
+		this.model.data = {
+			scenes
+		};
+	}
+
+	renderContent() {
+		if (!this.blockView) {
+			this.blockView = document.createElement("div");
+			this.blockView.classList.add("block-scenes-content");
+		}
+
+		emptyNode(this.blockView);
+
+		(async () => {
+			const scenes = await this.getScenes();
+	
+			for (const scene of scenes) {
+				if (!this.switches[scene.id]) {
+					const switchView = createButton(scene.name, {
+						icon: scene.icon,
+						color: scene.color,
+						onClick: () => scene.execute()
+					});
+
+					this.switches[scene.id] = switchView;
+					this.blockView.appendChild(switchView);
+					continue;
+				}
+	
+				const switchView = this.switches[scene.id];
+				this.blockView.appendChild(switchView);
+				continue;
+			}
+		})();
+
+		return this.blockView;
+	}
+
+	destroy() {
+		super.destroy();
+		
+		for (const { destroy } of Object.values(this.switches))
+			destroy();
+
+		this.switches = {};
 	}
 }
 

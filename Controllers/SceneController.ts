@@ -140,5 +140,5 @@ sceneController.post("/:id/execute", async ({ params: { id }, request }) => {
 		throw new Error(`Không tìm thấy cảnh với mã #${id}`);
 
 	scene.execute();
-	return new APIResponse(0, `Chạy thành công!`, 200);
+	return new APIResponse(0, `Chạy thành công!`, 200, await scene.getReturnData());
 });

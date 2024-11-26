@@ -1465,6 +1465,22 @@
 	}
 }
 
+.block-scenes-content {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 1rem;
+
+	> .sq-btn {
+		padding: 1rem 1.5rem;
+		border-radius: 1.5rem;
+
+		> icon {
+			margin-right: 1rem;
+		}
+	}
+}
+
 .sq-choice {
 	--background: var(--background-1);
 
