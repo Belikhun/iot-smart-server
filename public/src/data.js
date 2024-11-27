@@ -27,6 +27,8 @@ app.strings = {
 	"no_result_title": "Không tìm thấy kết quả",
 	"no_result_sub": "Thử nới lỏng truy vấn tìm kiếm của bạn và thử lại.",
 	"response.errorReport": "Xem Báo Cáo Lỗi",
+	"cronEditor": "Biểu thức CRON",
+	"nextRun": "Thời gian chạy tiếp theo",
 
 	"block.text": "Văn Bản",
 	"block.quickSettings": "Cài Đặt Nhanh",

@@ -3,6 +3,7 @@ import APIResponse from "../Classes/APIResponse";
 import { getSchedule, getSchedules, registerSchedule } from "../Device/ScheduleService";
 import ScheduleModel from "../Models/ScheduleModel";
 import { ScheduleAction } from "../Device/Schedules/ScheduleAction";
+import * as cron from "cron";
 
 export const scheduleController = new Elysia({ prefix: "/schedule" });
 
@@ -37,11 +38,12 @@ scheduleController.post("/:id/edit", async ({ params: { id }, request }) => {
 	if (!schedule)
 		throw new Error(`Không tìm thấy lịch điều khiển với mã #${id}`);
 
-	const { name, icon, color, executeAmount, active } = await request.json();
+	const { name, icon, color, cronExpression, executeAmount, active } = await request.json();
 
 	schedule.model.name = name;
 	schedule.model.icon = icon;
 	schedule.model.color = color;
+	schedule.model.cronExpression = cronExpression;
 	schedule.model.executeAmount = parseInt(executeAmount);
 	schedule.model.active = active;
 	await schedule.model.save();
@@ -116,4 +118,11 @@ scheduleController.post("/:id/action/create", async ({ params: { id }, request }
 	});
 
 	return new APIResponse(0, `Tạo điều kiện mới thành công!`, 200, await instance.getReturnData());
+});
+
+scheduleController.get("/test", async ({ query: { cron: cronExpression }, request }) => {
+	return new APIResponse(0, `Kiểm tra biểu thức`, 200, {
+		timestamp: cron.sendAt(cronExpression as string).toMillis() / 1000,
+		timeout: cron.timeout(cronExpression as string) / 1000
+	});
 });

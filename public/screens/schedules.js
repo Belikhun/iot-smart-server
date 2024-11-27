@@ -533,6 +533,15 @@ const schedules = {
 		/** @type {ScreenInfoGrid} */
 		grid: undefined,
 
+		/** @type {TimeCounter} */
+		cronCounter: undefined,
+
+		/** @type {TreeDOM} */
+		cronEditorView: undefined,
+		
+		/** @type {TreeDOM} */
+		saveTimeout: undefined,
+		
 		/** @type {TreeDOM} */
 		actionView: undefined,
 
@@ -557,6 +566,83 @@ const schedules = {
 		init() {
 			this.container = document.createElement("div");
 			this.container.classList.add("screen-info");
+
+			this.cronCounter = new TimeCounter({
+				prefix: "Chạy sau: ",
+				ended: "đã chạy"
+			});
+
+			this.cronEditorView = makeTree("div", ["map-color", "cron-editor"], {
+				inputs: { tag: "div", class: "inputs", child: {
+					second: { tag: "div", class: ["field", "second"], child: {
+						input: { tag: "input", type: "text", placeholder: "*" },
+						label: { tag: "label", text: "giây" }
+					}},
+
+					minute: { tag: "div", class: ["field", "minute"], child: {
+						input: { tag: "input", type: "text", placeholder: "*" },
+						label: { tag: "label", text: "phút" }
+					}},
+
+					hour: { tag: "div", class: ["field", "hour"], child: {
+						input: { tag: "input", type: "text", placeholder: "*" },
+						label: { tag: "label", text: "giờ" }
+					}},
+
+					day: { tag: "div", class: ["field", "day"], child: {
+						input: { tag: "input", type: "text", placeholder: "*" },
+						label: { tag: "label", text: "ngày" }
+					}},
+
+					month: { tag: "div", class: ["field", "month"], child: {
+						input: { tag: "input", type: "text", placeholder: "*" },
+						label: { tag: "label", text: "tháng" }
+					}},
+
+					weekDay: { tag: "div", class: ["field", "weekDay"], child: {
+						input: { tag: "input", type: "text", placeholder: "*" },
+						label: { tag: "label", text: "thứ" }
+					}},
+
+					separator: { tag: "div", class: "separator", text: "/" },
+
+					executeAmount: { tag: "div", class: ["field", "executeAmount"], child: {
+						input: { tag: "input", type: "text", placeholder: "0" },
+						label: { tag: "label", text: app.string("table.executeAmount").toLocaleLowerCase() }
+					}}
+				}},
+
+				explain: { tag: "div", class: "explain", child: {
+					validate: { tag: "div", class: "validate", child: {
+						icon: ScreenUtils.renderIcon("circleCheck"),
+						content: { tag: "span", class: "content", text: "---" }
+					}},
+
+					runAt: { tag: "div", class: ["info", "runAt"], text: `---` },
+					nextRun: { tag: "div", class: ["info", "nextRun"], child: {
+						inner: this.cronCounter
+					}},
+				}}
+			});
+
+			this.cronEditorView.inputs.second.input.addEventListener("input", () => this.cronInputted());
+			this.cronEditorView.inputs.minute.input.addEventListener("input", () => this.cronInputted());
+			this.cronEditorView.inputs.hour.input.addEventListener("input", () => this.cronInputted());
+			this.cronEditorView.inputs.day.input.addEventListener("input", () => this.cronInputted());
+			this.cronEditorView.inputs.month.input.addEventListener("input", () => this.cronInputted());
+			this.cronEditorView.inputs.weekDay.input.addEventListener("input", () => this.cronInputted());
+			this.cronEditorView.inputs.executeAmount.input.addEventListener("input", () => {
+				const value = parseInt(this.cronEditorView.inputs.executeAmount.input.value);
+
+				if (isNaN(value))
+					return;
+
+				this.instance.executeAmount = value;
+				this.doSave();
+			});
+
+
+			/** ===== ACTION ===== */
 
 			this.actionReload = createButton("", {
 				icon: "reload",
@@ -686,6 +772,12 @@ const schedules = {
 					]
 				},
 
+				cronEditor: {
+					label: app.string("cronEditor"),
+					node: this.cronEditorView,
+					headerLine: false
+				},
+
 				actions: {
 					label: app.string("actions"),
 					node: this.actionView,
@@ -693,10 +785,103 @@ const schedules = {
 				}
 			}, { columns: 3 });
 
+			this.grid.onUpdate(() => {
+				this.setCron(this.instance.cronExpression);
+				this.cronEditorView.inputs.executeAmount.input.value = this.instance.executeAmount;
+			});
+
 			this.reload = createButton("", {
 				icon: "reload",
 				onClick: async () => await this.grid.update()
 			});
+		},
+
+		cronInputted() {
+			const cron = [
+				this.cronEditorView.inputs.second.input.value,
+				this.cronEditorView.inputs.minute.input.value,
+				this.cronEditorView.inputs.hour.input.value,
+				this.cronEditorView.inputs.day.input.value,
+				this.cronEditorView.inputs.month.input.value,
+				this.cronEditorView.inputs.weekDay.input.value
+			].join(" ");
+
+			this.setCron(cron, true);
+		},
+
+		set cronInputDisabled(disabled) {
+			this.cronEditorView.inputs.second.input.disabled = disabled;
+			this.cronEditorView.inputs.minute.input.disabled = disabled;
+			this.cronEditorView.inputs.hour.input.disabled = disabled;
+			this.cronEditorView.inputs.day.input.disabled = disabled;
+			this.cronEditorView.inputs.month.input.disabled = disabled;
+			this.cronEditorView.inputs.weekDay.input.disabled = disabled;
+		},
+
+		/**
+		 * Set and render cron expression into the UI.
+		 * 
+		 * @param	{string}	cron
+		 * @param	{boolean}	isUserInput
+		 */
+		setCron(cron, isUserInput = false) {
+			const [second, minute, hour, day, month, weekDay] = cron.split(" ");
+
+			if (!isUserInput) {
+				this.cronEditorView.inputs.second.input.value = second;
+				this.cronEditorView.inputs.minute.input.value = minute;
+				this.cronEditorView.inputs.hour.input.value = hour;
+				this.cronEditorView.inputs.day.input.value = day;
+				this.cronEditorView.inputs.month.input.value = month;
+				this.cronEditorView.inputs.weekDay.input.value = weekDay;
+			}
+
+			try {
+				const explain = CronParser.parse(cron);
+				this.cronEditorView.dataset.color = "green";
+				this.cronEditorView.explain.validate.icon.dataset.icon = "circleCheck";
+				this.cronEditorView.explain.validate.content.innerText = explain;
+				this.testCron(cron);
+
+				if (isUserInput && this.instance.cronExpression !== cron) {
+					this.instance.cronExpression = cron;
+					this.doSave();
+				}
+			} catch (e) {
+				this.cronEditorView.dataset.color = "red";
+				this.cronEditorView.explain.validate.icon.dataset.icon = "circleXMark";
+				this.cronEditorView.explain.validate.content.innerText = "Biểu thức CRON không hợp lệ!";
+			}
+		},
+
+		async testCron(cron) {
+			try {
+				const response = await myajax({
+					url: app.api(`/schedule/test`),
+					method: "GET",
+					query: { cron }
+				});
+
+				const { timestamp, timeout } = response.data;
+				this.cronEditorView.explain.runAt.innerText = `Lần chạy tới vào: ${humanReadableTime(new Date(timestamp * 1000))}`;
+				this.cronCounter.start(timestamp, { count: "down" });
+			} catch (e) {
+				schedules.screen.handleError(e, "WARN");
+			}
+		},
+
+		doSave() {
+			clearTimeout(this.saveTimeout);
+
+			if (!this.instance.cronExpression || (this.instance.executeAmount != 0 && !this.instance.executeAmount))
+				return;
+
+			this.saveTimeout = setTimeout(async () => {
+				this.cronInputDisabled = true;
+				await this.instance.save();
+				this.grid.update();
+				this.cronInputDisabled = false;
+			}, 1000);
 		},
 
 		/**
@@ -712,6 +897,7 @@ const schedules = {
 			});
 
 			this.instance = instance;
+			this.setCron(instance.cronExpression);
 
 			await Promise.all([
 				this.grid.update(),

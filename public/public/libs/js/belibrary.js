@@ -999,6 +999,9 @@ function formatTime(seconds, {
 		return ended;
 	}
 
+	if (seconds < 1)
+		return `ít hơn 1 giây`;
+
 	for (let key in time)
 		if (minimal) {
 			if (seconds > time[key]) {
@@ -1025,7 +1028,7 @@ function formatTime(seconds, {
  * @param	{Object}	options
  * @param	{Number}	options.to			Relative to (default now)
  * @param	{Boolean}	options.returnNode	Return time as node
- * @return	{HTMLElement|String}
+ * @return	{HTMLElement|string}
  */
 function relativeTime(timestamp, {
 	to = time(),
@@ -1069,67 +1072,102 @@ function relativeTime(timestamp, {
 	return string;
 }
 
-function liveTime(element, start = time(new Date()), {
-	type = "full",
-	count = "up",
-	prefix = "",
-	surfix = "",
-	ended = "Đã kết thúc",
-	endedCallback = () => {},
-	interval = 1000
-} = {}) {
-	let updateInterval = setInterval(() => {
-		if (!document.body.contains(element)) {
-			clog("DEBG", "Live Time Element does not exist in document. Clearing...");
-			clearInterval(updateInterval);
+class TimeCounter {
+	constructor({
+		type = "full",
+		prefix = "",
+		surfix = "",
+		ended = "Đã kết thúc",
+		interval = 1000
+	} = {}) {
+		this.container = document.createElement("div");
+		this.container.classList.add("time-counter");
+
+		this.type = type;
+		this.prefix = prefix;
+		this.surfix = surfix;
+		this.ended = ended;
+		this.interval = interval;
+		this.running = false;
+
+		this.updateInterval = null;
+	}
+
+	/**
+	 * Start the counter
+	 * 
+	 * @param	{number}			start
+	 * @param	{object}			options
+	 * @param	{"up" | "down"}		options.count
+	 */
+	start(start = time(), {
+		count = "up"
+	} = {}) {
+		this.startTime = start;
+		this.count = count;
+
+		if (!this.running) {
+			this.updateInterval = setInterval(() => this.update(), this.interval);
+			this.running = true;
 		}
 
-		let t = 0;
-		let ts = "";
-		let parsed = null;
+		this.update();
+		return this;
+	}
 
-		if (count === "up")
-			t = time() - start;
-		else
-			t = start - time();
+	update() {
+		const delta = (this.count === "up")
+			? time() - this.startTime
+			: this.startTime - time();
 
-		switch (type) {
-			case "full":
-				ts = formatTime(t, { ended: ended, endedCallback: () => endedCallback(element) });
+		let timeString;
+
+		switch (this.type) {
+			case "full": {
+				timeString = formatTime(delta, { ended: this.ended });
 				break;
+			}
 
-			case "simple":
-				if (t < 0) {
-					endedCallback(element);
-					ts = ended;
+			case "simple": {
+				if (delta < 0) {
+					timeString = this.ended;
 					break;
 				}
 
 				parsed = parseTime(t % 86400, { forceShowHours: true, showPlus: true });
-				ts = `<timer><days>${Math.floor(t / 86400)}</days>${parsed.str}<ms>${parsed.ms}</ms></timer>`;
+				timeString = `<timer><days>${Math.floor(t / 86400)}</days>${parsed.str}<ms>${parsed.ms}</ms></timer>`;
 				break;
+			}
 
-			case "minimal":
-				if (t < 0) {
-					endedCallback(element);
-					ts = ended;
+			case "minimal": {
+				if (delta < 0) {
+					timeString = this.ended;
 					break;
 				}
 
 				parsed = parseTime(t % 86400, { forceShowHours: true, showPlus: true });
-				ts = `<timer><days>${Math.floor(t / 86400)}</days>${parsed.str}</timer>`;
+				timeString = `<timer><days>${Math.floor(t / 86400)}</days>${parsed.str}</timer>`;
 				break;
+			}
 
 			default:
-				ts = `Unknown clock type: ${type}`;
+				timeString = `Unknown clock type: ${this.type}`;
 				break;
 		}
 
-		element.innerHTML = `${prefix}${ts}${surfix}`;
+		this.container.innerHTML = `${this.prefix}${timeString}${this.surfix}`;
 
-		if (t < 0)
-			clearInterval(updateInterval);
-	}, interval);
+		if (delta < 0)
+			this.stop();
+
+		return this;
+	}
+
+	stop() {
+		clearInterval(this.updateInterval);
+		this.running = false;
+		return this;
+	}
 }
 
 /**

@@ -1516,3 +1516,74 @@
 		font-weight: 700;
 	}
 }
+
+.cron-editor {
+	margin: 1rem 0;
+
+	> .inputs {
+		display: flex;
+		flex: 1 1 0;
+		gap: 1rem;
+
+		overflow: hidden;
+
+		> .field {
+			text-align: center;
+
+			> input {
+				padding: 0.5rem;
+				width: 100%;
+				box-sizing: border-box;
+
+				font-family: inherit;
+				font-size: 2rem;
+				font-weight: 600;
+				text-align: center;
+
+				border: 0.1rem solid var(--color);
+				border-radius: 1rem;
+				box-shadow: none;
+				outline: none;
+
+				&:focus {
+					border-color: var(--text-primary);
+				}
+			}
+
+			> label {
+				font-size: 0.85rem;
+				color: var(--text-secondary);
+			}
+		}
+
+		> .separator {
+			margin: 0 0.5rem;
+			font-size: 2rem;
+			font-weight: 700;
+			color: var(--border);
+		}
+	}
+
+	> .explain {
+		margin-top: 1rem;
+		text-align: left;
+
+		> .validate {
+			margin-bottom: 0.5rem;
+
+			font-size: 1.5rem;
+			font-weight: 600;
+			color: var(--color);
+
+			> icon {
+				color: var(--color);
+				margin-right: 0.5rem;
+			}
+		}
+
+		> .info {
+			font-size: 0.85rem;
+			color: var(--text-secondary);
+		}
+	}
+}

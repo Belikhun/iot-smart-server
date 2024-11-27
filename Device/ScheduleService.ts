@@ -49,6 +49,7 @@ export class Schedule {
 			start: true,
 			onTick: () => {
 				this.execute();
+				this.log.debug(`Lần chạy tới vào ${this.job?.nextDate().toLocal()}`);
 			}
 		});
 	}

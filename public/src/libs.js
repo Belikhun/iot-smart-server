@@ -8436,3 +8436,125 @@ class ScreenInstancePicker {
 		this.updateState();
 	}
 }
+
+class CronParser {
+	static dayNames = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
+	static monthNames = [
+		"Tháng một", "Tháng hai", "Tháng ba", "Tháng 4", "Tháng năm", "Tháng sáu",
+		"Tháng bảy", "Tháng tám", "Tháng chín", "Tháng mười", "Tháng mười một", "Tháng mười hai"
+	];
+
+	static parse(cronExpression) {
+		const parts = cronExpression.split(" ");
+
+		if (parts.length !== 6 || !this.validateCronParts(parts)) {
+			throw new Error("Biểu thức cron không hợp lệ");
+		}
+
+		const [second, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+
+		// Tạo mô tả ngắn gọn
+		const secondPart = this.parseSecond(second);
+		const minutePart = this.parseMinute(minute);
+		const hourPart = this.parseHour(hour);
+		const dayPart = this.parseDayOfMonth(dayOfMonth);
+		const monthPart = this.parseMonth(month);
+		const dayOfWeekPart = this.parseDayOfWeek(dayOfWeek);
+
+		// Loại bỏ các phần "mặc định"
+		const description = [
+			secondPart,
+			minutePart,
+			hourPart,
+			dayPart !== "mỗi ngày" ? dayPart : "",
+			monthPart !== "mỗi tháng" ? monthPart : "",
+			dayOfWeekPart !== "mỗi ngày trong tuần" ? dayOfWeekPart : ""
+		]
+			.filter(Boolean)
+			.join(", ");
+
+		return description;
+	}
+
+	static validateCronParts(parts) {
+		const [second, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+		return (
+			this.validateField(second, 0, 59) &&
+			this.validateField(minute, 0, 59) &&
+			this.validateField(hour, 0, 23) &&
+			this.validateField(dayOfMonth, 1, 31) &&
+			this.validateField(month, 1, 12) &&
+			this.validateField(dayOfWeek, 0, 7)
+		);
+	}
+
+	static validateField(field, min, max) {
+		if (field === "*") return true;
+
+		if (field.includes("/")) {
+			const [base, step] = field.split("/");
+			return this.validateBase(base, min, max) && /^\d+$/.test(step) && parseInt(step, 10) > 0;
+		}
+
+		if (field.includes(",")) {
+			return field.split(",").every(value => this.validateBase(value, min, max));
+		}
+
+		if (field.includes("-")) {
+			const [start, end] = field.split("-");
+			return this.validateBase(start, min, max) && this.validateBase(end, min, max) && parseInt(start, 10) <= parseInt(end, 10);
+		}
+
+		return this.validateBase(field, min, max);
+	}
+
+	static validateBase(value, min, max) {
+		if (value === "*") return true;
+		const num = parseInt(value, 10);
+		return !isNaN(num) && num >= min && num <= max;
+	}
+
+	static parseSecond(second) {
+		if (second === "*") return "Mỗi giây";
+		if (second.includes("/")) return `Cứ mỗi ${second.split("/")[1]} giây`;
+		return `Vào giây thứ ${second}`;
+	}
+
+	static parseMinute(minute) {
+		if (minute === "*") return "";
+		if (minute.includes("/")) return `cứ mỗi ${minute.split("/")[1]} phút`;
+		return `vào phút thứ ${minute}`;
+	}
+
+	static parseHour(hour) {
+		if (hour === "*") return "";
+		if (hour.includes("/")) return `cứ mỗi ${hour.split("/")[1]} giờ`;
+		const parsedHour = hour.split(",").map(h => this.formatHour(h)).join(" và ");
+		return `vào khoảng ${parsedHour}`;
+	}
+
+	static parseDayOfMonth(day) {
+		if (day === "*") return "mỗi ngày";
+		if (day.includes("/")) return `cứ mỗi ${day.split("/")[1]} ngày`;
+		return `vào ngày ${day}`;
+	}
+
+	static parseMonth(month) {
+		if (month === "*") return "mỗi tháng";
+		const months = month.split(",").map(m => this.monthNames[parseInt(m, 10) - 1]).join(", ");
+		return `trong ${months}`;
+	}
+
+	static parseDayOfWeek(day) {
+		if (day === "*") return "mỗi ngày trong tuần";
+		const days = day.split(",").map(d => this.dayNames[parseInt(d, 10)]).join(", ");
+		return `vào ${days}`;
+	}
+
+	static formatHour(hour) {
+		const h = parseInt(hour, 10);
+		const ampm = h >= 12 ? "chiều" : "sáng";
+		const hourIn12 = h % 12 === 0 ? 12 : h % 12;
+		return `${hourIn12} giờ ${ampm}`;
+	}
+}
