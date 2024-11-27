@@ -46,6 +46,9 @@ scheduleController.post("/:id/edit", async ({ params: { id }, request }) => {
 	schedule.model.active = active;
 	await schedule.model.save();
 
+	// Restart the Cron Job.
+	schedule.start();
+
 	return new APIResponse(0, `Đã cập nhật lịch điều khiển`, 200, await schedule.getReturnData());
 });
 

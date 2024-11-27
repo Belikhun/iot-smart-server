@@ -39,6 +39,11 @@ export class Schedule {
 		if (this.job)
 			this.job.stop();
 
+		if (!this.model.cronExpression || !this.model.active)
+			return;
+
+		this.log.debug(`Bắt đầu tác vụ chạy với expression ${this.model.cronExpression}`);
+
 		this.job = CronJob.from({
 			cronTime: this.model.cronExpression as string,
 			start: true,
@@ -50,10 +55,11 @@ export class Schedule {
 
 	public execute() {
 		if (this.job) {
-			if (this.model.ran! >= this.model.executeAmount!) {
+			if (this.model.executeAmount! > 0 && this.model.ran! >= this.model.executeAmount!) {
 				this.job.stop();
 				this.job = null;
 
+				this.log.debug(`Tác vụ chạy bị dừng do đã chạy tới số lần chạy tối đa`);
 				return false;
 			}
 		}

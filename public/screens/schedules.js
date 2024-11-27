@@ -498,10 +498,10 @@ const schedules = {
 					);
 				}
 
-				case "lastSchedule": {
-					return (value)
-						? relativeTime(value)
-						: "Chưa được chạy";
+				case "executeAmount": {
+					return (value > 0)
+						? `Tối đa ${value} lần`
+						: "Không giới hạn";
 				}
 
 				case "active":
@@ -635,10 +635,14 @@ const schedules = {
 							copyable: true
 						},
 						{
-							label: app.string("table.lastSchedule"),
-							value: () => (this.instance.lastSchedule)
-								? relativeTime(this.instance.lastSchedule)
-								: "Chưa được chạy"
+							label: app.string("table.executeAmount"),
+							value: () => (this.instance.executeAmount > 0)
+								? `Tối đa ${this.instance.executeAmount} lần`
+								: "Không giới hạn"
+						},
+						{
+							label: app.string("table.ran"),
+							value: () => `${this.instance.ran} lần`
 						},
 						{
 							label: app.string("table.created"),
@@ -711,7 +715,6 @@ const schedules = {
 
 			await Promise.all([
 				this.grid.update(),
-				this.updateConditions(),
 				this.updateActions()
 			]);
 		},
