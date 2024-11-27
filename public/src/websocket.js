@@ -109,6 +109,11 @@ const websocket = {
 				devices.updateDevice(target);
 				return;
 			}
+
+			case "update:schedules": {
+				schedules.list.fetch();
+				return;
+			}
 		}
 
 		if (this.registeredHandlers[command]) {

@@ -2,10 +2,14 @@ import { RealtimeClient } from "@openai/realtime-api-beta";
 import { scope } from "../Utils/Logger";
 import { pleft } from "../Utils/belibrary";
 import { MessageTask } from "./MessageTask";
-import type { WebSocket } from "../Routes/WebSocket";
+import { sendDashboardCommand, type WebSocket } from "../Routes/WebSocket";
 import { getDeviceFeature, getDevices } from "../Device/Device";
 import type SessionModel from "../Models/SessionModel";
 import { FeatureFlag } from "../Device/Features/FeatureBase";
+import ScheduleModel from "../Models/ScheduleModel";
+import { registerSchedule } from "../Device/ScheduleService";
+import { ScheduleAction } from "../Device/Schedules/ScheduleAction";
+import { ActionType } from "../Device/ActionFactory";
 
 const log = scope(`openai`);
 export type ChatClientEvent = {[key: string]: any};
@@ -221,6 +225,127 @@ export const initializeOpenAIClient = async (session: SessionModel): Promise<Rea
 			return "All features updated successfully!";
 
 		return messages.join("\n");
+	});
+
+	client.addTool({
+		name: "createSchedule",
+		description: [
+			"Create a device feature's control schedule, using CRON expression.",
+			"The CRON expression has an additional second field, which mean the CRON expression has 6 fields in total. Example: * * * * * *",
+			"",
+			"Supported ranges:",
+			"field          allowed values",
+			"-----          --------------",
+			"second         0-59",
+			"minute         0-59",
+			"hour           0-23",
+			"day of month   1-31",
+			"month          1-12",
+			"day of week    0-7"
+		].join("\n"),
+		parameters: {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "The schedule name."
+				},
+
+				"cronExpression": {
+					"type": "string",
+					"description": "The CRON expression for the schedule. The schedule will start running based on this CRON expression."
+				},
+
+				"executeAmount": {
+					"type": "number",
+					"description": [
+						"The amount of time this schedule will be executed.",
+						"0 = run indefinitely",
+						"1 = run only once",
+						"n = run for n times"
+					].join("\n")
+				},
+
+				"features": {
+					"type": "array",
+					"description": "An array contains list of device's feature will be updated when the schedule is executed.",
+					"items": {
+						"type": "object",
+						"properties": {
+							"uuid": {
+								"type": "string",
+								"description": "Device's feature UUID."
+							},
+
+							"value": {
+								"oneOf": [
+									{
+										"type": "number",
+										"description": "A new value to be set for the device's feature. Most of the device's feature kind will use this."
+									},
+									{
+										"type": "array",
+										"description": "Value specific for \"FeatureRGBLed\" feature kind, where the value is the color following [R, G, B] format.",
+										"items": {
+											"type": "number"
+										},
+										"minItems": 3,
+										"maxItems": 3
+									},
+									{
+										"type": "boolean",
+										"description": "Value specific for \"FeatureButton\" and \"FeatureOnOffToggle\" feature kind, where the value is simply the on or off state."
+									},
+								]
+							}
+						},
+						"required": ["uuid", "value"],
+						"additionalProperties": false
+					}
+				}
+			},
+			"required": ["features"],
+			"additionalProperties": false
+		}
+	}, async ({ name, cronExpression, executeAmount, features }: any) => {
+		log.info(`Đang gọi tool createSchedule():`, name);
+
+		const instance = await ScheduleModel.create({
+			name,
+			icon: "clock",
+			color: "accent",
+			executeAmount: parseInt(executeAmount),
+			active: true,
+			cronExpression
+		});
+
+		const schedule = await registerSchedule(instance);
+		const messages = [];
+
+		for (const { uuid, value } of features) {
+			const feature = getDeviceFeature(uuid);
+
+			if (!feature) {
+				messages.push(`No device feature found with UUID ${feature}`);
+				continue;
+			}
+
+			await ScheduleAction.create({
+				schedule,
+				targetId: feature.model.id as number,
+				targetKind: "deviceFeature",
+				action: ActionType.SET_VALUE,
+				newValue: value
+			});
+		}
+
+		schedule.load();
+		sendDashboardCommand("update:schedules");
+
+		return {
+			success: true,
+			errors: messages
+		};
 	});
 
 	try {
