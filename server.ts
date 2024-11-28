@@ -10,6 +10,7 @@ import APIResponse from "./Classes/APIResponse";
 import type SessionModel from "./Models/SessionModel";
 import { time } from "./Utils/belibrary";
 import { websocketRouter } from "./Routes/WebSocket";
+import cors from "@elysiajs/cors";
 
 const log = scope("http");
 
@@ -20,6 +21,7 @@ export interface HttpServerContext extends BaseContext {
 
 export const server = new Elysia()
 	.use(sessionMiddleware)
+	.use(cors())
 	.use(serverTiming())
 	.use(staticPlugin({ assets: path.resolve("public"), prefix: "/", indexHTML: true }));
 
@@ -28,7 +30,7 @@ server.onRequest(({ request }) => {
 });
 
 server.mapResponse(({ set: { status }, path, headers, response }) => {
-	const timestamp = (headers["X-Timestamp"])
+	const timestamp = (headers && headers["X-Timestamp"])
 		? parseInt(headers["X-Timestamp"])
 		: 0;
 

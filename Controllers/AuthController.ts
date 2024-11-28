@@ -36,3 +36,7 @@ authController.post("/logout", async ({ session }: HttpServerContext) => {
 authController.get("/session", async ({ session }: HttpServerContext) => {
 	return new APIResponse(0, "Phiên đăng nhập hiện tại", 200, await session?.getReturnData());
 });
+
+authController.get("/hello", async ({ session }: HttpServerContext) => {
+	return new APIResponse(0, "Hello!", 200);
+});

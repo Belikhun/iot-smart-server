@@ -18,6 +18,17 @@ export const sessionMiddleware = (app: Elysia) => {
 					expire: { [Op.gt]: timestamp }
 				}
 			});
+		} else if (context.headers.authorization) {
+			const [authType, authData] = context.headers.authorization.split(" ");
+
+			if (authType === "Session") {
+				session = await SessionModel.findOne({
+					where: {
+						sessionId: authData,
+						expire: { [Op.gt]: timestamp }
+					}
+				});
+			}
 		}
 
 		return {
