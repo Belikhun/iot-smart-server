@@ -35,6 +35,7 @@ app.strings = {
 	"block.sensor": "Cảm Biến",
 	"block.knob": "Núm Xoay",
 	"block.colorWheel": "Đặt Màu Đèn",
+	"block.scenes": "Các Cảnh",
 
 	"action.view": "Xem",
 	"action.edit": "Chỉnh sửa",

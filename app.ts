@@ -15,7 +15,7 @@ await initializeTriggers();
 await initializeSchedules();
 
 try {
-	// await initializeTuya();
+	await initializeTuya();
 } catch (e) {
 
 }
