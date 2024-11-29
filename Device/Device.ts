@@ -240,9 +240,44 @@ export const initializeDevices = async () => {
 		log.info(`Đang nạp thông tin thiết bị ${deviceModel.name} [${deviceModel.hardwareId}]`);
 		const device = new Device(deviceModel);
 		await device.loadFeatures();
+
 		devices[device.model.hardwareId] = device;
 		deviceIdMap[device.model.id as number] = device;
+
+		if (device.model.hardwareId === "system")
+			device.connected = true;
+
 		log.success(`Nạp thông tin thiết bị ${device.model.name} thành công!`);
+	}
+
+	if (!devices.system) {
+		log.success(`Đang tạo thiết bị ảo cho hệ thống...`);
+
+		const device = await createDevice({
+			hardwareId: "system",
+			name: "System's Virtual Device",
+			token: "SVD",
+			color: "accent",
+			type: "system"
+		});
+
+		device.connected = true;
+
+		await device.createFeature({
+			featureId: "alert",
+			uuid: "system/alert",
+			kind: "FeatureSystemAlert",
+			name: "Alert",
+			flags: FeatureFlag.WRITE
+		});
+
+		await device.createFeature({
+			featureId: "notification",
+			uuid: "system/notification",
+			kind: "FeatureSystemNotification",
+			name: "Notification",
+			flags: FeatureFlag.WRITE
+		});
 	}
 }
 

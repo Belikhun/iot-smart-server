@@ -10,6 +10,8 @@ import { FeatureOnOffSensor } from "./Features/FeatureOnOffSensor";
 import { FeatureOnOffToggle } from "./Features/FeatureOnOffToggle";
 import { FeatureRGBLed } from "./Features/FeatureRGBLed";
 import { FeatureSensorValue } from "./Features/FeatureSensorValue";
+import { FeatureSystemAlert } from "./Features/FeatureSystemAlert";
+import { FeatureSystemNotification } from "./Features/FeatureSystemNotification";
 import { FeatureTemperature } from "./Features/FeatureTemperature";
 
 const RegisteredFeatures = {
@@ -22,7 +24,9 @@ const RegisteredFeatures = {
 	"FeatureHumidity": FeatureHumidity,
 	"FeatureSensorValue": FeatureSensorValue,
 	"FeatureAlarm": FeatureAlarm,
-	"FeatureFanMotor": FeatureFanMotor
+	"FeatureFanMotor": FeatureFanMotor,
+	"FeatureSystemAlert": FeatureSystemAlert,
+	"FeatureSystemNotification": FeatureSystemNotification
 }
 
 export function resolveFeature(model: DeviceFeatureModel, device: Device): FeatureBase {

@@ -420,3 +420,78 @@ class KnobComponent {
 		return this.currentValue;
 	}
 }
+
+class SystemNotificationForm {
+	constructor() {
+		this.levelSelect = createSelectInput({
+			label: "Cấp độ",
+			fixed: false,
+			options: {
+				info: "Thông tin",
+				warning: "Cảnh báo",
+				critical: "Nghiêm trọng"
+			},
+
+			value: "info"
+		});
+
+		this.contentInput = createInput({
+			type: "text",
+			label: "Nội dung"
+		});
+
+		this.submitButton = createButton("", {
+			icon: "paperPlaneTop",
+			disabled: true,
+			onClick: async () => {
+				for (const handler of this.inputHandlers) {
+					try {
+						await handler(this.value);
+					} catch (e) {
+						clog("WARN", e);
+					}
+				}
+			}
+		});
+
+		this.levelSelect.onChange(() => this.updateState());
+		this.contentInput.onInput(() => this.updateState());
+
+		this.view = makeTree("div", "system-notification-form", {
+			level: this.levelSelect,
+			content: this.contentInput,
+			submit: this.submitButton
+		});
+
+		this.inputHandlers = [];
+	}
+
+	set value({ level, message }) {
+		this.levelSelect.value = level;
+		this.contentInput.value = message;
+		this.updateState();
+	}
+
+	get value() {
+		return {
+			level: this.levelSelect.value,
+			message: this.contentInput.value
+		};
+	}
+
+	updateState() {
+		this.submitButton.disabled = (!this.levelSelect.value || !this.contentInput.value);
+		return this;
+	}
+
+	/**
+	 * Listen for on input event.
+	 * 
+	 * @param	{(value: { level: string, message: string }) => void}	handler 
+	 * @returns	{this}
+	 */
+	onInput(handler) {
+		this.inputHandlers.push(handler);
+		return this;
+	}
+}

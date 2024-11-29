@@ -165,11 +165,11 @@ export class FeatureBase {
 		return value;
 	}
 
-	protected serializeValue(value: any): string {
+	protected serializeValue(value: any): string | null {
 		return value;
 	}
 
-	protected unserializeValue(value: string): any {
+	protected unserializeValue(value: string | null): any {
 		return value;
 	}
 

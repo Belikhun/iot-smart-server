@@ -997,3 +997,11 @@ icon[data-icon="powerOff"]::after {
 icon[data-icon="box"]::after {
 	content: "\f466";
 }
+
+icon[data-icon="lightEmergencyOn"]::after {
+	content: "\e420";
+}
+
+icon[data-icon="envelope"]::after {
+	content: "\f0e0";
+}

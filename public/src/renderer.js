@@ -166,7 +166,9 @@ class FeatureRenderer {
 			"FeatureHumidity": { icon: "dropletPercent" },
 			"FeatureSensorValue": { icon: "sensor" },
 			"FeatureAlarm": { icon: "siren" },
-			"FeatureFanMotor": { icon: "fan" }
+			"FeatureFanMotor": { icon: "fan" },
+			"FeatureSystemAlert": { icon: "lightEmergencyOn" },
+			"FeatureSystemNotification": { icon: "envelope" },
 		}
 	}
 
@@ -233,7 +235,8 @@ class FeatureRenderer {
 
 		switch (this.model.kind) {
 			case "FeatureButton":
-			case "FeatureOnOffToggle": {
+			case "FeatureOnOffToggle":
+			case "FeatureSystemAlert": {
 				const view = makeTree("div", "feature-button", {
 					handle: { tag: "div", class: "handle" }
 				});
@@ -525,6 +528,30 @@ class FeatureRenderer {
 
 					get value () {
 						return currentValue;
+					}
+				};
+
+				break;
+			}
+
+			case "FeatureSystemNotification": {
+				const form = new SystemNotificationForm();
+
+				instance = {
+					view: form.view,
+
+					onInput: (handler) => {
+						form.onInput((value) => {
+							handler(value);
+						});
+					},
+
+					set value(value) {
+						form.value = value;
+					},
+
+					get value () {
+						return form.value;
 					}
 				};
 

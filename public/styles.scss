@@ -1587,3 +1587,34 @@
 		}
 	}
 }
+
+.system-notification-form {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 0.5rem;
+
+	> .sq-selector {
+		flex-shrink: 0;
+		width: 10rem;
+		
+		> .current {
+			height: 3.5rem;
+
+			> .value {
+				white-space: nowrap;
+				font-size: 0.85rem;
+			}
+		}
+	}
+
+	> .sq-input {
+		height: 3.5rem;
+		margin-top: 0;
+	}
+
+	> .sq-btn {
+		height: 3.5rem;
+		border-radius: 1rem;
+	}
+}
