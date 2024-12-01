@@ -753,7 +753,8 @@ const ActionTypes = {
 	setValue: { icon: "equals" },
 	setFromFeature: { icon: "rightLeft" },
 	toggleValue: { icon: "lightSwitch" },
-	alarmValue: { icon: "siren", hidden: true }
+	alarmValue: { icon: "siren", hidden: true },
+	notificationValue: { icon: "envelope", hidden: true }
 };
 
 function featureActionSearch(/** @type {() => DeviceFeature} */ getFeature) {
@@ -774,6 +775,10 @@ function featureActionSearch(/** @type {() => DeviceFeature} */ getFeature) {
 				switch (feature.kind) {
 					case "FeatureAlarm":
 						actions = ["alarmValue"];
+						break;
+
+					case "FeatureSystemNotification":
+						actions = ["notificationValue"];
 						break;
 				}
 			}
@@ -943,6 +948,39 @@ function renderActionValue(action) {
 
 				set disabled(disabled) {
 					// Not supported
+				}
+			};
+		}
+
+		case "notificationValue": {
+			const form = new SystemNotificationForm();
+
+			return {
+				action,
+				view: form.view,
+				input: null,
+
+				onInput: (handler) => {
+					form.onInput((value) => {
+						handler(JSON.stringify(value));
+					});
+				},
+
+				set value(value) {
+					if (!value) {
+						form.value = null;
+						return;
+					}
+
+					form.value = JSON.parse(value);
+				},
+
+				get value() {
+					return JSON.stringify(form.value);
+				},
+
+				set disabled(disabled) {
+					form.disabled = disabled;
 				}
 			};
 		}

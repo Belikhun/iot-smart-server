@@ -114,6 +114,15 @@ const websocket = {
 				schedules.list.fetch();
 				return;
 			}
+
+			case "notification": {
+				const { level, message } = data;
+				toast.show(app.string(`level.${level}`), message, {
+					hint: humanReadableTime(new Date())
+				});
+
+				return;
+			}
 		}
 
 		if (this.registeredHandlers[command]) {

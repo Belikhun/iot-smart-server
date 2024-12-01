@@ -466,7 +466,20 @@ class SystemNotificationForm {
 		this.inputHandlers = [];
 	}
 
-	set value({ level, message }) {
+	set disabled(disabled) {
+		this.levelSelect.disabled = disabled;
+		this.contentInput.disabled = disabled;
+	}
+
+	set value(value) {
+		if (!value) {
+			this.levelSelect.value = "info";
+			this.contentInput.value = null;
+			this.updateState();
+			return;
+		}
+
+		const { level, message } = value;
 		this.levelSelect.value = level;
 		this.contentInput.value = message;
 		this.updateState();

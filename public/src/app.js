@@ -388,6 +388,12 @@ const app = {
 		}
 	},
 
+	toast: {
+		init() {
+			toast.init(app.root);
+		}
+	},
+
 	screen: {
 		/** @type {TreeDOM} */
 		container: undefined,

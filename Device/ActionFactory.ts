@@ -8,7 +8,8 @@ export enum ActionType {
 	SET_VALUE = "setValue",
 	SET_FROM_FEATURE = "setFromFeature",
 	TOGGLE_VALUE = "toggleValue",
-	ALARM_VALUE = "alarmValue"
+	ALARM_VALUE = "alarmValue",
+	NOTIFICATION_VALUE = "notificationValue"
 }
 
 export const setFeatureValueByAction = (feature: FeatureBase, action: ActionType, newValue: any) => {
@@ -45,6 +46,14 @@ export const setFeatureValueByAction = (feature: FeatureBase, action: ActionType
 				payload.data = [0.2, 1000];
 
 			feature.setValue(payload);
+			break;
+		}
+
+		case ActionType.NOTIFICATION_VALUE: {
+			if (!newValue)
+				return;
+
+			feature.setValue(JSON.parse(newValue));
 			break;
 		}
 	}

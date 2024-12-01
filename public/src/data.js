@@ -29,6 +29,9 @@ app.strings = {
 	"response.errorReport": "Xem Báo Cáo Lỗi",
 	"cronEditor": "Biểu thức CRON",
 	"nextRun": "Thời gian chạy tiếp theo",
+	"level.info": "Thông Tin",
+	"level.warning": "Cảnh Báo",
+	"level.critical": "Nghiêm Trọng",
 
 	"block.text": "Văn Bản",
 	"block.quickSettings": "Cài Đặt Nhanh",
@@ -115,6 +118,7 @@ app.strings = {
 	"action.setFromFeature": "Lấy giá trị từ",
 	"action.toggleValue": "Lật trạng thái (bật/tắt)",
 	"action.alarmValue": "Đặt tiếng kêu",
+	"action.notificationValue": "Thông báo",
 
 	"model_info": "Thông tin chi tiết của :model: :name:",
 	"conditions": "Các điều kiện",

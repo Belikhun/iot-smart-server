@@ -1833,7 +1833,7 @@ class TriggerAction extends Model {
 			this.featureInput.disabled = false;
 			this.actionInput.disabled = false;
 
-			if (this.currentAction && this.currentAction.input)
+			if (this.currentAction)
 				this.currentAction.disabled = false;
 
 			this.saveTimeout = null;
@@ -2322,7 +2322,7 @@ class SceneAction extends Model {
 			this.featureInput.disabled = false;
 			this.actionInput.disabled = false;
 
-			if (this.currentAction && this.currentAction.input)
+			if (this.currentAction)
 				this.currentAction.disabled = false;
 
 			this.saveTimeout = null;
@@ -2784,7 +2784,7 @@ class ScheduleAction extends Model {
 			this.featureInput.disabled = false;
 			this.actionInput.disabled = false;
 
-			if (this.currentAction && this.currentAction.input)
+			if (this.currentAction)
 				this.currentAction.disabled = false;
 
 			this.saveTimeout = null;
