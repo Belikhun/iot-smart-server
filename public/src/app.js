@@ -203,7 +203,7 @@ const app = {
 			clearTimeout(this.task);
 			this.task = setTimeout(() => {
 				app.root.removeChild(this.view);
-			}, 3000);
+			}, 300);
 
 			this.audio.currentTime = 0;
 			return this;
