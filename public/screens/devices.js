@@ -252,8 +252,21 @@ const devices = {
 			for (const device of this.current) {
 				this.devices[device.hardwareId] = device;
 
-				for (const feature of device.features)
+				for (const feature of device.features) {
+					if (!this.features[feature.uuid] && feature.uuid === "system/alert") {
+						feature.onValueUpdate((value, source) => {
+							if (value)
+								app.alarm.start();
+							else
+								app.alarm.stop();
+						});
+
+						if (feature.value)
+							app.alarm.start();
+					}
+
 					this.features[feature.uuid] = feature;
+				}
 			}
 
 			if (render || app.screen.active.id === this.screen.id)

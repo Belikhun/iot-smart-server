@@ -159,6 +159,57 @@ const app = {
 		return this.currentScreenMode;
 	},
 
+	alarm: {
+		/** @type {TreeDOM} */
+		view: undefined,
+
+		/** @type {HTMLAudioElement} */
+		audio: undefined,
+
+		started: false,
+
+		task: undefined,
+
+		init() {
+			this.view = makeTree("div", "system-alarm", {
+				icon: { tag: "icon", icon: "exclamation" },
+				text: { tag: "span", text: "Cảnh báo của hệ thống hiện đang được kích hoạt!" }
+			});
+
+			this.audio = new Audio(app.url("/public/sounds/alarm.mp3"));
+			this.audio.loop = true;
+		},
+
+		start() {
+			if (this.started)
+				return this;
+
+			this.started = true;
+			clearTimeout(this.task);
+			app.root.appendChild(this.view);
+			app.root.classList.add("alarm");
+			this.audio.play();
+			return this;
+		},
+		
+		stop() {
+			if (!this.started)
+				return this;
+
+			this.started = false;
+			app.root.classList.remove("alarm");
+			this.audio.pause();
+
+			clearTimeout(this.task);
+			this.task = setTimeout(() => {
+				app.root.removeChild(this.view);
+			}, 3000);
+
+			this.audio.currentTime = 0;
+			return this;
+		}
+	},
+
 	auth: {
 		/** @type {TreeDOM} */
 		loginView: undefined,

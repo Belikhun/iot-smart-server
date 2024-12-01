@@ -1,6 +1,82 @@
 
 @use "dashboard.scss";
 
+#app {
+	box-sizing: border-box;
+	transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+
+	> nav {
+		z-index: 1;
+		background-color: var(--background);
+		transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+	}
+
+	> .system-alarm {
+		position: absolute;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 3rem;
+		padding: 0 1rem 1rem 1rem;
+
+		background-color: var(--osc-color-red);
+		color: white;
+		overflow: hidden;
+		z-index: -1;
+
+		&::before {
+			content: "";
+			position: absolute;
+			display: block;
+
+			left: -50rem;
+			top: 0;
+			width: 0;
+			height: 100%;
+			box-shadow: 0 0 84rem 32rem color-mix(in srgb, var(--osc-color-red) 75%, white);
+
+			animation-name: system-alarm-sweep;
+			animation-duration: 3s;
+			animation-timing-function: linear;
+			animation-iteration-count: infinite;
+		}
+
+		> icon {
+			font-weight: 900;
+			z-index: 1;
+		}
+
+		> span {
+			font-weight: 600;
+			z-index: 1;
+		}
+	}
+
+	&.alarm {
+		padding-top: 3rem;
+
+		> nav {
+			border-top-left-radius: 1rem;
+			border-top-right-radius: 1rem;
+		}
+	}
+}
+
+@keyframes system-alarm-sweep {
+	0% {
+		transform: translateX(0);
+	}
+
+	100% {
+		transform: translateX(calc(100vw + 100rem));
+	}
+}
+
 .login-panel {
 	position: absolute;
 	display: flex;
