@@ -1,3 +1,4 @@
+import { sendNotification } from "../../Firebase/Client";
 import { sendDashboardCommand, type WebSocket } from "../../Routes/WebSocket";
 import { FeatureBase, FeatureUpdateSource } from "./FeatureBase";
 
@@ -20,11 +21,23 @@ export class FeatureSystemNotification extends FeatureBase {
 		return JSON.parse(value);
 	}
 
-	public setValue(newValue: any, source?: FeatureUpdateSource, sourceWS?: WebSocket | null): FeatureBase {
+	public setValue(newValue: any, source?: FeatureUpdateSource, sourceWS?: WebSocket | null): FeatureSystemNotification {
 		super.setValue(newValue, source, sourceWS);
 
 		if (source !== FeatureUpdateSource.DEVICE) {
-			sendDashboardCommand("notification", this.getValue());
+			const { level, message }: { level: string, message: string } = this.getValue();
+			const levelDisplay = {
+				info: "Thông Tin",
+				warning: "Cảnh Báo",
+				critical: "Nghiêm Trọng"
+			}[level];
+
+			sendDashboardCommand("notification", { level, message });
+			sendNotification({
+				title: levelDisplay as string,
+				body: message
+			});
+
 			this.setValue(null, FeatureUpdateSource.DEVICE);
 		}
 
