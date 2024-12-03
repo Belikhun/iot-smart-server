@@ -9,7 +9,8 @@ export enum ActionType {
 	SET_FROM_FEATURE = "setFromFeature",
 	TOGGLE_VALUE = "toggleValue",
 	ALARM_VALUE = "alarmValue",
-	NOTIFICATION_VALUE = "notificationValue"
+	NOTIFICATION_VALUE = "notificationValue",
+	RGB_VALUE = "rgbValue",
 }
 
 export const setFeatureValueByAction = (feature: FeatureBase, action: ActionType, newValue: any) => {
@@ -49,7 +50,8 @@ export const setFeatureValueByAction = (feature: FeatureBase, action: ActionType
 			break;
 		}
 
-		case ActionType.NOTIFICATION_VALUE: {
+		case ActionType.NOTIFICATION_VALUE:
+		case ActionType.RGB_VALUE: {
 			if (!newValue)
 				return;
 

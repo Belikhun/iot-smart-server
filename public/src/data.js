@@ -119,6 +119,7 @@ app.strings = {
 	"action.toggleValue": "Lật trạng thái (bật/tắt)",
 	"action.alarmValue": "Đặt tiếng kêu",
 	"action.notificationValue": "Thông báo",
+	"action.rgbValue": "Đặt màu sắc",
 
 	"model_info": "Thông tin chi tiết của :model: :name:",
 	"conditions": "Các điều kiện",

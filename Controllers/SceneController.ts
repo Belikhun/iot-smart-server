@@ -62,6 +62,16 @@ sceneController.post("/:id/edit", async ({ params: { id }, request }) => {
 	return new APIResponse(0, `Đã cập nhật cảnh`, 200, await scene.getReturnData());
 });
 
+sceneController.delete("/:id/delete", async ({ params: { id }, request }) => {
+	const scene = getScene(parseInt(id));
+
+	if (!scene)
+		throw new Error(`Không tìm thấy cảnh với mã #${id}`);
+
+	await scene.delete();
+	return new APIResponse(0, `Đã xóa cảnh`, 200);
+});
+
 sceneController.get("/:id/action", async ({ params: { id }, request }) => {
 	const scene = getScene(parseInt(id));
 
@@ -122,11 +132,11 @@ sceneController.post("/:id/action/create", async ({ params: { id }, request }) =
 	if (!scene)
 		throw new Error(`Không tìm thấy cảnh với mã #${id}`);
 
-	const { deviceFeatureId, action, newValue } = await request.json();
+	const { deviceFeature, action, newValue } = await request.json();
 
 	const instance = await SceneAction.create({
 		scene,
-		deviceFeatureId,
+		deviceFeatureId: deviceFeature,
 		action,
 		newValue
 	});

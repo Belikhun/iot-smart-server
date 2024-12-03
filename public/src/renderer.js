@@ -754,7 +754,8 @@ const ActionTypes = {
 	setFromFeature: { icon: "rightLeft" },
 	toggleValue: { icon: "lightSwitch" },
 	alarmValue: { icon: "siren", hidden: true },
-	notificationValue: { icon: "envelope", hidden: true }
+	notificationValue: { icon: "envelope", hidden: true },
+	rgbValue: { icon: "lightbulb", hidden: true }
 };
 
 function featureActionSearch(/** @type {() => DeviceFeature} */ getFeature) {
@@ -779,6 +780,10 @@ function featureActionSearch(/** @type {() => DeviceFeature} */ getFeature) {
 
 					case "FeatureSystemNotification":
 						actions = ["notificationValue"];
+						break;
+
+					case "FeatureRGBLed":
+						actions = ["rgbValue"];
 						break;
 				}
 			}
@@ -981,6 +986,57 @@ function renderActionValue(action) {
 
 				set disabled(disabled) {
 					form.disabled = disabled;
+				}
+			};
+		}
+
+		case "rgbValue": {
+			const view = document.createElement("div");
+			view.classList.add("action-color-picker-wrapper");
+
+			let inputHandler = null;
+			let updating = false;
+
+			const wheel = new ReinventedColorWheel({
+				appendTo: view,
+				wheelDiameter: 120,
+				wheelThickness: 12,
+				handleDiameter: 16,
+				wheelReflectsSaturation: true,
+
+				onChange: (color) => {
+					if (!inputHandler || updating)
+						return;
+
+					inputHandler(JSON.stringify(color.rgb));
+				}
+			});
+
+			return {
+				action,
+				view,
+				input: null,
+
+				onInput: (handler) => {
+					if (typeof handler !== "function")
+						throw new Error(`onInput(): không phải một hàm hợp lệ`);
+
+					inputHandler = handler;
+					return this;
+				},
+
+				set value(value) {
+					updating = true;
+
+					if (!value)
+						value = "[0,0,0]";
+
+					wheel.rgb = JSON.parse(value);
+					updating = false;
+				},
+
+				get value() {
+					return JSON.stringify(wheel.rgb);
 				}
 			};
 		}
