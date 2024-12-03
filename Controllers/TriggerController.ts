@@ -50,6 +50,16 @@ triggerController.post("/:id/edit", async ({ params: { id }, request }) => {
 	return new APIResponse(0, `Đã cập nhật luật kích hoạt`, 200, await trigger.getReturnData());
 });
 
+triggerController.delete("/:id/delete", async ({ params: { id }, request }) => {
+	const trigger = getTrigger(parseInt(id));
+
+	if (!trigger)
+		throw new Error(`Không tìm thấy luật kích hoạt với mã #${id}`);
+
+	await trigger.delete();
+	return new APIResponse(0, `Đã xóa luật kích hoạt`, 200);
+});
+
 triggerController.get("/:id/condition", async ({ params: { id }, request }) => {
 	const trigger = getTrigger(parseInt(id));
 

@@ -834,6 +834,15 @@ class Trigger extends Model {
 		}
 	}
 
+	async delete() {
+		await myajax({
+			url: app.api(`/trigger/${this.id}/delete`),
+			method: "DELETE"
+		});
+
+		this.id = null;
+	}
+
 	/**
 	 * Process response returned from API.
 	 *

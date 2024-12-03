@@ -370,19 +370,15 @@ const schedules = {
 		},
 
 		/**
-		 * Delete the selected schedule
+		 * Start deleting schedule operation
 		 *
 		 * @param   {Schedule}	instance
 		 */
 		async delete(instance) {
 			try {
-				let deleted = await ModelFactory.delete("schedule", instance, {
-					name: this.name,
-					prompt: `${instance.id}.${instance.shortname}`
-				});
+				await instance.delete();
 
-				if (deleted)
-					this.fetch();
+				this.fetch();
 			} catch (e) {
 				this.log("ERRR", "delete()", e);
 				schedules.screen.handleError(e);
@@ -392,18 +388,12 @@ const schedules = {
 		/**
 		 * Start deleting Schedule operation
 		 *
-		 * @param	{Schedule[]}		instances
+		 * @param	{Schedule[]}	instances
 		 */
 		async bulkDelete(instances) {
 			try {
-				let deleted = await ModelFactory.bulkDelete(instances, {
-					model: "schedule",
-					name: this.name,
-					prompt: `schedule.${instances.length}`
-				});
-
-				if (deleted)
-					this.fetch();
+				await Promise.all(instances.map((instance) => instance.delete()));
+				this.fetch();
 			} catch (e) {
 				this.log("ERRR", "bulkDelete()", e);
 				schedules.screen.handleError(e);

@@ -81,6 +81,24 @@ export class Trigger {
 		return true;
 	}
 
+	public async delete() {
+		this.log.info("Đang xóa nhóm điều kiện chính...");
+		await this.group.delete();
+
+		this.log.info("Đang xóa các hành động...");
+		for (const action of Object.values(this.actions))
+			await action.delete();
+
+		this.actions = {};
+
+		this.log.info("Đang xóa các thông tin liên quan...");
+		delete triggers[this.model.id as number];
+		await this.model.destroy({ force: true });
+
+		this.log.success("Xóa thành công luật tự động hóa!");
+		return true;
+	}
+
 	public test() {
 		const result = {};
 		this.log.info(`Đang chạy thử các điều kiện...`);

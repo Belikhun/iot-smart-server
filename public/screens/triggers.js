@@ -362,19 +362,15 @@ const triggers = {
 		},
 
 		/**
-		 * Delete the selected trigger
+		 * Start deleting trigger operation
 		 *
 		 * @param   {Trigger}	instance
 		 */
 		async delete(instance) {
 			try {
-				let deleted = await ModelFactory.delete("trigger", instance, {
-					name: this.name,
-					prompt: `${instance.id}.${instance.shortname}`
-				});
+				await instance.delete();
 
-				if (deleted)
-					this.fetch();
+				this.fetch();
 			} catch (e) {
 				this.log("ERRR", "delete()", e);
 				triggers.screen.handleError(e);
@@ -384,18 +380,12 @@ const triggers = {
 		/**
 		 * Start deleting Trigger operation
 		 *
-		 * @param	{Trigger[]}		instances
+		 * @param	{Trigger[]}	instances
 		 */
 		async bulkDelete(instances) {
 			try {
-				let deleted = await ModelFactory.bulkDelete(instances, {
-					model: "trigger",
-					name: this.name,
-					prompt: `trigger.${instances.length}`
-				});
-
-				if (deleted)
-					this.fetch();
+				await Promise.all(instances.map((instance) => instance.delete()));
+				this.fetch();
 			} catch (e) {
 				this.log("ERRR", "bulkDelete()", e);
 				triggers.screen.handleError(e);
