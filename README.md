@@ -1,6 +1,6 @@
 > [!NOTE]
 > ### Project is not completed!
-> This project is a part of my thesis. Papers will be published here once everything is completed.
+> This project is a part of my graduation thesis. Papers will be published here once everything is completed.
 >
 > This project will not be maintained and the repository will be archived once the papers are published.
 
