@@ -16,7 +16,7 @@ Smart devices coordinator and manager, powered by **Bun.JS**.
 ## 🗂 Running from source
 
 > [!IMPORTANT]
-> Detailed step-by-step tutorial to get this project up and running is not available!
+> Detailed step-by-step tutorial to get this project up and running is not, and will not be available!
 >
 > Database file, sample configs and environment files for this project is not available!
 
@@ -24,5 +24,5 @@ Smart devices coordinator and manager, powered by **Bun.JS**.
 
 ## 🍊 Related projects
 
-* [Smart Device `iot-smart-server`](https://github.com/Belikhun/iot-smart-device)
-* [Smart App `iot-smart-app`](https://github.com/Belikhun/iot-smart-app)
+* [Smart Device `Belikhun/iot-smart-device`](https://github.com/Belikhun/iot-smart-device)
+* [Smart App `Belikhun/iot-smart-app`](https://github.com/Belikhun/iot-smart-app)
