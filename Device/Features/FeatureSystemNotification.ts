@@ -3,6 +3,9 @@ import { sendDashboardCommand, type WebSocket } from "../../Routes/WebSocket";
 import { FeatureBase, FeatureUpdateSource } from "./FeatureBase";
 
 export class FeatureSystemNotification extends FeatureBase {
+
+	protected lastMessage: string | null = null;
+
 	public defaultValue(): object | null {
 		return null;
 	}
@@ -24,21 +27,25 @@ export class FeatureSystemNotification extends FeatureBase {
 	public setValue(newValue: any, source?: FeatureUpdateSource, sourceWS?: WebSocket | null): FeatureSystemNotification {
 		super.setValue(newValue, source, sourceWS);
 
-		if (source !== FeatureUpdateSource.DEVICE) {
+		if (this.getValue() && source !== FeatureUpdateSource.DEVICE) {
 			const { level, message }: { level: string, message: string } = this.getValue();
-			const levelDisplay = {
-				info: "Thông Tin",
-				warning: "Cảnh Báo",
-				critical: "Nghiêm Trọng"
-			}[level];
 
-			sendDashboardCommand("notification", { level, message });
-			sendNotification({
-				title: levelDisplay as string,
-				body: message
-			});
+			if (message !== this.lastMessage) {
+				const levelDisplay = {
+					info: "Thông Tin",
+					warning: "Cảnh Báo",
+					critical: "Nghiêm Trọng"
+				}[level];
 
-			this.setValue(null, FeatureUpdateSource.DEVICE);
+				sendDashboardCommand("notification", { level, message });
+				sendNotification({
+					title: levelDisplay as string,
+					body: message
+				});
+
+				this.lastMessage = message;
+				this.setValue(null, FeatureUpdateSource.DEVICE);
+			}
 		}
 
 		return this;
