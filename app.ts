@@ -8,7 +8,7 @@ import { initializeHttpServer } from "./server";
 import { initializeTuya } from "./Tuya/Client";
 import { startWatchdog } from "./watchdog";
 
-initializeDB();
+await initializeDB();
 initializeHttpServer();
 await initializeDevices();
 await initializeScenes();
