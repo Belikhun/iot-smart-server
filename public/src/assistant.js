@@ -797,7 +797,7 @@ class VoiceRecorder {
 				silenceThreshold: this.silenceThreshold,
 				silenceTimeout: this.silenceTimeout,
 				voiceFrequencyRange: this.voiceFrequencyRange,
-				loudnessInterval: 2048
+				loudnessInterval: 2048,
 			},
 		});
 
@@ -818,8 +818,7 @@ class VoiceRecorder {
 	}
 
 	stop() {
-		if (!this.isRecording)
-			return;
+		if (!this.isRecording) return;
 
 		if (this.workletNode) {
 			this.workletNode.port.postMessage({ event: "stop" });
@@ -838,8 +837,7 @@ class VoiceRecorder {
 		this.isRecording = false;
 		clog("INFO", "Recording stopped.");
 
-		if (this.recordingResolver)
-			this.recordingResolver();
+		if (this.recordingResolver) this.recordingResolver();
 	}
 
 	onChunk(handler) {
@@ -863,15 +861,13 @@ class VoiceRecorder {
 
 		switch (messageEvent) {
 			case "chunk": {
-				if (this.onChunkHandler)
-					this.onChunkHandler(data);
+				if (this.onChunkHandler) this.onChunkHandler(data);
 
 				break;
 			}
-			
+
 			case "loudness": {
-				if (this.onLoudnessHandler)
-					this.onLoudnessHandler(data);
+				if (this.onLoudnessHandler) this.onLoudnessHandler(data);
 
 				break;
 			}
@@ -879,11 +875,13 @@ class VoiceRecorder {
 			case "silence": {
 				clog("INFO", "Silence detected. Stopping recording...");
 				this.stop();
+				break;
 			}
 
 			case "stop": {
 				clog("INFO", "Stop command received. Stopping recording...");
 				this.stop();
+				break;
 			}
 
 			default:
@@ -948,7 +946,7 @@ class VoiceRecorder {
 			process(inputs) {
 				if (this.isStopped)
 					return false;
-			
+
 				const input = inputs[0];
 				if (input.length === 0) return true;
 
@@ -971,7 +969,7 @@ class VoiceRecorder {
 
 					if (this.silenceCounter >= (this.sampleRate / 128) * this.silenceTimeout) {
 						this.sendChunk(); // Send the leftover chunk
-						this.port.postMessage({ event: 'stop' }); // Signal stop
+						this.port.postMessage({ event: 'silence' }); // Signal silence
 						return false;
 					}
 				} else {
@@ -1001,7 +999,7 @@ class VoiceRecorder {
 				return true;
 			}
 		}
-
+  
 		registerProcessor('voice-recorder-processor', VoiceRecorderProcessor);
 	  `;
 	}
