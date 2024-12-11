@@ -9,12 +9,12 @@ import { initializeTuya } from "./Tuya/Client";
 import { startWatchdog } from "./watchdog";
 
 await initializeDB();
-initializeHttpServer();
 await initializeDevices();
 await initializeScenes();
 await initializeTriggers();
 await initializeSchedules();
 initializeFirebase();
+initializeHttpServer();
 
 try {
 	// await initializeTuya();
