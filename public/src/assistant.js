@@ -754,7 +754,7 @@ class WavStreamPlayer {
 class VoiceRecorder {
 	constructor({
 		sampleRate = 44100,
-		silenceThreshold = 10,
+		silenceThreshold = 0,
 		silenceTimeout = 2,
 		voiceFrequencyRange = [85, 300],
 	} = {}) {

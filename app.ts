@@ -17,7 +17,7 @@ initializeFirebase();
 initializeHttpServer();
 
 try {
-	// await initializeTuya();
+	await initializeTuya();
 } catch (e) {
 
 }
